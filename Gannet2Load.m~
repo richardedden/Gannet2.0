@@ -109,25 +109,15 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         case 'Siemens'
             if(exist('waterfile'))    
                 MRS_struct.Reference_compound='H2O';
-                switch MRS_struct.ONOFForder
-                    case 'offfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
-                    case 'onfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
-                end    
+                if(MRS_struct.on
+                MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
                 MRS_struct.Nwateravg = 1;
                 MRS_struct.phase{ii} = 0;
                 MRS_struct.phase_firstorder(ii) = 0;
             else
                  MRS_struct.Reference_compound='Cr';
- %               MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
-                switch MRS_struct.ONOFForder
-                    case 'offfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
-                    case 'onfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
-                end    
-             end
+                MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
+            end
             da_xres = MRS_struct.npoints;
             da_yres = 1;
             totalframes = 1;
@@ -141,19 +131,11 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             MRS_struct.freq=(MRS_struct.ZeroFillTo+1-(1:1:MRS_struct.ZeroFillTo))/MRS_struct.ZeroFillTo*freqrange+4.7-freqrange/2.0;
             MRS_struct.FreqPhaseAlign=0;
             %Data are always read in OFF then ON
-            
+            MRS_struct.ON_OFF=[0 1];
+            MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
             totalframes = 2;
-            switch MRS_struct.ONOFForder
-                case 'onfirst'
-                    MRS_struct.ON_OFF=[1 0];
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
-                case 'offfirst'
-                    MRS_struct.ON_OFF=[0 1];
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
-            end
-            
         case 'Philips'
-            if(exist('waterfile'))
+            if(exist('waterfile'))    
                 MRS_struct.Reference_compound='H2O';
             else
                  MRS_struct.Reference_compound='Cr';
@@ -289,7 +271,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   6. Build Gannet Output 
+%   6. Build Gannet Output Figure
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
         if(ishandle(101))
             close(101)

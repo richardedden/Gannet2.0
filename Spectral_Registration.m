@@ -50,8 +50,8 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct)
        
     ChoCrMeanSpecFit = FitChoCr(freqrange, ChoCrMeanSpec, ChoCr_initx,MRS_struct.LarmorFreq);
     MRS_struct.ChoCrMeanSpecFit = ChoCrMeanSpecFit./[1 (2*MRS_struct.LarmorFreq) (MRS_struct.LarmorFreq) (180/pi) 1 1 1];
-    figure(5)
-    plot(freqrange,ChoCrMeanSpec,freqrange,TwoLorentzModel(ChoCrMeanSpecFit./[1 (2*MRS_struct.LarmorFreq) (MRS_struct.LarmorFreq) (180/pi) 1 1 1],freqrange))
+%     figure(5)
+%     plot(freqrange,ChoCrMeanSpec,freqrange,TwoLorentzModel(ChoCrMeanSpecFit./[1 (2*MRS_struct.LarmorFreq) (MRS_struct.LarmorFreq) (180/pi) 1 1 1],freqrange))
     
     AllFramesFTrealign=AllFramesFTrealign*exp(1i*pi/180*(ChoCrMeanSpecFit(4)));%phase
         ChoCrFreqShift = ChoCrMeanSpecFit(3);

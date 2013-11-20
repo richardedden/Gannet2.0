@@ -234,8 +234,16 @@ fclose(fid);
  
  %RE 110726 This is the complex time domain data 
  MRS_struct.ondata = hmm_complex;
- MRS_struct.data =[MRS_struct.ondata;MRS_struct.offdata].';
- if(nargin==4)
+ switch MRS_struct.ONOFForder
+     case 'offfirst'
+         MRS_struct.data =[MRS_struct.offdata;MRS_struct.ondata].';
+     case 'onfirst'
+         MRS_struct.data =[MRS_struct.ondata;MRS_struct.offdata].';
+ end
+ 
+ %MRS_struct.data =[MRS_struct.ondata;MRS_struct.offdata].';
+ 
+if(nargin==4)
 %%%Now load in the Water data
 rda_filename=water_filename; %This is generally file3
 fid = fopen(rda_filename);
