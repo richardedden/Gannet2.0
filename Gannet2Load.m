@@ -25,8 +25,8 @@ for filecheck=1:length(gabafile)
         missing=1;
     end
 end
-for filecheck=1:length(waterfile)
-    if(nargin > 1)
+if(nargin > 1)
+    for filecheck=1:length(waterfile)        
         if(~exist(waterfile{filecheck}))
             disp(['The file ' waterfile(filecheck) ' is missing. Typo?'])
             missing=1;
@@ -44,7 +44,7 @@ if missing
 MRS_struct.versionload = 'G2 131016';
 MRS_struct.ii=0;
 MRS_struct.gabafile=gabafile;
-MRS_struct=Gannet2PreInitialise(MRS_struct);
+MRS_struct=GannetPreInitialise(MRS_struct);
 %Check whether water data or not
 if(nargin > 1)
     MRS_struct.waterfile = waterfile;
