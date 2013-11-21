@@ -276,7 +276,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'NAA'
                    %AllFramesFTrealign=AlignUsingNAA(AllFramesFTrealign);
                 case 'SpecReg'
-                    [AllFramesFTrealign MRS_struct]=Spectral_Registration(MRS_struct);
+                    [AllFramesFTrealign MRS_struct]=Spectral_Registration(MRS_struct,0);
                         
                end %end of switch for alignment target    
                 

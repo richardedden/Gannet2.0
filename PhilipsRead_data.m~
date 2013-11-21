@@ -131,10 +131,11 @@ function [ MRS_struct ] = PhilipsRead_data(MRS_struct, fname, fname_water )
           % in the same file
                MRS_struct.data_water = conj(MRS_struct.data_water); %RE 110728 - empirical factor to scale 'like GE'
                MRS_struct.data_water = MRS_struct.data_water .*repmat(conj(MRS_struct.data_water(1,:))./abs(MRS_struct.data_water(1,:)),[MRS_struct.npoints 1]);
-        % Apply spectral registration to water, use 3-end water scans
+               % Apply spectral registration to water, use 5-end water
+               % scans
                [dummy, MRS_struct] = Spectral_Registration(MRS_struct,1);
                MRS_struct.tempwater = MRS_struct.data_water;
-               if(size(MRS_struct.data_water,2)>3)
+               if(size(MRS_struct.data_water,2)>2)
                    MRS_struct.data_water = squeeze(mean(MRS_struct.data_water(:,3:end),2)).'; %adh 20130208 sdat is mean of .data - not sum
                else
                    MRS_struct.data_water = squeeze(mean(MRS_struct.data_water(:,end),2)).'; %adh 20130208 sdat is mean of .data - not sum
