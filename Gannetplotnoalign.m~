@@ -27,12 +27,15 @@ specbaseline = mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2);
 gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
 gabaheight = mean(gabaheight);
 
+
 plot(MRS_struct.freq, real(SpectraToPlot));
 legendtxt = {'no align'};
 hl=legend(legendtxt);
 set(hl,'EdgeColor',[1 1 1]);
 set(gca,'XDir','reverse');
 oldaxis = axis;
+% yaxis max = top spec baseline + 2*meangabaheight
 yaxismax = (numspec + 2) *gabaheight; % top spec + 2* height of gaba
 yaxismin =  - 2* gabaheight; % extend 2* gaba heights below zero
+
 axis([0 5  yaxismin yaxismax])

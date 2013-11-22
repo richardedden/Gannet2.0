@@ -5,9 +5,7 @@ function Gannetplotprepostalign(MRS_struct, specno)
 %          Plot multiple spectra as a stack - baselines offset
 %            by mean height of GABA
 
-%numspec = length(MRS_struct.spec.diff(:,1));
 numspec = 2;
-
 SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(specno,:)];
 
 %Water scaling is touhg if we have no water scans! Comment out
@@ -18,7 +16,6 @@ SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(sp
 % SpectraToPlot = SpectraToPlot .* heightrescale;
 
 % Estimate baseline from between Glx and GABA
-%specbaseline = mean(real(SpectraToPlot(1,17250:17650)),2);
 z=abs(MRS_struct.freq-3.6);
 Glx_right=find(min(z)==z);
 z=abs(MRS_struct.freq-3.3);
@@ -29,24 +26,17 @@ specbaseline = mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2);
 % averaged gaba height across all scans - to estimate stack spacing
 gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
 gabaheight = mean(gabaheight);
-
 plotstackoffset = [ 0 : (numspec-1) ]';
 plotstackoffset = plotstackoffset * gabaheight;
 plotstackoffset = plotstackoffset - specbaseline;
-
 SpectraToPlot = SpectraToPlot + ...
     repmat(plotstackoffset, [ 1  length(MRS_struct.spec.diff(1,:))]);
-
-%figure(99)
 plot(MRS_struct.freq, real(SpectraToPlot));
-%legendtxt = regexprep(MRS_struct.pfile{specno}, '_','-');
 legendtxt = {'post', 'pre'};
 hl=legend(legendtxt);
 set(hl,'EdgeColor',[1 1 1]);
 set(gca,'XDir','reverse');
 oldaxis = axis;
-% yaxis max = top spec baseline + 2*meangabaheight
 yaxismax = (numspec + 2) *gabaheight; % top spec + 2* height of gaba
 yaxismin =  - 2* gabaheight; % extend 2* gaba heights below zero
-
 axis([0 5  yaxismin yaxismax])

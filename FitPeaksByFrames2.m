@@ -18,7 +18,6 @@
             initx, nlinopts);
         FitParams(jj,:) = fit_param;
         FitParams2(jj,:) = fit_param;
-        % 110715 remove linear baseline - think this helps...
         %fit_plot = LorentzModel(fit_param, freq);
         %fit_plot = LorentzModel_nolinear(fit_param, freq);
         

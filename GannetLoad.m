@@ -1,5 +1,5 @@
 function MRS_struct=GannetLoad(gabafile, waterfile)
-%Gannet 2.0 Gannet2Load
+%Gannet 2.0 GannetLoad
 %Started by RAEE Nov 5, 2012
 
 %Aim to make the GannetLoad more modular and easier to understand/edit, and
@@ -41,7 +41,7 @@ if missing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MRS_struct.versionload = 'G2 131016';
+MRS_struct.versionload = 'G2 131121';
 MRS_struct.ii=0;
 MRS_struct.gabafile=gabafile;
 MRS_struct=GannetPreInitialise(MRS_struct);
@@ -297,12 +297,12 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         h=figure(101);
         set(h, 'Position', [100, 100, 1000, 707]);
         set(h,'Color',[1 1 1]);
-        figTitle = ['Gannet2Load Output'];
+        figTitle = ['GannetLoad Output'];
         set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
               
             %Top Left
             ha=subplot(2,2,1);
-            Gannet2plotprepostalign(MRS_struct,ii)
+            Gannetplotprepostalign(MRS_struct,ii)
             x=title({'Edited Spectrum';'(pre- and post-align)'});
             set(gca,'YTick',[]);
             %Top Right
@@ -361,7 +361,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              tmp = [ 'LoadVer     : ' MRS_struct.versionload ];
              text(0,0.3, tmp, 'FontName', 'Helvetica','FontSize',12);
     %         
-              script_path=which('Gannet2Load');
+              script_path=which('GannetLoad');
               % CJE update for GE
     %          Gannet_circle=[script_path(1:(end-12)) 'GANNET_circle.png'];
               Gannet_circle_white=[script_path(1:(end-13)) 'GANNET_circle_white.jpg'];

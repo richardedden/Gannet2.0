@@ -252,7 +252,7 @@ for ii=1:numscans
         waterrhigh=find(min(z)==z);
         rlabelbounds=waterrlow:waterrhigh;
         labelfreq=freq(freqbounds);
-        axis_bottom=axis;
+        axisbottom=axis;
         hwatres=text(4.4,max(min(residw(rlabelbounds))-0.05*watmax,axis_bottom(3)),'residual');
         set(hwatres,'horizontalAlignment', 'left');       
         %CJE fixes water baseline code - baseline model as before...
