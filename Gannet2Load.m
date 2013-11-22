@@ -18,6 +18,8 @@ function MRS_struct=Gannet2Load(gabafile, waterfile)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   0. Check the file list for typos
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%test1 branch
 missing=0;
 for filecheck=1:length(gabafile)
     if(~exist(gabafile{filecheck}))
