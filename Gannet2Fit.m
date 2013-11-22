@@ -9,8 +9,6 @@ function [MRS_struct] = Gannet2Fit(MRS_struct)
 %   3. Cr Fit
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%sometext
-
 FIT_LSQCURV = 0;
 FIT_NLINFIT = 1;
 fit_method = FIT_NLINFIT; %FIT_NLINFIT;
