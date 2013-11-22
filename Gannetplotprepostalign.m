@@ -1,4 +1,4 @@
-function Gannet2plotprepostalign(MRS_struct, specno)
+function Gannetplotprepostalign(MRS_struct, specno)
 %function MRSplotprepostalign(MRS_struct, specno)
 % Plots pre and post alignment spectra in MRSLoadPfiles
 % 110214:  Scale spectra by the peak _height_ of water

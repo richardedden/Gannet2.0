@@ -1,4 +1,4 @@
-function MRS_struct=Gannet2Load(gabafile, waterfile)
+function MRS_struct=GannetLoad(gabafile, waterfile)
 %Gannet 2.0 Gannet2Load
 %Started by RAEE Nov 5, 2012
 

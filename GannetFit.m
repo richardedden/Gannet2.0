@@ -1,4 +1,4 @@
-function [MRS_struct] = Gannet2Fit(MRS_struct)
+function [MRS_struct] = GannetFit(MRS_struct)
 %
 % MRS_struct = structure with data loaded from MRSLoadPfiles
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
