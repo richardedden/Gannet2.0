@@ -120,7 +120,6 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 MRS_struct.phase_firstorder(ii) = 0;
             else
                  MRS_struct.Reference_compound='Cr';
- %               MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
                 switch MRS_struct.ONOFForder
                     case 'offfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
