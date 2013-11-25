@@ -363,7 +363,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               script_path=which('GannetLoad');
               % CJE update for GE
     %          Gannet_circle=[script_path(1:(end-12)) 'GANNET_circle.png'];
-              Gannet_circle_white=[script_path(1:(end-13)) 'GANNET_circle_white.jpg'];
+              Gannet_circle_white=[script_path(1:(end-13)) '/GANNET_circle_white.jpg'];
     %          A=imread(Gannet_circle);
               A2=imread(Gannet_circle_white);
               hax=axes('Position',[0.80, 0.05, 0.15, 0.15]);
