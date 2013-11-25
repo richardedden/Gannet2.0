@@ -425,7 +425,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     subplot(2,2,4,'replace')
     axis off;
     script_path=which('GannetFit');
-    Gannet_circle_white=[script_path(1:(end-12)) 'GANNET_circle_white.jpg'];
+    Gannet_circle_white=[script_path(1:(end-12)) '/GANNET_circle_white.jpg'];
     A_2=imread(Gannet_circle_white);
     hax=axes('Position',[0.80, 0.05, 0.15, 0.15]);
     image(A_2);axis off; axis square;
