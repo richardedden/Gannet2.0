@@ -5,8 +5,8 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
 
 
 %Acquisition Parameters
-    MRS_struct.sw=5000;  % sw taken from header for all formats except Philips .data
-    % MRS_struct.sw=2000;     
+%    MRS_struct.sw=5000;  % sw taken from header for all formats except Philips .data
+    MRS_struct.sw=2000;     
     MRS_struct.TR=2000;
     MRS_struct.LarmorFreq=127.8;
     MRS_struct.ONOFForder='offfirst';
