@@ -18,7 +18,7 @@
             initx, nlinopts);
         FitParams(jj,:) = fit_param;
         FitParams2(jj,:) = fit_param;
-        %fit_plot = LorentzModel(fit_param, freq);
+        %fit_plot = ComplexLorentzModel(fit_param, freq);
         %fit_plot = LorentzModel_nolinear(fit_param, freq);
         
           %figure(3); subplot(1,2,1);plot(freq', real(FrameData(:,jj)), 'g', freq', fit_plot,'b');
@@ -54,8 +54,8 @@
     %for jj = 1:nframes
     %    fitplot1=LorentzModel(FitParams2(jj,:), freq);;
     %    figure(3); subplot(1,2,1);plot(freq', real(FrameData(:,jj)), 'g', freq', fitplot1,'b');
-    %    fitplot2=LorentzModel(FitParams(jj,:), freq);;
-    %    figure(3); subplot(1,2,2);plot(freq', real(FrameData(:,jj)), 'g', freq', fitplot2,'b');pause(2)
+        %fitplot2=ComplexLorentzModel(FitParams(jj,:), freq);;
+        %figure(3); subplot(1,2,2);plot(freq', real(FrameData(:,jj)), 'g', freq', fitplot2,'b');pause(2);
     %end
     % Reject any point where the fit params - area, fwhm, phase
     %  or freq are > 3stdev away from the mean
