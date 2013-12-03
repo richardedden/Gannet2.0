@@ -612,7 +612,7 @@ function [MRS_struct] = MRSGABAinstunits(MRS_struct,ii)
 
 PureWaterConc = 55000; % mmol/litre
 WaterVisibility = 0.65; % This is approx the value from Ernst, Kreis, Ross
-EditingEfficiency = 0.5;
+EditingEfficiency = MRS_struct.kappa;
 T1_GABA = 0.80 ; % "empirically determined"...! Gives same values as RE's spreadsheet
 % ... and consistent with Cr-CH2 T1 of 0.8 (Traber, 2004)
 %Not yet putting in measured GABA T1, but it is in the pipeline - 1.35ish

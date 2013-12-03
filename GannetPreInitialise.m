@@ -6,9 +6,10 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
 
 %Acquisition Parameters
 %    MRS_struct.sw=5000;  % sw taken from header for all formats except Philips .data
-    MRS_struct.sw=2000;     
-    MRS_struct.TR=2000;
-    MRS_struct.LarmorFreq=127.8;
+    MRS_struct.sw=2000; %This should be parsed from headers where possible    
+    MRS_struct.TR=2000;%This should be parsed from headers where possible
+    MRS_struct.TE=68; %This should be parsed from headers where possible
+    MRS_struct.LarmorFreq=127.8; %This should be parsed from headers where possible
     MRS_struct.ONOFForder='offfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
     MRS_struct.Water_Positive=1;
