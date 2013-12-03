@@ -198,10 +198,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             switch MRS_struct.ONOFForder
                 case 'onfirst'
                     MRS_struct.ON_OFF=repmat([1 0],[MRS_struct.Navg(ii)/MRS_struct.nrows MRS_struct.nrows/2]);
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';
+                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
                 case 'offfirst'
                     MRS_struct.ON_OFF=repmat([0 1],[MRS_struct.Navg(ii)/MRS_struct.nrows MRS_struct.nrows/2]);
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';
+                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
             end
     end    %End of vendor switch loop for data load
 
@@ -273,7 +273,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'H20'
                    %AllFramesFTrealign=AlignUsingH2O(AllFramesFTrealign);
                case 'NAA'
-                   [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
+                   [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFT,MRS_struct);%No initialise by Water correction (GSH-proof)
                case 'SpecReg'
                     [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0);
                case 'SpecRegDual'
@@ -281,14 +281,14 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
                end %end of switch for alignment target    
         MRS_struct.AlignTo
-        size(MRS_struct.reject)
+        size(MRS_struct.reject(ii,:))
         size(MRS_struct.ON_OFF)
 
         
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
         %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF
-        MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==0)'&(MRS_struct.reject(:,ii)==0))),2);
-        MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==1)'&(MRS_struct.reject(:,ii)==0))),2);
+        MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==0)&(MRS_struct.reject(:,ii)==0))),2);
+        MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==1)&(MRS_struct.reject(:,ii)==0))),2);
         MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on-MRS_struct.spec.off)/2; %Not sure whether we want a two here.
         MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
 
@@ -313,6 +313,9 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             hb=subplot(2,2,2);
             rejectframesplot = (1./MRS_struct.reject(:,ii).') .*  MRS_struct.waterfreq(ii,:);
             plot([1:DataSize], MRS_struct.waterfreq(ii,:)', '-', [1:DataSize], rejectframesplot, 'ro');
+            
+            
+            
             set(gca,'XLim',[0 DataSize]);
             xlabel('time'); ylabel('\omega_0');
             title('Water Frequency, ppm');
@@ -363,7 +366,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              text(0,0.5, tmp, 'FontName', 'Helvetica','FontSize',12);
              %tmp = [ 'Align/Reject: ' num2str(MRS_struct.FreqPhaseAlign) ];
              %text(0,0.5, tmp, 'FontName', 'Courier');
-             tmp = [ 'Rejects     : '  num2str(sum(MRS_struct.reject(:,ii),1)) ];
+             tmp = [ 'Rejects     : '  num2str(sum(MRS_struct.rejects(:,ii),1)) ];
              text(0,0.4, tmp, 'FontName', 'Courier');
              tmp = [ 'LoadVer     : ' MRS_struct.versionload ];
              text(0,0.3, tmp, 'FontName', 'Helvetica','FontSize',12);

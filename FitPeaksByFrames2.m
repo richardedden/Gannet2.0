@@ -8,17 +8,17 @@
     nlinopts = statset('nlinfit');
     nlinopts = statset(nlinopts, 'MaxIter', 1e4, 'Display','Off');
     nframes = size(FrameData,2);
-    
+    FrameData=real(FrameData);
     for jj = 1:nframes
         % [fit_param, resnorm, resid, exitflag ]  = ...
         %     lsqcurvefit(@(xdummy,ydummy) LorentzModel(xdummy, ydummy), initx, ...
         % 		  freq', real(FrameData(:,jj)));
         [fit_param, residCr] = nlinfit(freq', (FrameData(:,jj)), ...
-            @(xdummy, ydummy) ComplexLorentzModel(xdummy, ydummy), ...
+            @(xdummy, ydummy) LorentzModel(xdummy, ydummy), ...
             initx, nlinopts);
         FitParams(jj,:) = fit_param;
         FitParams2(jj,:) = fit_param;
-        %fit_plot = ComplexLorentzModel(fit_param, freq);
+        fit_plot = LorentzModel(fit_param, freq);
         %fit_plot = LorentzModel_nolinear(fit_param, freq);
         
           %figure(3); subplot(1,2,1);plot(freq', real(FrameData(:,jj)), 'g', freq', fit_plot,'b');

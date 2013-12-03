@@ -71,7 +71,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
             if(nargin==3)
                 if(Dual==1)
                 %Need to get the slot right to put data back into
-                averages_per_dynamic=find(MRS_struct.ON_OFF~=(MRS_struct.ON_OFF(1)),1)-1;
+                averages_per_dynamic=MRS_struct.Navg/MRS_struct.nrows;
                 dyn=floor((corrloop-1)/averages_per_dynamic); %number of cycles in
                 ind=mod((corrloop-1),averages_per_dynamic)+1; %number in current cycle
                 
@@ -91,11 +91,11 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
                 
                 
                 MRS_struct.data_align(:,corrloop_d)=MRS_struct.data(:,corrloop_d).*exp(1i*parsFit(corrloop,1)*2*pi*time)*exp(1i*pi/180*parsFit(corrloop,2));       end
-                CorrPars(corrloop_d,:)=parsFit(corrloop,:);
+                CorrPars(corrloop_d,:)=parsFit;
             else
                 corrloop_d=corrloop;
                 MRS_struct.data_align(:,corrloop_d)=MRS_struct.data(:,corrloop_d).*exp(1i*parsFit(corrloop,1)*2*pi*time)*exp(1i*pi/180*parsFit(corrloop,2));
-                CorrPars(corrloop_d,:)=parsFit(corrloop,:);
+                CorrPars=parsFit;
             end
             
         end
@@ -150,7 +150,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
                 end
                 
             MRS_struct.FreqStdevHz(MRS_struct.ii)=std(parsFit(:,1),1);
-            MRS_struct.CrFWHMHz(MRS_struct.ii)=mean([ChoCrMeanSpecFitON(2) ChoCrMeanSpecFitOFF(2)]);    
+            MRS_struct.CrFWHMHz(MRS_struct.ii)=mean([CrMeanSpecFitON(2) CrMeanSpecFitOFF(2)]);    
             else
             ChoCrMeanSpecFit = FitChoCr(freqrange, ChoCrMeanSpec, ChoCr_initx,MRS_struct.LarmorFreq);
             MRS_struct.ChoCrMeanSpecFit = ChoCrMeanSpecFit./[1 (2*MRS_struct.LarmorFreq) (MRS_struct.LarmorFreq) (180/pi) 1 1 1];
@@ -187,13 +187,18 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
             % Reject any point where the fit params - phase
             %  or freq are > 3stdev away from the mean
             MeanFrameParams = mean(CorrPars, 1);
-            UpperLim = repmat(MeanFrameParams + 3*std(CorrPars,1), [size(AllFramesFTrealign,2) 1]);
-            LowerLim = repmat(MeanFrameParams - 3*std(CorrPars,1), [size(AllFramesFTrealign,2) 1]);
+            UpperLim = repmat(MeanFrameParams + 3*std(FrameParams,1), [size(AllFramesFTrealign,2) 1]);
+            LowerLim = repmat(MeanFrameParams - 3*std(FrameParams,1), [size(AllFramesFTrealign,2) 1]);
             %but don't reject on linear, const baseline fit vals
-            rejectframe = gt(CorrPars, UpperLim);
-            rejectframe = rejectframe + lt(CorrPars, LowerLim);
+            UpperLim(:,5:6) = Inf;
+            LowerLim(:,5:6) = -Inf;
+            size(UpperLim)
+            size(FrameParams)
+            rejectframe = gt(FrameParams, UpperLim);
+            rejectframe = rejectframe + lt(FrameParams, LowerLim);
             MRS_struct.reject(:,MRS_struct.ii) = max(rejectframe,[],2);
             %Balance up rejects
+
             IsRejectOnOrOff=MRS_struct.ON_OFF(MRS_struct.reject(:,MRS_struct.ii)==1);
             stepsize=find(MRS_struct.ON_OFF~=(MRS_struct.ON_OFF(1)),1)-1;
             for kk=1:size(MRS_struct.reject(:,MRS_struct.ii),1)
