@@ -287,9 +287,13 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
         %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF
+        size(MRS_struct.ON_OFF)
+        size(MRS_struct.reject(:,ii)==0)
+        
+        
         MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==0)'&(MRS_struct.reject(:,ii)==0))),2);
         MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==1)'&(MRS_struct.reject(:,ii)==0))),2);
-        MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on-MRS_struct.spec.off)/2; %Not sure whether we want a two here.
+        MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on(ii,:)-MRS_struct.spec.off(ii,:))/2; %Not sure whether we want a two here.
         MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
