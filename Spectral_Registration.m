@@ -24,7 +24,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
         if(nargin==3)
             if(Dual==1)
                 %This code runs twice, first for ONs, second for OFFs.
-                    SpecRegLoop
+                    SpecRegLoop;
                     size(real(MRS_struct.data(:,(MRS_struct.ON_OFF==SpecRegLoop))))
                     
                     flatdata(:,1,:)=real(MRS_struct.data(:,(MRS_struct.ON_OFF==SpecRegLoop)));
@@ -77,20 +77,21 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
                 
                 if(SpecRegLoop==1)
                     if(MRS_struct.ON_OFF(1)==1)
-                        corrloop_d = dyn*averages_per_dynamic*2+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+ind;
                     else
-                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind;
                     end
                 else
                     if(MRS_struct.ON_OFF(1)==1)
-                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind;
                     else
-                        corrloop_d = dyn*averages_per_dynamic*2+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+ind;
                     end
                 end
                 
                 
-                MRS_struct.data_align(:,corrloop_d)=MRS_struct.data(:,corrloop_d).*exp(1i*parsFit(corrloop,1)*2*pi*time)*exp(1i*pi/180*parsFit(corrloop,2));       end
+                MRS_struct.data_align(:,corrloop_d)=MRS_struct.data(:,corrloop_d).*exp(1i*parsFit(corrloop,1)*2*pi*time)*exp(1i*pi/180*parsFit(corrloop,2));       
+                end
                 CorrPars(corrloop_d,:)=parsFit(corrloop,:);
             else
                 corrloop_d=corrloop;
@@ -102,7 +103,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
         
         if(SpecRegLoop==0)
             FullData = MRS_struct.data_align;
-            size(MRS_struct.data_align)
+%            size(MRS_struct.data_align)
             FullData = FullData.* repmat( (exp(-(time)*MRS_struct.LB*pi)), [1 size(MRS_struct.data,2)]);
             AllFramesFTrealign=fftshift(fft(FullData,MRS_struct.ZeroFillTo,1),1);
 
@@ -139,7 +140,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
                     ChoCrFreqShiftON = ChoCrMeanSpecFitON(3);
                     ChoCrFreqShiftON = ChoCrFreqShiftON - 3.02*MRS_struct.LarmorFreq;
                     ChoCrFreqShiftON = ChoCrFreqShiftON ./ (MRS_struct.LarmorFreq*(MRS_struct.freq(2) - MRS_struct.freq(1) ));
-                    ChoCrFreqShift_pointsON = round(ChoCrFreqShiftON)
+                    ChoCrFreqShift_pointsON = round(ChoCrFreqShiftON);
                     AllFramesFTrealign(:,(MRS_struct.ON_OFF==1))=circshift(AllFramesFTrealign(:,(MRS_struct.ON_OFF==1)), [-ChoCrFreqShift_pointsON 0]);%freq
                     ChoCrFreqShiftOFF = ChoCrMeanSpecFitOFF(3);
                     ChoCrFreqShiftOFF = ChoCrFreqShiftOFF - 3.02*MRS_struct.LarmorFreq;
@@ -158,7 +159,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
             ChoCrFreqShift = ChoCrMeanSpecFit(3);
             ChoCrFreqShift = ChoCrFreqShift - 3.02*MRS_struct.LarmorFreq;
             ChoCrFreqShift = ChoCrFreqShift ./ (MRS_struct.LarmorFreq*(MRS_struct.freq(2) - MRS_struct.freq(1) ));
-            ChoCrFreqShift_points = round(ChoCrFreqShift)
+            ChoCrFreqShift_points = round(ChoCrFreqShift);
             AllFramesFTrealign=circshift(AllFramesFTrealign, [-ChoCrFreqShift_points 0]);%freq
             end
             %     figure(5)
