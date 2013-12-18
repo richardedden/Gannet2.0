@@ -78,9 +78,10 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             nreceivers = double(twix_obj.image.NCha);
             % Copy it into FullData
             if twix_obj.image.NEco>twix_obj.image.NIda
-                FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]),[2 1 3 4]);
+                shape(squeeze(
+                FullData=reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]);
                 %Undo Plus-minus 
-                %FullData(:,:,2,:)=-FullData(:,:,2,:);
+                FullData(:,:,2,:)=-FullData(:,:,2,:);
                 FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NEco]);
             else
                 FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NSet twix_obj.image.NIda]),[2 1 4 3]);
@@ -111,17 +112,12 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
            twix_obj_water=mapVBVD(fname_water);
            MRS_struct.nrows_water = twix_obj_water.image.NAcq;
            MRS_struct.npoints_water = twix_obj_water.image.NCol;
-            
-           if twix_obj.image.NEco>twix_obj.image.NIda
-            WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NEco twix_obj_water.image.NSet]),[2 1 3 4]);
-            WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NEco]);
-           else
-           % Copy it into WaterData
+            % Copy it into WaterData
             WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
             %Undo Plus-minus 
             WaterData(:,:,2,:)=-WaterData(:,:,2,:);
             WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
-           end
+            
             
             firstpoint_water=mean(conj(WaterData(:,1,:)),3);
             channels_scale=squeeze(sqrt(sum(firstpoint_water.*conj(firstpoint_water))));
