@@ -105,7 +105,27 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
             end
-            totalframes = MRS_struct.nrows
+            totalframes = MRS_struct.nrows;
+        case 'Siemens_twix'
+            Water_Positive=1;           %CHECK
+            if(exist('waterfile'))
+                MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii}, waterfile{ii});
+                WaterData = MRS_struct.data_water;
+                ComWater = mean(WaterData,2);
+            else
+                MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii});
+            end
+            da_xres = MRS_struct.npoints;
+            da_yres = MRS_struct.nrows;
+            FullData = MRS_struct.data;
+            %Set up vector of which rows of .data are ONs and OFFs.
+            switch MRS_struct.ONOFForder
+                case 'onfirst'
+                    MRS_struct.ON_OFF=repmat([1 0],[1 size(MRS_struct.data,2)/2]);
+                case 'offfirst'
+                    MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
+            end
+            totalframes = MRS_struct.nrows;
         case 'Siemens'
             if(exist('waterfile'))    
                 MRS_struct.Reference_compound='H2O';
@@ -224,11 +244,14 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
             if(strcmpi(MRS_struct.vendor,'GE'))           %CHECK
                 ComWater = mean(WaterData,2);           %CHECK
-            elseif(strcmpi(MRS_struct.vendor,'Siemens'))           %CHECK
+            elseif(strcmpi(MRS_struct.vendor,'Siemens'))       %CHECK
                 ComWater = WaterData;           %CHECK
-            else                                %CHECK
+            elseif (strcmpi(MRS_struct.vendor,'Siemens_twix')) %CHECK
+                ComWater = WaterData;
+            else
                 ComWater = WaterData.';           %CHECK
             end           %CHECK
+            
             ComWater = ComWater.*exp(-(time')*MRS_struct.LB*pi);
             MRS_struct.spec.water(ii,:)=fftshift(fft(ComWater,MRS_struct.ZeroFillTo,1))';
         end %End of H20 reference loop
@@ -279,17 +302,11 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'SpecRegDual'
                    %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after... 
                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
-               end %end of switch for alignment target    
-        MRS_struct.AlignTo
-        size(MRS_struct.reject)
-        size(MRS_struct.ON_OFF)
+               end %end of switch for alignment target   
 
         
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
-        %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF
-        size(MRS_struct.ON_OFF)
-        size(MRS_struct.reject(:,ii)==0)
-        
+        %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
         
         MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==0)'&(MRS_struct.reject(:,ii)==0))),2);
         MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==1)'&(MRS_struct.reject(:,ii)==0))),2);
@@ -359,8 +376,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              text(0,0.9, tmp, 'FontName', 'Helvetica','FontSize',12);
              tmp = [ 'Navg        : ' num2str(MRS_struct.Navg(ii)) ];
              text(0,0.8, tmp, 'FontName', 'Helvetica','FontSize',12);
-             %tmp = sprintf('FWHM (Hz)   : %.2f', MRS_struct.CrFWHMHz(ii) );
-             %text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',12);
+             tmp = sprintf('Cr FWHM (Hz)   : %.2f', MRS_struct.CrFWHMHz(ii) );
+             text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',12);
              %tmp = sprintf('FreqSTD (Hz): %.2f', MRS_struct.FreqStdevHz(ii));
              %text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
              tmp = [ 'LB (Hz)     : ' num2str(MRS_struct.LB,2) ];
@@ -422,6 +439,9 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               elseif(strcmpi(MRS_struct.vendor,'Siemens'))
                   tmp = strfind(pfil_nopath, '.rda');
                   dot7 = tmp(end); % just in case there's another .rda somewhere else...
+              elseif(strcmpi(MRS_struct.vendor,'Siemens_twix'))
+                  tmp = strfind(pfil_nopath, '.dat');
+                  dot7 = tmp(end); % just in case there's another .rda somewhere else...    
               end
               pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
               %hax=axes('Position',[0.85, 0.05, 0.15, 0.15]);
@@ -429,10 +449,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               %image(A2);axis off; axis square;
               % fix pdf output, where default is cm
               if sum(strcmp(listfonts,'Helvetica'))>0
-               set(findall(h,'type','text'),'FontName','Helvetica')
-               set(ha,'FontName','Helvetica')
-               set(hb,'FontName','Helvetica')
-               set(hc,'FontName','Helvetica')
+               set(findall(h,'type','text'),'FontName','Helvetica');
+               set(ha,'FontName','Helvetica');
+               set(hb,'FontName','Helvetica');
+               set(hc,'FontName','Helvetica');
               end
               set(gcf, 'PaperUnits', 'inches');
               set(gcf,'PaperSize',[11 8.5]);

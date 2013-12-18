@@ -476,6 +476,9 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     elseif(strcmpi(MRS_struct.vendor,'Siemens'))
         tmp = strfind(pfil_nopath, '.rda');
         dot7 = tmp(end); % just in case there's another .data somewhere else...
+    elseif(strcmpi(MRS_struct.vendor,'Siemens_twix'))
+        tmp = strfind(pfil_nopath, '.dat');
+        dot7 = tmp(end); % just in case there's another .dat somewhere else...
     end
     pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
     if sum(strcmp(listfonts,'Helvetica'))>0

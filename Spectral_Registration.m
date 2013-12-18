@@ -24,8 +24,8 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
         if(nargin==3)
             if(Dual==1)
                 %This code runs twice, first for ONs, second for OFFs.
-                    SpecRegLoop
-                    size(real(MRS_struct.data(:,(MRS_struct.ON_OFF==SpecRegLoop))))
+                    SpecRegLoop;
+                    size(real(MRS_struct.data(:,(MRS_struct.ON_OFF==SpecRegLoop))));
                     
                     flatdata(:,1,:)=real(MRS_struct.data(:,(MRS_struct.ON_OFF==SpecRegLoop)));
                     flatdata(:,2,:)=imag(MRS_struct.data(:,(MRS_struct.ON_OFF==SpecRegLoop)));
@@ -102,11 +102,9 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
         
         if(SpecRegLoop==0)
             FullData = MRS_struct.data_align;
-            size(MRS_struct.data_align)
             FullData = FullData.* repmat( (exp(-(time)*MRS_struct.LB*pi)), [1 size(MRS_struct.data,2)]);
             AllFramesFTrealign=fftshift(fft(FullData,MRS_struct.ZeroFillTo,1),1);
 
-            
             
             %In FD, move Cr to 3.02 and get phase 'right' as opposed to 'consistent'.
             ChoCrFitLimLow=2.6;
@@ -158,7 +156,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
             ChoCrFreqShift = ChoCrMeanSpecFit(3);
             ChoCrFreqShift = ChoCrFreqShift - 3.02*MRS_struct.LarmorFreq;
             ChoCrFreqShift = ChoCrFreqShift ./ (MRS_struct.LarmorFreq*(MRS_struct.freq(2) - MRS_struct.freq(1) ));
-            ChoCrFreqShift_points = round(ChoCrFreqShift)
+            ChoCrFreqShift_points = round(ChoCrFreqShift);
             AllFramesFTrealign=circshift(AllFramesFTrealign, [-ChoCrFreqShift_points 0]);%freq
             end
             %     figure(5)
@@ -177,6 +175,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
             Cr_initx = [ Area_estimate Width_estimate 3.02 0 Baseline_offset 0 ].*[1 (2*MRS_struct.LarmorFreq) (MRS_struct.LarmorFreq) (180/pi) 1 1 ];
             CrMeanSpec = mean(AllFramesFTrealign(clb:cub,:),2);
             CrMeanSpecFit = FitCr(freqrange, CrMeanSpec, Cr_initx);
+            
             %Some Output
             MRS_struct.FreqStdevHz(MRS_struct.ii)=std(parsFit(:,1),1);
             MRS_struct.CrFWHMHz(MRS_struct.ii)=CrMeanSpecFit(2);

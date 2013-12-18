@@ -19,7 +19,6 @@
         
      %   size(real(FrameData(:,jj)))
      %   size(TwoLorentzModel(initx,freq'))
-        
         [fit_param, resnorm, resid, exitflag ]  = ...
             lsqcurvefit(@(xdummy,ydummy) LorentzModel(xdummy, ydummy), initx, ...
                          freq', real(FrameData(:,jj)));

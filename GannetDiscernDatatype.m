@@ -2,23 +2,27 @@ function MRS_struct = GannetDiscernDatatype(filename,MRS_struct)
 %Use the file ending to determine file type
 
 lastchar=filename;
-lastchar=lastchar((end-1):end);
 
-if(strcmpi(lastchar,'.7'))
+last2char=lastchar((end-1):end);
+last4char=lastchar((end-3):end);
+
+if(strcmpi(last2char,'.7'))
     MRS_struct.vendor = 'GE';
     MRS_struct.Reference_compound='H2O';
-elseif(strcmpi(lastchar,'AT'))
+elseif(strcmpi(last4char,'SDAT'))
     MRS_struct.vendor = 'Philips';
-    if(strcmp(lastchar,'AT'))
+    if(strcmp(last4char,'SDAT'))
        MRS_struct.spar_string='SPAR';
     else
         MRS_struct.spar_string='spar';
     end
-elseif(strcmpi(lastchar,'TA'))
+elseif(strcmpi(last2char,'TA'))
     MRS_struct.vendor = 'Philips_data';
-elseif(strcmpi(lastchar,'DA'))
+elseif(strcmpi(last2char,'DA'))
     MRS_struct.vendor = 'Siemens';
-else
+elseif(strcmpi(last4char,'.DAT'))
+    MRS_struct.vendor = 'Siemens_twix';
+else    
     error('Unrecognised filetype: should end .7 .SDAT or .RDA')
 end
 end

@@ -8,6 +8,8 @@
     nlinopts = statset('nlinfit');
     nlinopts = statset(nlinopts, 'MaxIter', 1e5, 'Display','Off');
     nframes = size(FrameData,2);
+    lsqopts=optimset('lsqcurvefit');
+    lsqoptions=optimset(lsqopts, 'Display','none');
     
     for jj = 1:nframes
         % [fit_param, resnorm, resid, exitflag ]  = ...
@@ -19,10 +21,11 @@
         
      %   size(real(FrameData(:,jj)))
      %   size(TwoLorentzModel(initx,freq'))
-        
+
+
         [fit_param, resnorm, resid, exitflag ]  = ...
-            lsqcurvefit(@(xdummy,ydummy) TwoLorentzModel(xdummy, ydummy), initx, ...
-                         freq', real(FrameData(:,jj)));
+            lsqcurvefit(@(xdummy,ydummy) double(TwoLorentzModel(xdummy, ydummy)), double(initx), ...
+                         double(freq'), double(real(FrameData(:,jj))),[],[],lsqoptions);
               initxLSQ = fit_param;
         
         [fit_param, residCr] = nlinfit(freq', real(FrameData(:,jj)), ...
