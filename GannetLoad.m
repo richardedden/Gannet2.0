@@ -35,7 +35,7 @@ if(nargin > 1)
 end
 if missing
         error('Not all the files are there, so I give up.');
-    end
+end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -106,6 +106,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
             end
             totalframes = MRS_struct.nrows;
+<<<<<<< HEAD
         case 'Siemens_twix'
             Water_Positive=1;           %CHECK
             if(exist('waterfile'))
@@ -126,6 +127,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
             end
             totalframes = MRS_struct.nrows;
+=======
+>>>>>>> 9983528fbe86278e5f80ae73bcaa746f36a86a1f
         case 'Siemens'
             if(exist('waterfile'))    
                 MRS_struct.Reference_compound='H2O';
@@ -302,12 +305,19 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'SpecRegDual'
                    %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after... 
                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
+<<<<<<< HEAD
                end %end of switch for alignment target   
 
         
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
         %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
         
+=======
+               end %end of switch for alignment target    
+        
+        %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
+        %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
+>>>>>>> 9983528fbe86278e5f80ae73bcaa746f36a86a1f
         MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==0)'&(MRS_struct.reject(:,ii)==0))),2);
         MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==1)'&(MRS_struct.reject(:,ii)==0))),2);
         MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on(ii,:)-MRS_struct.spec.off(ii,:))/2; %Not sure whether we want a two here.
@@ -495,5 +505,5 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
 
 
-          end%end of load-and-processing loop over datasets
+end %end of load-and-processing loop over datasets
 end
