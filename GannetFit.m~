@@ -482,11 +482,11 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         text(0,0.5, tmp);
         tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.GABAIU_Error_cr);
         text(0,0.4, tmp);
-        tmp = sprintf([MRS_struct.target '/Cr i.r.: %.4f'], MRS_struct.gabaiuCr(ii) );
+        tmp = sprintf([MRS_struct.target'/Cr i.r.: %.4f'], MRS_struct.gabaiuCr(ii) );
         text(0,0.3, tmp);
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
         text(0,0.2, tmp);
-        tmp =        [MRS_struct.target ', Water fit alg. :' tmp4 ];
+        tmp =        ['GABA, Water fit alg. :' tmp4 ];
         text(0,0.0, tmp);
     end
     %Add Gannet logo
