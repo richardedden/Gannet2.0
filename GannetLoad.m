@@ -406,8 +406,19 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               %for philips .data
               if(strcmpi(MRS_struct.vendor,'Philips_data'))
               fullpath = MRS_struct.gabafile{ii};
-              fullpath = regexprep(fullpath, '\./', '');      
-              fullpath = regexprep(fullpath, '/', '_');
+              %fullpath = regexprep(fullpath, '\./', '');   edit out NP   
+              %fullpath = regexprep(fullpath, '/', '_'); edit out NP
+              fullpath = regexprep(fullpath, '.data', '_data'); %NP see below
+              fullpath = regexprep(fullpath, '\', '_');
+              %NP edit 02012013
+              %Previous code somehow didn't run when running from hierarchical
+              %folder (e.g. GABA_file = '.\name\MRI\raw.data) I got an error when Gannet tried to save the pdf for
+              %.data file. E.g. ??? Error using ==> saveas at 115 Invalid or missing path: MRSload_output/.\7011-0124\MRI\raw_008.data.pdf
+              %So it obviously didn't rewrite the path properly for the pdf here, but it IS important to get both folder and filename
+              %as a lot of the .data files have similar names (e.g.
+              %%raw_001.data). This change works for me for now, might not
+              %%be most elegant
+              
               end
               %  pfil_nopath = pfil_nopath( (length(pfil_nopath)-15) : (length(pfil_nopath)-9) );
               tmp = strfind(pfil_nopath,'/');
