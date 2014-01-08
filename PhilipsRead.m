@@ -51,7 +51,7 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    if nargin>2
        % load water data
        MRS_struct.data_water = SDATread(fname_water, MRS_struct.npoints);
-       MRS_struct.data_water(1,5)
+       MRS_struct.data_water(1,5);
        MRS_struct.data_water = MRS_struct.data_water.*conj(MRS_struct.data_water(1))./abs(MRS_struct.data_water(1));
        MRS_struct.phase_water = conj(MRS_struct.data_water(1))./abs(MRS_struct.data_water(1));
        %MRS_struct.data = MRS_struct.data.* MRS_struct.phase_water;

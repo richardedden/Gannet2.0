@@ -169,9 +169,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     MRS_struct.ON_OFF=[0 1];
                     MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
-            end
-            
-        case 'Philips'
+            end           
+        case 'Philips'           
             if(exist('waterfile'))
                 MRS_struct.Reference_compound='H2O';
             else
@@ -186,7 +185,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             end
             if MRS_struct.Water_Positive==0
                 MRS_struct.data=-MRS_struct.data;
-            end
+            end          
             da_xres = MRS_struct.npoints;
             da_yres = MRS_struct.nrows;
             totalframes = MRS_struct.nrows;
@@ -410,6 +409,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               %fullpath = regexprep(fullpath, '/', '_'); edit out NP
               fullpath = regexprep(fullpath, '.data', '_data'); %NP see below
               fullpath = regexprep(fullpath, '\', '_');
+              fullpath = regexprep(fullpath, '/', '_');
               %NP edit 02012013
               %Previous code somehow didn't run when running from hierarchical
               %folder (e.g. GABA_file = '.\name\MRI\raw.data) I got an error when Gannet tried to save the pdf for

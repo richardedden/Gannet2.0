@@ -77,15 +77,15 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
                 
                 if(SpecRegLoop==1)
                     if(MRS_struct.ON_OFF(1)==1)
-                        corrloop_d = dyn*averages_per_dynamic*2+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+ind;
                     else
-                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind;
                     end
                 else
                     if(MRS_struct.ON_OFF(1)==1)
-                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+averages_per_dynamic+ind;
                     else
-                        corrloop_d = dyn*averages_per_dynamic*2+ind
+                        corrloop_d = dyn*averages_per_dynamic*2+ind;
                     end
                 end
                 
@@ -137,7 +137,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
                     ChoCrFreqShiftON = ChoCrMeanSpecFitON(3);
                     ChoCrFreqShiftON = ChoCrFreqShiftON - 3.02*MRS_struct.LarmorFreq;
                     ChoCrFreqShiftON = ChoCrFreqShiftON ./ (MRS_struct.LarmorFreq*(MRS_struct.freq(2) - MRS_struct.freq(1) ));
-                    ChoCrFreqShift_pointsON = round(ChoCrFreqShiftON)
+                    ChoCrFreqShift_pointsON = round(ChoCrFreqShiftON);
                     AllFramesFTrealign(:,(MRS_struct.ON_OFF==1))=circshift(AllFramesFTrealign(:,(MRS_struct.ON_OFF==1)), [-ChoCrFreqShift_pointsON 0]);%freq
                     ChoCrFreqShiftOFF = ChoCrMeanSpecFitOFF(3);
                     ChoCrFreqShiftOFF = ChoCrFreqShiftOFF - 3.02*MRS_struct.LarmorFreq;

@@ -70,7 +70,7 @@ for ii=1:numscans
         options = optimset(options,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
         nlinopts = statset('nlinfit');
         nlinopts = statset(nlinopts, 'MaxIter', 1e5);
-         ii
+         
         %Fitting to a Gaussian model happens here
          [GaussModelParam(ii,:),resnorm,residg] = lsqcurvefit(@(xdummy,ydummy) GaussModel_area(xdummy,ydummy), ...
             GaussModelInit, freq(freqbounds),real(GABAData(ii,freqbounds)), ...
@@ -156,7 +156,7 @@ for ii=1:numscans
     figTitle = ['GannetFit Output'];
     set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
     % GABA plot
-    ha=subplot(2, 2, 1)
+    ha=subplot(2, 2, 1);
     % find peak of GABA plot... plot residuals above this...
     gabamin = min(real(GABAData(ii,plotbounds)));
     gabamax = max(real(GABAData(ii,plotbounds)));
@@ -512,6 +512,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         %         fullpath = regexprep(fullpath, '/', '_');
         fullpath = regexprep(fullpath, '.data', '_data');
         fullpath = regexprep(fullpath, '\', '_');
+        fullpath = regexprep(fullpath, '/', '_');
         %NP edit 02012013
         %Previous code somehow didn't run when running from hierarchical
         %folder (e.g. GABA_file = '.\name\MRI\raw.data) I got an error when Gannet tried to save the pdf for
@@ -569,7 +570,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     else
         pdfname=[ epsdirname '/' pfil_nopath  '.pdf' ];
     end
-    epsdirname
+    %epsdirname
     if(exist(epsdirname,'dir') ~= 7)
         epsdirname
         mkdir(epsdirname)
@@ -729,7 +730,7 @@ else
     * MM ./ EditingEfficiency;
 end
 FAC=PureWaterConc*WaterVisibility*(N_H_Water./N_H_GABA) ...
-    * MM ./ EditingEfficiency*T1_factor*T2_factor
+    * MM ./ EditingEfficiency*T1_factor*T2_factor;
 
 
 %%%%%%%%%%%%%%% INSET FIGURE %%%%%%%%%%%%%%%%%%%%%%%
