@@ -142,9 +142,9 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                  MRS_struct.Reference_compound='Cr';
                 switch MRS_struct.ONOFForder
                     case 'offfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
+                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
                     case 'onfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
+                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1});
                 end    
              end
             da_xres = MRS_struct.npoints;
@@ -165,10 +165,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             switch MRS_struct.ONOFForder
                 case 'onfirst'
                     MRS_struct.ON_OFF=[1 0];
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
+                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';%re
                 case 'offfirst'
                     MRS_struct.ON_OFF=[0 1];
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:);
+                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';
             end           
         case 'Philips'           
             if(exist('waterfile'))
