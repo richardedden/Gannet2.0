@@ -1,6 +1,6 @@
 function [ MRS_struct ] = GERead(MRS_struct, fname)
             ii=MRS_struct.ii;
-            MRS_struct.global_rescale=1;
+            MRS_struct.p.global_rescale=1;
 %121106 RAEE moving code from GAnnetLoad to GERead (to match other file
 %formats and tidy things up some.
             fid = fopen(fname,'r', 'ieee-be');
@@ -47,8 +47,8 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             nechoes = hdr_value(36);
             nframes = hdr_value(38);
             point_size = hdr_value(42);
-            MRS_struct.npoints = hdr_value(52);
-            MRS_struct.nrows = hdr_value(53);
+            MRS_struct.p.npoints = hdr_value(52);
+            MRS_struct.p.nrows = hdr_value(53);
             rc_xres = hdr_value(54);
             rc_yres = hdr_value(55);
             start_recv = hdr_value(101);
@@ -57,28 +57,28 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
 
 
             % Specto Prescan pfiles
-            if (MRS_struct.npoints == 1) & (MRS_struct.nrows == 1)
-                MRS_struct.npoints = 2048;
+            if (MRS_struct.p.npoints == 1) & (MRS_struct.p.nrows == 1)
+                MRS_struct.p.npoints = 2048;
             end
             
             % Determine number of slices in this Pfile:  this does not work for all cases.
             slices_in_pass = nslices/npasses;
 
             % Compute size (in bytes) of each frame, echo and slice
-            data_elements = MRS_struct.npoints*2;
+            data_elements = MRS_struct.p.npoints*2;
             frame_size = data_elements*point_size;
-            echo_size = frame_size*MRS_struct.nrows;
+            echo_size = frame_size*MRS_struct.p.nrows;
             slice_size = echo_size*nechoes;
             mslice_size = slice_size*slices_in_pass;
             my_slice = 1;
             my_echo = 1;
             my_frame = 1;
 
-            FullData=zeros(nreceivers, MRS_struct.npoints , MRS_struct.nrows-my_frame+1);
+            FullData=zeros(nreceivers, MRS_struct.p.npoints , MRS_struct.p.nrows-my_frame+1);
 
             %Start to read data into Eightchannel structure.
-            totalframes=MRS_struct.nrows-my_frame+1;
-            MRS_struct.nrows=totalframes;
+            totalframes=MRS_struct.p.nrows-my_frame+1;
+            MRS_struct.p.nrows=totalframes;
             data_elements2 = data_elements*totalframes*nreceivers;
 
             %  % Compute offset in bytes to start of frame.
@@ -99,21 +99,20 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             % 110303 CJE
             % calculate Navg from nframes, 8 water frames, 2 phase cycles
             % Needs to be specific to single experiment - for frame rejection
-            MRS_struct.Navg(ii) = (nframes-8)*2;
-            MRS_struct.Nwateravg = 8; %moved from MRSGABAinstunits RE 110726
-            MRS_struct.TR = 1.8;
-            ShapeData = reshape(raw_data,[2 MRS_struct.npoints totalframes nreceivers]);
+            MRS_struct.p.Navg(ii) = (nframes-8)*2;
+            MRS_struct.p.Nwateravg = 8; %moved from MRSGABAinstunits RE 110726
+            ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints totalframes nreceivers]);
             ZeroData = ShapeData(:,:,1,:);
             WaterData = ShapeData(:,:,2:9,:);
             FullData = ShapeData(:,:,10:end,:);
 
             totalframes = totalframes-9;
-            MRS_struct.nrows=totalframes;
+            MRS_struct.p.nrows=totalframes;
 
             Frames_for_Water = 8;
 
-            FullData = FullData.*repmat([1;i],[1 MRS_struct.npoints totalframes nreceivers]);
-            WaterData = WaterData.*repmat([1;i],[1 MRS_struct.npoints Frames_for_Water nreceivers]);
+            FullData = FullData.*repmat([1;i],[1 MRS_struct.p.npoints totalframes nreceivers]);
+            WaterData = WaterData.*repmat([1;i],[1 MRS_struct.p.npoints Frames_for_Water nreceivers]);
 
             FullData = squeeze(sum(FullData,1));
             FullData = permute(FullData,[3 1 2]);
@@ -124,31 +123,31 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             % at this point, FullData(rx_channel, point, average)
 
             firstpoint=conj(WaterData(:,1,:));
-            firstpoint=repmat(firstpoint, [1 MRS_struct.npoints 1]);
+            firstpoint=repmat(firstpoint, [1 MRS_struct.p.npoints 1]);
             % here firstpoint(rx_channel,[], average)
 
 
             % CJE March 10 - correct phase of each Water avg independently
-            WaterData=WaterData.*firstpoint*MRS_struct.global_rescale;
+            WaterData=WaterData.*firstpoint*MRS_struct.p.global_rescale;
 
             %Multiply the Eightchannel data by the firstpointvector
             % zeroth order phasing of spectra
             % CJE Nov 09: do global rescaling here too
             % don't really need the phasing step here if performing frame-by-frame phasing
             for receiverloop = 1:nreceivers
-                FullData(receiverloop,:) = FullData(receiverloop,:)*firstpoint(receiverloop,1,1)*MRS_struct.global_rescale;
+                FullData(receiverloop,:) = FullData(receiverloop,:)*firstpoint(receiverloop,1,1)*MRS_struct.p.global_rescale;
                 % WaterData(receiverloop,:) = WaterData(receiverloop,:)*firstpoint(receiverloop,1,1)*MRS_struct.global_rescale;
             end
 
             % sum over Rx channels
             FullData = squeeze(sum(FullData,1));
-            MRS_struct.data =FullData;
+            MRS_struct.fids.data =FullData;
             WaterData = squeeze(sum(WaterData,1));
-            MRS_struct.data_water=WaterData;
-            MRS_struct.sw = 5000;  %should really pick this up from the header
+            MRS_struct.fids.data_water=WaterData;
+            MRS_struct.p.sw = 5000;  %should really pick this up from the header
             %%%%%% end of GE specific load
-            rescale=1/1e11%necessary for GE data or numbers blow up.
-            MRS_struct.data =MRS_struct.data*rescale;
-            MRS_struct.data_water =MRS_struct.data_water*rescale;
+            rescale=1/1e11;%necessary for GE data or numbers blow up.
+            MRS_struct.fids.data =MRS_struct.fids.data*rescale;
+            MRS_struct.fids.data_water =MRS_struct.fids.data_water*rescale;
             
 end

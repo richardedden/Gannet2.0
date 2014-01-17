@@ -41,16 +41,16 @@ if missing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MRS_struct.versionload = 'G2 131202 raee';
+MRS_struct.versionload = 'G2 140116';
 MRS_struct.ii=0;
 MRS_struct.gabafile=gabafile;
 MRS_struct=GannetPreInitialise(MRS_struct);
 %Check whether water data or not
 if(nargin > 1)
     MRS_struct.waterfile = waterfile;
-    MRS_struct.Reference_compound='H2O';
+    MRS_struct.p.Reference_compound='H2O';
 else
-    MRS_struct.Reference_compound='Cr';
+    MRS_struct.p.Reference_compound='Cr';
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -67,7 +67,7 @@ end
     
 MRS_struct=GannetDiscernDatatype(pfiles{1},MRS_struct);
 
-    if(strcmpi(MRS_struct.vendor,'Siemens'))
+    if(strcmpi(MRS_struct.p.vendor,'Siemens'))
         numpfiles = numpfiles/2;
     end
 
@@ -87,140 +87,140 @@ MRS_struct=GannetDiscernDatatype(pfiles{1},MRS_struct);
 for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
     MRS_struct.ii=ii;
     
-    switch MRS_struct.vendor
+    switch MRS_struct.p.vendor
         case 'GE'
             Water_Positive=1;           %CHECK
             AlignTo = 2;           %CHECK
             MRS_struct = GERead(MRS_struct, gabafile{ii});
-            da_xres = MRS_struct.npoints;
-            da_yres = MRS_struct.nrows;
-            WaterData = MRS_struct.data_water;
-            MRS_struct.data = MRS_struct.data*MRS_struct.nrows/MRS_struct.Navg(ii);%I think GE does sum over NEX
-            FullData = MRS_struct.data;
+            da_xres = MRS_struct.p.npoints;
+            da_yres = MRS_struct.p.nrows;
+            WaterData = MRS_struct.fids.data_water;
+            MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);%I think GE does sum over NEX
+            FullData = MRS_struct.fids.data;
             ComWater = mean(WaterData,2);
             %Set up vector of which rows of .data are ONs and OFFs.
-            switch MRS_struct.ONOFForder
+            switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.ON_OFF=repmat([1 0],[1 size(MRS_struct.data,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
-            totalframes = MRS_struct.nrows;
+            totalframes = MRS_struct.p.nrows;
         case 'Siemens_twix'
             Water_Positive=1;           %CHECK
             if(exist('waterfile'))
                 MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii}, waterfile{ii});
-                WaterData = MRS_struct.data_water;
+                WaterData = MRS_struct.fids.data_water;
                 ComWater = mean(WaterData,2);
             else
                 MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii});
             end
-            da_xres = MRS_struct.npoints;
-            da_yres = MRS_struct.nrows;
-            FullData = MRS_struct.data;
+            da_xres = MRS_struct.p.npoints;
+            da_yres = MRS_struct.p.nrows;
+            FullData = MRS_struct.fids.data;
             %Set up vector of which rows of .data are ONs and OFFs.
-            switch MRS_struct.ONOFForder
+            switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.ON_OFF=repmat([1 0],[1 size(MRS_struct.data,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
-            totalframes = MRS_struct.nrows;
+            totalframes = MRS_struct.p.nrows;
         case 'Siemens'
             if(exist('waterfile'))    
-                MRS_struct.Reference_compound='H2O';
-                switch MRS_struct.ONOFForder
+                MRS_struct.p.Reference_compound='H2O';
+                switch MRS_struct.p.ONOFForder
                     case 'offfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
                     case 'onfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
                 end    
-                MRS_struct.Nwateravg = 1;
-                MRS_struct.phase{ii} = 0;
-                MRS_struct.phase_firstorder(ii) = 0;
+                MRS_struct.p.Nwateravg = 1;
+                MRS_struct.out.phase{ii} = 0;
+                MRS_struct.out.phase_firstorder(ii) = 0;
             else
-                 MRS_struct.Reference_compound='Cr';
-                switch MRS_struct.ONOFForder
+                 MRS_struct.p.Reference_compound='Cr';
+                switch MRS_struct.p.ONOFForder
                     case 'offfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
                     case 'onfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1});
                 end    
              end
-            da_xres = MRS_struct.npoints;
+            da_xres = MRS_struct.p.npoints;
             da_yres = 1;
             totalframes = 1;
-            FullData = MRS_struct.data;
-            if(strcmp(MRS_struct.Reference_compound,'H2O'))
-                WaterData = MRS_struct.data_water;
+            FullData = MRS_struct.fids.data;
+            if(strcmp(MRS_struct.p.Reference_compound,'H2O'))
+                WaterData = MRS_struct.fids.data_water;
             end
-            MRS_struct.LarmorFreq;
+            MRS_struct.p.LarmorFreq;
             % work out frequency scale 121106 (remving CSize)
-            freqrange=MRS_struct.sw/MRS_struct.LarmorFreq;
-            MRS_struct.freq=(MRS_struct.ZeroFillTo+1-(1:1:MRS_struct.ZeroFillTo))/MRS_struct.ZeroFillTo*freqrange+4.7-freqrange/2.0;
-            MRS_struct.FreqPhaseAlign=0;
+            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
+            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
+            MRS_struct.out.FreqPhaseAlign=0;
             %Data are always read in OFF then ON
             
             totalframes = 2;
-            switch MRS_struct.ONOFForder
+            switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.ON_OFF=[1 0];
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';%re
+                    MRS_struct.fids.ON_OFF=[1 0];
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';%re
                 case 'offfirst'
-                    MRS_struct.ON_OFF=[0 1];
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';
+                    MRS_struct.fids.ON_OFF=[0 1];
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
             end           
         case 'Philips'           
             if(exist('waterfile'))
-                MRS_struct.Reference_compound='H2O';
+                MRS_struct.p.Reference_compound='H2O';
             else
-                 MRS_struct.Reference_compound='Cr';
+                 MRS_struct.p.Reference_compound='Cr';
             end
             %Need to set Water_Positive based on water signal
-            if strcmpi(MRS_struct.Reference_compound,'H2O')
+            if strcmpi(MRS_struct.p.Reference_compound,'H2O')
                 MRS_struct = PhilipsRead(MRS_struct, gabafile{ii}, waterfile{ii});
-                WaterData = MRS_struct.data_water;
+                WaterData = MRS_struct.fids.data_water;
             else
                 MRS_struct = PhilipsRead(MRS_struct, gabafile{ii});
             end
-            if MRS_struct.Water_Positive==0
-                MRS_struct.data=-MRS_struct.data;
+            if MRS_struct.p.Water_Positive==0
+                MRS_struct.fids.data=-MRS_struct.fids.data;
             end          
-            da_xres = MRS_struct.npoints;
-            da_yres = MRS_struct.nrows;
-            totalframes = MRS_struct.nrows;
-            FullData = MRS_struct.data;
+            da_xres = MRS_struct.p.npoints;
+            da_yres = MRS_struct.p.nrows;
+            totalframes = MRS_struct.p.nrows;
+            FullData = MRS_struct.fids.data;
             AlignTo = 2;           %CHECK
-            switch MRS_struct.ONOFForder
+            switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.ON_OFF=repmat([1 0],[1 size(MRS_struct.data,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.ON_OFF=repmat([0 1],[1 size(MRS_struct.data,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
         case 'Philips_data'
             if(exist('waterfile'))    
-                MRS_struct.Reference_compound='H2O';
+                MRS_struct.p.Reference_compound='H2O';
                 MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii},waterfile{ii});
             else
-                 MRS_struct.Reference_compound='Cr';
+                 MRS_struct.p.Reference_compound='Cr';
                  MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii});
             end
             Water_Positive=1;           %CHECK
-            if strcmpi(MRS_struct.Reference_compound,'H2O')
-                WaterData = MRS_struct.data_water;
+            if strcmpi(MRS_struct.p.Reference_compound,'H2O')
+                WaterData = MRS_struct.fids.data_water;
             end
-            da_xres = MRS_struct.npoints;
-            da_yres = MRS_struct.nrows*MRS_struct.Navg(ii);
-            totalframes = MRS_struct.Navg(ii);
-            FullData = MRS_struct.data;
+            da_xres = MRS_struct.p.npoints;
+            da_yres = MRS_struct.p.nrows*MRS_struct.p.Navg(ii);
+            totalframes = MRS_struct.p.Navg(ii);
+            FullData = MRS_struct.fids.data;
             AlignTo = 1;           %CHECK
-            switch MRS_struct.ONOFForder
+            switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.ON_OFF=repmat([1 0],[MRS_struct.Navg(ii)/MRS_struct.nrows MRS_struct.nrows/2]);
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
                 case 'offfirst'
-                    MRS_struct.ON_OFF=repmat([0 1],[MRS_struct.Navg(ii)/MRS_struct.nrows MRS_struct.nrows/2]);
-                    MRS_struct.ON_OFF=MRS_struct.ON_OFF(:).';
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
             end
     end    %End of vendor switch loop for data load
 
@@ -233,44 +233,44 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
     %what data
 
     %First steps
-    MRS_struct.zf=MRS_struct.ZeroFillTo/MRS_struct.npoints;
-    time=(1:1:size(FullData,1))/MRS_struct.sw;
-    time_zeropad=(1:1:MRS_struct.ZeroFillTo)/(MRS_struct.sw);
+    MRS_struct.p.zf=MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
+    time=(1:1:size(FullData,1))/MRS_struct.p.sw;
+    time_zeropad=(1:1:MRS_struct.p.ZeroFillTo)/(MRS_struct.p.sw);
     DataSize = size(FullData,2);
 
         % Finish processing water data. 
-        if(strcmpi(MRS_struct.Reference_compound,'H2O'))     
+        if(strcmpi(MRS_struct.p.Reference_compound,'H2O'))     
 
-            if(strcmpi(MRS_struct.vendor,'GE'))           %CHECK
+            if(strcmpi(MRS_struct.p.vendor,'GE'))           %CHECK
                 ComWater = mean(WaterData,2);           %CHECK
-            elseif(strcmpi(MRS_struct.vendor,'Siemens'))       %CHECK
+            elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))       %CHECK
                 ComWater = WaterData;           %CHECK
-            elseif (strcmpi(MRS_struct.vendor,'Siemens_twix')) %CHECK
+            elseif (strcmpi(MRS_struct.p.vendor,'Siemens_twix')) %CHECK
                 ComWater = WaterData;
             else
                 ComWater = WaterData.';           %CHECK
             end           %CHECK
             
-            ComWater = ComWater.*exp(-(time')*MRS_struct.LB*pi);
-            MRS_struct.spec.water(ii,:)=fftshift(fft(ComWater,MRS_struct.ZeroFillTo,1))';
+            ComWater = ComWater.*exp(-(time')*MRS_struct.p.LB*pi);
+            MRS_struct.spec.water(ii,:)=fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
         end %End of H20 reference loop
 
-            FullData = FullData.* repmat( (exp(-(time')*MRS_struct.LB*pi)), [1 totalframes]);
-            AllFramesFT=fftshift(fft(FullData,MRS_struct.ZeroFillTo,1),1);
+            FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
+            AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale
-            freqrange=MRS_struct.sw/MRS_struct.LarmorFreq;
-            MRS_struct.freq=(MRS_struct.ZeroFillTo+1-(1:1:MRS_struct.ZeroFillTo))/MRS_struct.ZeroFillTo*freqrange+4.7-freqrange/2.0;
+            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
+            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
 
             %  Frame-by-frame Determination of max Frequency in spectrum (assumed water) maximum
             % find peak location for frequency realignment
             [FrameMax, FrameMaxPos] = max(AllFramesFT, [], 1);
             %Not always true that water starts at 4.68, if drift is rapid...
-            water_off=abs(MRS_struct.freq-4.68);
+            water_off=abs(MRS_struct.spec.freq-4.68);
             water_index=find(min(water_off)==water_off);
             % Determine Frame shifts
             FrameShift = FrameMaxPos - water_index;
             %Apply for Philips data, not for GE data (Why?)
-            switch MRS_struct.vendor
+            switch MRS_struct.p.vendor
                 case 'GE'           %CHECK
                     AllFramesFTrealign=AllFramesFT;
                 case {'Philips','Philips_data'}           %CHECK
@@ -282,14 +282,14 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     %AllFramesFTrealign.
             end %end of switch for Water max alignment p[re-initialisation
 
-            MRS_struct.waterfreq(ii,:) = MRS_struct.freq(FrameMaxPos);%to be used for the output figure
+            MRS_struct.fids.waterfreq(ii,:) = MRS_struct.spec.freq(FrameMaxPos);%to be used for the output figure
 
             %Frame-by-Frame alignment
-            switch MRS_struct.AlignTo
+            switch MRS_struct.p.AlignTo
                case 'Cr'
                     [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
                case 'Cr'
-                    %AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct.ONOFForder,n);     
+                    %AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct.p.ONOFForder,n);     
                case 'Cho'
                     %AllFramesFTrealign=AlignUsingCho(AllFramesFTrealign);
                case 'H20'
@@ -307,10 +307,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
         %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
         
-        MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==0)'&(MRS_struct.reject(:,ii)==0))),2);
-        MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.ON_OFF==1)'&(MRS_struct.reject(:,ii)==0))),2);
+        MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
+        MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
         MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on(ii,:)-MRS_struct.spec.off(ii,:))/2; %Not sure whether we want a two here.
-        MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+        MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   6. Build Gannet Output 
@@ -331,25 +331,25 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             set(gca,'YTick',[]);
             %Top Right
             hb=subplot(2,2,2);
-            rejectframesplot = (1./MRS_struct.reject(:,ii).') .*  MRS_struct.waterfreq(ii,:);
-            plot([1:DataSize], MRS_struct.waterfreq(ii,:)', '-', [1:DataSize], rejectframesplot, 'ro');
+            rejectframesplot = (1./MRS_struct.out.reject(:,ii).') .*  MRS_struct.fids.waterfreq(ii,:);
+            plot([1:DataSize], MRS_struct.fids.waterfreq(ii,:)', '-', [1:DataSize], rejectframesplot, 'ro');
             set(gca,'XLim',[0 DataSize]);
             xlabel('time'); ylabel('\omega_0');
             title('Water Frequency, ppm');
              %Bottom Left
              hc=subplot(2,2,3);
-             if strcmp(MRS_struct.AlignTo,'no')~=1
+             if strcmp(MRS_struct.p.AlignTo,'no')~=1
                 CrFitLimLow=2.72;
                 CrFitLimHigh=3.12;
-                z=abs(MRS_struct.freq-CrFitLimHigh);
+                z=abs(MRS_struct.spec.freq-CrFitLimHigh);
                 lb=find(min(z)==z);
-                z=abs(MRS_struct.freq-CrFitLimLow);
+                z=abs(MRS_struct.spec.freq-CrFitLimLow);
                 ub=find(min(z)==z);
                 CrFitRange=ub-lb;
                 plotrealign=[ real(AllFramesFT((lb):(ub),:)) ;
                 real(AllFramesFTrealign((lb):(ub),:)) ];
                 %don't display rejects
-                plotrealign((ub-lb+1):end,(MRS_struct.reject(:,ii).'==1))=min(plotrealign(:));
+                plotrealign((ub-lb+1):end,(MRS_struct.out.reject(:,ii).'==1))=min(plotrealign(:));
                 imagesc(plotrealign);
                 title('Cr Frequency, pre and post align');
                 xlabel('time');
@@ -366,24 +366,24 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              %Bottom Right
              subplot(2,2,4);
              axis off;
-             if strcmp(MRS_struct.vendor,'Siemens')
+             if strcmp(MRS_struct.p.vendor,'Siemens')
                  tmp = [ 'filename    : ' MRS_struct.gabafile{ii*2-1} ];
              else
                 tmp = [ 'filename    : ' MRS_struct.gabafile{ii} ];
              end
              tmp = regexprep(tmp, '_','-');
              text(0,0.9, tmp, 'FontName', 'Helvetica','FontSize',12);
-             tmp = [ 'Navg        : ' num2str(MRS_struct.Navg(ii)) ];
+             tmp = [ 'Navg        : ' num2str(MRS_struct.p.Navg(ii)) ];
              text(0,0.8, tmp, 'FontName', 'Helvetica','FontSize',12);
-             tmp = sprintf('Cr FWHM (Hz)   : %.2f', MRS_struct.CrFWHMHz(ii) );
+             tmp = sprintf('Cr FWHM (Hz)   : %.2f', MRS_struct.out.CrFWHMHz(ii) );
              text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',12);
              %tmp = sprintf('FreqSTD (Hz): %.2f', MRS_struct.FreqStdevHz(ii));
              %text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
-             tmp = [ 'LB (Hz)     : ' num2str(MRS_struct.LB,2) ];
+             tmp = [ 'LB (Hz)     : ' num2str(MRS_struct.p.LB,2) ];
              text(0,0.5, tmp, 'FontName', 'Helvetica','FontSize',12);
-             %tmp = [ 'Align/Reject: ' num2str(MRS_struct.FreqPhaseAlign) ];
+             %tmp = [ 'Align/Reject: ' num2str(MRS_struct.out.FreqPhaseAlign) ];
              %text(0,0.5, tmp, 'FontName', 'Courier');
-             tmp = [ 'Rejects     : '  num2str(sum(MRS_struct.reject(:,ii),1)) ];
+             tmp = [ 'Rejects     : '  num2str(sum(MRS_struct.out.reject(:,ii),1)) ];
              text(0,0.4, tmp, 'FontName', 'Courier');
              tmp = [ 'LoadVer     : ' MRS_struct.versionload ];
              text(0,0.3, tmp, 'FontName', 'Helvetica','FontSize',12);
@@ -397,13 +397,13 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               hax=axes('Position',[0.80, 0.05, 0.15, 0.15]);
               %set(gca,'Units','normalized');set(gca,'Position',[0.05 0.05 1.85 0.15]);
               image(A2);axis off; axis square;
-              if strcmp(MRS_struct.vendor,'Siemens')
+              if strcmp(MRS_struct.p.vendor,'Siemens')
                   pfil_nopath = MRS_struct.gabafile{ii*2-1};
               else
                 pfil_nopath = MRS_struct.gabafile{ii};
               end
               %for philips .data
-              if(strcmpi(MRS_struct.vendor,'Philips_data'))
+              if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
               fullpath = MRS_struct.gabafile{ii};
               %fullpath = regexprep(fullpath, '\./', '');   edit out NP   
               %fullpath = regexprep(fullpath, '/', '_'); edit out NP
@@ -433,7 +433,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                   lastslash=0;
               end
     %           
-               if(strcmpi(MRS_struct.vendor,'Philips'))
+               if(strcmpi(MRS_struct.p.vendor,'Philips'))
                    tmp = strfind(pfil_nopath, '.sdat');
                    tmp1= strfind(pfil_nopath, '.SDAT');
                    if size(tmp,1)>size(tmp1,1)
@@ -441,16 +441,16 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                    else
                        dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
                    end
-               elseif(strcmpi(MRS_struct.vendor,'GE'))
+               elseif(strcmpi(MRS_struct.p.vendor,'GE'))
                   tmp = strfind(pfil_nopath, '.7');
                   dot7 = tmp(end); % just in case there's another .7 somewhere else...
-              elseif(strcmpi(MRS_struct.vendor,'Philips_data'))
+              elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))
                   tmp = strfind(pfil_nopath, '.data');
                   dot7 = tmp(end); % just in case there's another .data somewhere else...
-              elseif(strcmpi(MRS_struct.vendor,'Siemens'))
+              elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))
                   tmp = strfind(pfil_nopath, '.rda');
                   dot7 = tmp(end); % just in case there's another .rda somewhere else...
-              elseif(strcmpi(MRS_struct.vendor,'Siemens_twix'))
+              elseif(strcmpi(MRS_struct.p.vendor,'Siemens_twix'))
                   tmp = strfind(pfil_nopath, '.dat');
                   dot7 = tmp(end); % just in case there's another .rda somewhere else...    
               end
@@ -468,7 +468,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               set(gcf, 'PaperUnits', 'inches');
               set(gcf,'PaperSize',[11 8.5]);
               set(gcf,'PaperPosition',[0 0 11 8.5]);
-              if(strcmpi(MRS_struct.vendor,'Philips_data'))
+              if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
                   pdfname=[ 'MRSload_output/' fullpath '.pdf' ];
               else
                   pdfname=[ 'MRSload_output/' pfil_nopath  '.pdf' ];
@@ -502,7 +502,17 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
                 %Save the structure?
 
+                % 140116: ADH reorder structure
+                
+        if(isfield(MRS_struct, 'waterfile') == 1)
+            structorder = {'versionload', 'ii', 'gabafile', ...
+                'waterfile', 'p', 'fids', 'spec', 'out'};
+        else 
+             structorder = {'versionload', 'ii', 'gabafile', ...
+                'p', 'fids', 'spec', 'out'};
+        end
 
+MRS_struct = orderfields(MRS_struct, structorder);
 
 
 

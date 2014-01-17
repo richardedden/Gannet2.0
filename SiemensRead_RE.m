@@ -95,10 +95,10 @@ while (isempty(strfind(tline , head_end_text)))
 end
 
 %%RE 110726 Take the used bits of the header info
-MRS_struct.LarmorFreq = rda.MRFrequency;
-MRS_struct.npoints = rda.VectorSize;
-MRS_struct.sw = 1/rda.DwellTime*1E6;
-MRS_struct.TR=rda.TR;
+MRS_struct.p.LarmorFreq = rda.MRFrequency;
+MRS_struct.p.npoints = rda.VectorSize;
+MRS_struct.p.sw = 1/rda.DwellTime*1E6;
+MRS_struct.p.TR=rda.TR;
 
 %
 % So now we should have got to the point after the header text
@@ -121,7 +121,7 @@ fclose(fid);
  hmm_complex = complex(hmm(1,:,:,:,:),hmm(2,:,:,:,:));
  
  %RE 110726 This is the complex time domain data 
- MRS_struct.offdata = hmm_complex;
+ MRS_struct.fids.offdata = hmm_complex;
 
  %%%Now load in the ON data
 rda_filename=on_filename; %This is generally file3
@@ -210,9 +210,9 @@ while (isempty(strfind(tline , head_end_text)))
 end
 
 %%RE 110726 Take the used bits of the header info
-MRS_struct.LarmorFreq = rda.MRFrequency;
-MRS_struct.npoints = rda.VectorSize;
-MRS_struct.Navg(MRS_struct.ii) = rda.NumberOfAverages;
+MRS_struct.p.LarmorFreq = rda.MRFrequency;
+MRS_struct.p.npoints = rda.VectorSize;
+MRS_struct.p.Navg(MRS_struct.ii) = rda.NumberOfAverages;
 % So now we should have got to the point after the header text
 % 
 % Siemens documentation suggests that the data should be in a double complex format (8bytes for real, and 8 for imaginary?)
@@ -233,15 +233,15 @@ fclose(fid);
  hmm_complex = complex(hmm(1,:,:,:,:),hmm(2,:,:,:,:));
  
  %RE 110726 This is the complex time domain data 
- MRS_struct.ondata = hmm_complex;
- switch MRS_struct.ONOFForder
+ MRS_struct.fids.ondata = hmm_complex;
+ switch MRS_struct.p.ONOFForder
      case 'offfirst'
-         MRS_struct.data =[MRS_struct.offdata;MRS_struct.ondata].';
+         MRS_struct.fids.data =[MRS_struct.fids.offdata;MRS_struct.fids.ondata].';
      case 'onfirst'
-         MRS_struct.data =[MRS_struct.ondata;MRS_struct.offdata].';
+         MRS_struct.fids.data =[MRS_struct.fids.ondata;MRS_struct.fids.offdata].';
  end
  
- %MRS_struct.data =[MRS_struct.ondata;MRS_struct.offdata].';
+ %MRS_struct.fids.data =[MRS_struct.fids.ondata;MRS_struct.fids.offdata].';
  
 if(nargin==4)
 %%%Now load in the Water data
@@ -331,8 +331,8 @@ while (isempty(strfind(tline , head_end_text)))
 end
 
 %%RE 110726 Take the used bits of the header info
-MRS_struct.LarmorFreq = rda.MRFrequency;
-MRS_struct.npoints = rda.VectorSize;
+MRS_struct.p.LarmorFreq = rda.MRFrequency;
+MRS_struct.p.npoints = rda.VectorSize;
 %
 % So now we should have got to the point after the header text
 % 
@@ -354,7 +354,7 @@ fclose(fid);
  hmm_complex = complex(hmm(1,:,:,:,:),hmm(2,:,:,:,:));
  
  %RE 110726 This is the complex time domain data 
- MRS_struct.data_water = hmm_complex.';
- %MRS_struct.data_water(1)
+ MRS_struct.fids.data_water = hmm_complex.';
+ %MRS_struct.fids.data_water(1)
 end
 end

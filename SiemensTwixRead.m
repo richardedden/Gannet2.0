@@ -1,6 +1,6 @@
 function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             ii=MRS_struct.ii;
-            MRS_struct.global_rescale=1;
+            MRS_struct.p.global_rescale=1;
 %131216 Since twix data is u combined, use same code from GERead to bring in Siemens
 %twix data
             
@@ -70,9 +70,9 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             %             
             %End of Jamie Near's code
             %Calculate some parameters:
-            MRS_struct.sw=spectralwidth;
-            MRS_struct.LarmorFreq = Bo*42.577;          
-            MRS_struct.nrows = twix_obj.image.NAcq;
+            MRS_struct.p.sw=spectralwidth;
+            MRS_struct.p.LarmorFreq = Bo*42.577;          
+            MRS_struct.p.nrows = twix_obj.image.NAcq;
             rc_xres = double(twix_obj.image.NCol);
             rc_yres = double(twix_obj.image.NAcq);
             nreceivers = double(twix_obj.image.NCha);
@@ -88,29 +88,29 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                 FullData(:,:,2,:)=-FullData(:,:,2,:);
                 FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NIda]);
             end
-                MRS_struct.Navg(ii) = double(twix_obj.image.NAcq);
+                MRS_struct.p.Navg(ii) = double(twix_obj.image.NAcq);
             %size(FullData)
             %Left-shift data by number_to_shift
             
-            FullData=FullData(:,1:MRS_struct.npoints,:);
+            FullData=FullData(:,1:MRS_struct.p.npoints,:);
             %size(FullData)
             %Combine data based upon first point of FIDs (mean over all
             %averages
             firstpoint=mean(conj(FullData(:,1,:)),3);
             channels_scale=squeeze(sqrt(sum(firstpoint.*conj(firstpoint))));
-            firstpoint=repmat(firstpoint, [1 MRS_struct.npoints MRS_struct.nrows])/channels_scale;
+            firstpoint=repmat(firstpoint, [1 MRS_struct.p.npoints MRS_struct.p.nrows])/channels_scale;
             %Multiply the Multichannel data by the firstpointvector
             % zeroth order phasing of spectra
-            FullData = FullData.*firstpoint*MRS_struct.global_rescale;
+            FullData = FullData.*firstpoint*MRS_struct.p.global_rescale;
             % sum over Rx channels
             FullData = conj(squeeze(sum(FullData,1)));
-            MRS_struct.data =FullData;
+            MRS_struct.fids.data =FullData;
 
         if(nargin==3)
            %Then we additionally need to pull in the water data. 
            twix_obj_water=mapVBVD(fname_water);
-           MRS_struct.nrows_water = twix_obj_water.image.NAcq;
-           MRS_struct.npoints_water = twix_obj_water.image.NCol;
+           MRS_struct.p.nrows_water = twix_obj_water.image.NAcq;
+           MRS_struct.p.npoints_water = twix_obj_water.image.NCol;
             
            if twix_obj.image.NEco>twix_obj.image.NIda
             WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NEco twix_obj_water.image.NSet]),[2 1 3 4]);
@@ -125,14 +125,14 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             
             firstpoint_water=mean(conj(WaterData(:,1,:)),3);
             channels_scale=squeeze(sqrt(sum(firstpoint_water.*conj(firstpoint_water))));
-            firstpoint_water=repmat(firstpoint_water, [1 MRS_struct.npoints_water MRS_struct.nrows_water])/channels_scale;
+            firstpoint_water=repmat(firstpoint_water, [1 MRS_struct.p.npoints_water MRS_struct.p.nrows_water])/channels_scale;
             %Multiply the Multichannel data by the firstpointvector
             % zeroth order phasing of spectra
-            WaterData = WaterData.*firstpoint_water*MRS_struct.global_rescale;
+            WaterData = WaterData.*firstpoint_water*MRS_struct.p.global_rescale;
             % sum over Rx channels
             WaterData = conj(squeeze(sum(WaterData,1)));
-            WaterData = squeeze(mean(WaterData(1:MRS_struct.npoints,:),2));
-            MRS_struct.data_water =WaterData;
+            WaterData = squeeze(mean(WaterData(1:MRS_struct.p.npoints,:),2));
+            MRS_struct.fids.data_water =WaterData;
         end
             
 end

@@ -3,21 +3,21 @@ function AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct)
     %fit Cr signal over
     Cr_ppm=3.02;
     %Determine limits
-    z=abs(MRS_struct.freq-3.12);
+    z=abs(MRS_struct.spec.freq-3.12);
     lb=find(min(z)==z);
-    z=abs(MRS_struct.freq-2.72);
+    z=abs(MRS_struct.spec.freq-2.72);
     ub=find(min(z)==z);
     %Set initial parameters by fitting the sum
     
-    freqrange = MRS_struct.freq(lb:ub);
+    freqrange = MRS_struct.spec.freq(lb:ub);
     Initx = [ 30 0.05 3.02 0 0 0 ];
     SumSpec = sum(AllFramesFTrealign(lb:ub,:),2);
     SumSpecParams = FitPeaksByFrames2(freqrange, SumSpec, Initx); %FitPeaksByFrames2 now edited so that output params have same units as Initx
     %Update freq and phase of AllFramesFTrealign to reflect Sum fit
     AllFramesFTrealign=AllFramesFTrealign*exp(1i*SumSpecParams(4));
     %Shift Cr freq to 3.02
-    freq_step_size=abs(MRS_struct.freq(1)-MRS_struct.freq(2));
-    Shift_points=round((real(SumSpecParams(3))-Cr_ppm)/freq_step_size)
+    freq_step_size=abs(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
+    Shift_points=round((real(SumSpecParams(3))-Cr_ppm)/freq_step_size);
     AllFramesFTrealign=circshift(AllFramesFTrealign,[Shift_points 0]);
     %Set initial fitting parameters by fitting the sum
     Init = SumSpecParams./[ size(AllFramesFTrealign,2) 1 1 1 size(AllFramesFTrealign,2) size(AllFramesFTrealign,2) ];
@@ -25,7 +25,7 @@ function AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct)
     Init(4)=0;
     %Select Data2BeFit
     %subplot(2,2,1)
-    %plot(MRS_struct.freq,real(AllFramesFTrealign))
+    %plot(MRS_struct.spec.freq,real(AllFramesFTrealign))
     %set(gca,'XLim',[2.5 3.5]);
     %set(gca,'XDir','reverse')
     Data2bFit = AllFramesFTrealign(lb:ub,:);
@@ -36,17 +36,17 @@ function AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct)
         AllFramesFTrealign(:,jj)=circshift(AllFramesFTrealign(:,jj),[-FrameShift_points(jj) 0]);
     end
     %subplot(2,2,2)
-    %plot(MRS_struct.freq,real(AllFramesFTrealign),'.-')
+    %plot(MRS_struct.spec.freq,real(AllFramesFTrealign),'.-')
     %set(gca,'XLim',[2.5 3.5]);
     %set(gca,'XDir','reverse')
     %mean(FrameShift_points)
     %mean(FrameParams(:,3))
     %size(AllFramesFTrealign)
-    %size(repmat(exp(1i*SumSpecParams(:,4)).',[length(MRS_struct.freq) 1]))
-    AllFramesFTrealign=AllFramesFTrealign.*repmat(exp(-1i*FrameParams(:,4)).',[length(MRS_struct.freq) 1]);
-    AllFramesFTrealign=AllFramesFTrealign+repmat(FrameParams(:,5).',[length(MRS_struct.freq) 1]);
+    %size(repmat(exp(1i*SumSpecParams(:,4)).',[length(MRS_struct.spec.freq) 1]))
+    AllFramesFTrealign=AllFramesFTrealign.*repmat(exp(-1i*FrameParams(:,4)).',[length(MRS_struct.spec.freq) 1]);
+    AllFramesFTrealign=AllFramesFTrealign+repmat(FrameParams(:,5).',[length(MRS_struct.spec.freq) 1]);
     %subplot(2,2,3)
-    %plot(MRS_struct.freq,real(AllFramesFTrealign))
+    %plot(MRS_struct.spec.freq,real(AllFramesFTrealign))
     %set(gca,'XLim',[2.5 3.5]);
     %set(gca,'XDir','reverse');
     %plot the models.

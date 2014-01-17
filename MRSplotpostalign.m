@@ -10,20 +10,14 @@ numspec = 2;
 
 SpectraToPlot = [MRS_struct.gabaspec(specno,:)];
 
-%Water scaling is touhg if we have no water scans! Comment out
-% % Find Water amplitude max, across all Pfiles
-% waterheight = abs(max(MRS_struct.waterspec(specno,:),[],2));
-% waterheight = repmat(waterheight, [2 1]);
-% heightrescale = repmat((1./waterheight), [1 length(MRS_struct.gabaspec(1,:))]);
-% SpectraToPlot = SpectraToPlot .* heightrescale;
 
 % Estimate baseline from between Glx and GABA
 %specbaseline = mean(real(SpectraToPlot(1,17250:17650)),2);
-z=abs(MRS_struct.freq-3.6);
+z=abs(MRS_struct.spec.freq-3.6);
 Glx_right=find(min(z)==z);
-z=abs(MRS_struct.freq-3.3);
+z=abs(MRS_struct.spec.freq-3.3);
 GABA_left=find(min(z)==z);
-z=abs(MRS_struct.freq-2.8);
+z=abs(MRS_struct.spec.freq-2.8);
 GABA_right=find(min(z)==z);
 specbaseline = mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2);
 % averaged gaba height across all scans - to estimate stack spacing
@@ -31,7 +25,7 @@ gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
 gabaheight = mean(gabaheight);
 
 %figure(99)
-plot(MRS_struct.freq, real(SpectraToPlot));
+plot(MRS_struct.spec.freq, real(SpectraToPlot));
 %legendtxt = regexprep(MRS_struct.pfile{specno}, '_','-');
 legendtxt = {'no align'};
 legend(legendtxt)

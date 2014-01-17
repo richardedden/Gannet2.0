@@ -3,7 +3,7 @@ function MRS_struct = FitCrOFF(MRS_struct)
     %further fitting for freq/phase correction
 
     %Determine which is OFF
-    switch MRS_struct.ONOFForder
+    switch MRS_struct.p.ONOFForder
         case 'ONfirst'
        ToBeFit=MRS_struct.
         case 'OFFfirst'
