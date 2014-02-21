@@ -169,7 +169,7 @@ for ii=1:numscans
         set(gca,'XLim',[2.6 3.6]);
     elseif strcmp(MRS_struct.p.target,'GSH')
        freqrange=MRS_struct.spec.freq(freqbounds); 
-       plot(MRS_struct.spec.freq, MRS_struct.spec.diff(ii,:), 'b',freqrange, ...
+       plot(MRS_struct.spec.freq, MRS_struct.spec.diff, 'b',freqrange, ...
             FiveGaussModel(FiveGaussModelParam(ii,:), freqrange),'r',freqrange, ...
             FiveGaussModel(GSHGaussModelParam(ii,:), freqrange),'r',...
             MRS_struct.spec.freq(freqbounds),residg,'k');
@@ -469,7 +469,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = [tmp '%'];
         tmp = ['FtErr (H/Cr) : ' tmp];
         text(0,0.4, tmp);
-        tmp = sprintf([MRS_struct.p.target '/ H_2O  : %.4f inst. units.'], MRS_struct.out.GABAconciu(ii) );
+        tmp = sprintf('GABA+ / H_2O  : %.4f inst. units.', MRS_struct.out.GABAconciu(ii) );
         text(0,0.3, tmp);
         tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
         text(0,0.2, tmp);
@@ -480,7 +480,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     else
         tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.CrArea(ii) );
         text(0,0.5, tmp);
-        tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr(ii));
+        tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr);
         text(0,0.4, tmp);
         tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
         text(0,0.3, tmp);
