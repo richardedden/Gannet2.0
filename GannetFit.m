@@ -108,14 +108,9 @@ for ii=1:numscans
         freqbounds=lowerbound:upperbound;
         plotbounds=(lowerbound-150):(upperbound+150);
 <<<<<<< HEAD
-<<<<<<< HEAD
         offset = (mean(MRS_struct.spec.diff(:, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(:, freqbounds((end-9):end)),2))/2;
         %This appears not to work for multi-file GSH datasets.
         slope = (mean(MRS_struct.spec.diff(:, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(:, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
-=======
-        offset = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/2;
-        slope = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
->>>>>>> 7d3ae24e9a051352453f5e135b9ad34b1a20728d
 =======
         offset = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/2;
         slope = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
