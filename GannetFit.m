@@ -107,14 +107,8 @@ for ii=1:numscans
         upperbound=find(min(z)==z);
         freqbounds=lowerbound:upperbound;
         plotbounds=(lowerbound-150):(upperbound+150);
-<<<<<<< HEAD
         offset = (mean(MRS_struct.spec.diff(:, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(:, freqbounds((end-9):end)),2))/2;
-        %This appears not to work for multi-file GSH datasets.
         slope = (mean(MRS_struct.spec.diff(:, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(:, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
-=======
-        offset = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/2;
-        slope = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
->>>>>>> 7d3ae24e9a051352453f5e135b9ad34b1a20728d
 
         peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
 
@@ -139,10 +133,10 @@ for ii=1:numscans
         BaselineModelParam=GSHGaussModelParam;
         BaselineModelParam(ii,1)=0;
 
-        MRS_struct.out.GABAArea(ii)=real(sum(FiveGaussModel(GSHGaussModelParam(ii,:), MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
+        MRS_struct.out.GABAArea=real(sum(FiveGaussModel(GSHGaussModelParam(ii,:), MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
         %Not sure how to handle fit error. For now, do whole range
         GABAheight = GSHGaussModelParam(ii,1);
-        MRS_struct.out.GABAFitError(ii)=  100*std(residg)/GABAheight;
+        MRS_struct.out.GABAFitError=  100*std(residg)/GABAheight;
         
         
     else
@@ -175,7 +169,7 @@ for ii=1:numscans
         set(gca,'XLim',[2.6 3.6]);
     elseif strcmp(MRS_struct.p.target,'GSH')
        freqrange=MRS_struct.spec.freq(freqbounds); 
-       plot(MRS_struct.spec.freq, MRS_struct.spec.diff(ii,:), 'b',freqrange, ...
+       plot(MRS_struct.spec.freq, MRS_struct.spec.diff, 'b',freqrange, ...
             FiveGaussModel(FiveGaussModelParam(ii,:), freqrange),'r',freqrange, ...
             FiveGaussModel(GSHGaussModelParam(ii,:), freqrange),'r',...
             MRS_struct.spec.freq(freqbounds),residg,'k');
@@ -210,8 +204,8 @@ for ii=1:numscans
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
         T1=20;
         %estimate height and baseline from data
-        [maxinWater maxWaterIndex]=max(real(WaterData(ii,:)),[],2); %NPRE, maxWaterIndex created to accomodate issues with water fitting init
-        waterbase = mean(real(WaterData(ii,1:500))); % avg
+        maxinWater=max(real(WaterData(:)));
+        waterbase = mean(real(WaterData(1:500))); % avg
 
         %Philips data do not phase well based on first point, so do a preliminary
         %fit, then adjust phase of WaterData accordingly     
@@ -277,7 +271,7 @@ for ii=1:numscans
                 nlinopts = statset(nlinopts, 'MaxIter', 1e5);
                 %This double fit doesn't seem to work too well with the GE
                 %data... dig a little deeper
-                LGPModelInit = [maxinWater 20 freq(maxWaterIndex) 0 waterbase -50 0];
+                LGPModelInit = [maxinWater 20 4.7 0 waterbase -50 0];
                 [LGPModelParam(ii,:),residw] = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)),...
                     @(xdummy,ydummy)	LorentzGaussModelP(xdummy,ydummy),...
                     LGPModelInit, nlinopts);
@@ -475,7 +469,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = [tmp '%'];
         tmp = ['FtErr (H/Cr) : ' tmp];
         text(0,0.4, tmp);
-        tmp = sprintf([MRS_struct.p.target '/ H_2O  : %.4f inst. units.'], MRS_struct.out.GABAconciu(ii) );
+        tmp = sprintf('GABA+ / H_2O  : %.4f inst. units.', MRS_struct.out.GABAconciu(ii) );
         text(0,0.3, tmp);
         tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
         text(0,0.2, tmp);
@@ -486,7 +480,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     else
         tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.CrArea(ii) );
         text(0,0.5, tmp);
-        tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr(ii));
+        tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr);
         text(0,0.4, tmp);
         tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
         text(0,0.3, tmp);
