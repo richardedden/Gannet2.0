@@ -10,7 +10,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.npoints=2048; %This is twice the acquired points for TWIX data;
     %This should be parsed from headers where possible
     MRS_struct.p.TR=2000;%This should be parsed from headers where possible
-    MRS_struct.p.TE=68; %This should be parsed from headers where possible
+    MRS_struct.p.TE=70; %This should be parsed from headers where possible
     MRS_struct.p.LarmorFreq=127; %This should be parsed from headers where possible
     %In general, LarmorFreq is 127.8 on Philips,
     MRS_struct.p.target='GABA'; %Other option is GSH
