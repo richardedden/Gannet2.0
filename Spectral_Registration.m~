@@ -2,7 +2,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
     %Spectral Registration is a time-domain frequency-and-phse correction as
     %per Near et al. 2014 [under review].
     % OnWhat = 0 for spectro data OnWhat=1 for water data
-    MRS_struct.p.parsFit=[];
+    
  %Dual-channel option only applies registration separately to ONs and OFFs
     SpecRegLoop=0;
     if(nargin==3)
@@ -67,7 +67,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
     else
         
         %Applying frequency and phase corrections.
-        MRS_struct.p.parsFit=[MRS_struct.p.parsFit parsFit];
+        Parsf
         for corrloop=1:size(flatdata,3)
             
             if(nargin==3)

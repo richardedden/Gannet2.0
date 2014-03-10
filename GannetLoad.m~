@@ -322,7 +322,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         
         if(strcmp(MRS_struct.p.target,'GSH'))
             residual_phase=pi-atan2(imag(sum(MRS_struct.spec.diff(ii,:))),real(sum(MRS_struct.spec.diff(ii,:))));
-            MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
+            MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.diff(ii,:))*exp(1i*); %Not sure whether we want a two here.
         end
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
