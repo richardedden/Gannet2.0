@@ -107,8 +107,8 @@ for ii=1:numscans
         upperbound=find(min(z)==z);
         freqbounds=lowerbound:upperbound;
         plotbounds=(lowerbound-150):(upperbound+150);
-        offset = (mean(MRS_struct.spec.diff(:, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(:, freqbounds((end-9):end)),2))/2;
-        slope = (mean(MRS_struct.spec.diff(:, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(:, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
+        offset = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) + mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/2;
+        slope = (mean(MRS_struct.spec.diff(ii, freqbounds(1:10)),2) - mean(MRS_struct.spec.diff(ii, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
 
         peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
 
@@ -133,10 +133,10 @@ for ii=1:numscans
         BaselineModelParam=GSHGaussModelParam;
         BaselineModelParam(ii,1)=0;
 
-        MRS_struct.out.GABAArea=real(sum(FiveGaussModel(GSHGaussModelParam(ii,:), MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
+        MRS_struct.out.GABAArea(ii)=real(sum(FiveGaussModel(GSHGaussModelParam(ii,:), MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
         %Not sure how to handle fit error. For now, do whole range
         GABAheight = GSHGaussModelParam(ii,1);
-        MRS_struct.out.GABAFitError=  100*std(residg)/GABAheight;
+        MRS_struct.out.GABAFitError(ii)=  100*std(residg)/GABAheight;
         
         
     else
@@ -169,7 +169,7 @@ for ii=1:numscans
         set(gca,'XLim',[2.6 3.6]);
     elseif strcmp(MRS_struct.p.target,'GSH')
        freqrange=MRS_struct.spec.freq(freqbounds); 
-       plot(MRS_struct.spec.freq, MRS_struct.spec.diff, 'b',freqrange, ...
+       plot(MRS_struct.spec.freq, MRS_struct.spec.diff(ii,:), 'b',freqrange, ...
             FiveGaussModel(FiveGaussModelParam(ii,:), freqrange),'r',freqrange, ...
             FiveGaussModel(GSHGaussModelParam(ii,:), freqrange),'r',...
             MRS_struct.spec.freq(freqbounds),residg,'k');
