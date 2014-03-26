@@ -16,11 +16,15 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.target='GABA'; %Other option is GSH
     MRS_struct.p.ONOFForder='offfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
-    MRS_struct.p.Water_Positive=1;
+    MRS_struct.p.Water_Positive=1; %For Philips MOIST ws, set to 0.
+    
     
 %Analysis Parameters
     MRS_struct.p.LB = 3;
     MRS_struct.p.ZeroFillTo = 32768;
     %AlignTo planned options: Cr; Cho; NAA; H20; CrOFF
     MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
+    
+%Output Parameters
+    MRS_struct.p.mat = 1; %1 = YES, save MRS_struct as .mat file.
 end
