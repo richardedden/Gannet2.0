@@ -27,4 +27,5 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     
 %Output Parameters
     MRS_struct.p.mat = 1; %1 = YES, save MRS_struct as .mat file.
+    MRS_struct.p.sdat = 1; %1 = YES, save MRS_struct as .sdat file.
 end
