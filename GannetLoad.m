@@ -514,7 +514,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
 
                 %Save the processed data into an SDAT file.
-                 if(MRS_struct.p.sdat)
+                 %if(MRS_struct.p.sdat)
                    if(strcmpi(MRS_struct.p.vendor,'Philips'))
                         if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
                           %sdat_G_name=[ 'MRSload_output/' fullpath '_G.data' ]
@@ -548,7 +548,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                    
                    
                    
-                end
+              %  end
 
                 % 140116: ADH reorder structure
                 
