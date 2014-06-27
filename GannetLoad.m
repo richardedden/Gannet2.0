@@ -530,13 +530,18 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                             copyfile(sparname,spar_G_name);
                             %write into the sdat file
                             %What do we write
-                            sdat_diff_out=ifft(MRS_struct.spec.diff(ii,:),[],2);
+                            sdat_diff_out=conj(ifft(fftshift(MRS_struct.spec.diff(ii,:),2),[],2));
                             sdat_diff_out=sdat_diff_out(1:MRS_struct.p.npoints);
+                            %Also write out OFF
+                            sdat_off_out=conj(ifft(fftshift(MRS_struct.spec.off(ii,:),2),[],2));
+                            sdat_off_out=sdat_off_out(1:MRS_struct.p.npoints);
                             %How do we write it out?
                             fileid  = fopen(sdat_G_name,'w','ieee-le');    
                             ff(:,1:2:2*MRS_struct.p.npoints) = real(sdat_diff_out);
                             ff(:,2:2:2*MRS_struct.p.npoints) = imag(sdat_diff_out);
-                            fwriteVAXD(fileid,ff.','float');
+                            gg(:,1:2:2*MRS_struct.p.npoints) = real(sdat_off_out);
+                            gg(:,2:2:2*MRS_struct.p.npoints) = imag(sdat_off_out);
+                            fwriteVAXD(fileid,[ff.' gg.'],'float');
                             fclose(fileid);
                         end
                    end
