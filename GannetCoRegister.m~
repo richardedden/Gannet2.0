@@ -48,22 +48,18 @@ end
     case 'Siemens_twix'
         error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);        
     case 'GE'
-        for ii=1:length(nii_name)
-            fname = MRS_struct.gabafile{ii};
-            %sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-            MRS_struct=GannetMask_GE(fname,nii_name{ii},MRS_struct);
-        end
-        %error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);
+        
+        error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);
     end
     
     
     %Currently only SDAT is supported
     %Run the script...
-%    for ii=1:length(nii_name)
-%        fname = MRS_struct.gabafile{ii};
-%        sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-%        MRS_struct=GannetMask(sparname,nii_name{ii},MRS_struct);
-%    end
+    for ii=1:length(nii_name)
+        fname = MRS_struct.gabafile{ii};
+        sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
+        MRS_struct=GannetMask(sparname,nii_name{ii},MRS_struct);
+    end
     
     %Build output figure
     h=figure(103);
