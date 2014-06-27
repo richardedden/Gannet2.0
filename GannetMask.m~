@@ -4,9 +4,7 @@ function MRS_struct = GannetMask(sparname, nii_file, MRS_struct)
 
 % this relies on SPM, nifti exported by Philips, and spar/sdat
 
-% some code to make ok wth 2 or 3  inputs
-% fix nifti inputs and writing output mask to directory of where the nifti
-% is. 
+% some code to 
 
 
 %function make_voxel
@@ -47,9 +45,9 @@ sparidx=find(ismember(sparheadinfo, 'cc_angulation')==1);
 MRS_struct.p.voxang(3) = str2num(sparheadinfo{sparidx+2});
 
 
-V=spm_vol(nii_file);
+V=spm_vol(['T1.nii']);
 [T1,XYZ]=spm_read_vols(V);
-H=spm_read_hdr(nii_file);
+H=spm_read_hdr('T1.nii');
 
 %Shift imaging voxel coordinates by half an imaging voxel so that the XYZ matrix
 %tells us the x,y,z coordinates of the MIDDLE of that imaging voxel.
@@ -179,35 +177,35 @@ V_mask.mat=V.mat;
 V_mask=spm_write_vol(V_mask,mask);
 
 T1img = T1/max(T1(:));
-T1img_mas = T1img + .2*mask;
+T1img_mas = T1img + .3*mask;
 
 % construct output
-% 
-% voxel_ctr = [-lr_off -ap_off cc_off];
-% slice = [round(V.dim(1)/2+voxel_ctr(1)) 
-%         round(V.dim(2)/2+voxel_ctr(2)) 
-%         round(V.dim(3)/2+voxel_ctr(3))];
-% 
-% size_max=max(size(T1img_mas));
-% three_plane_img=zeros([size_max 3*size_max]);
-% im1 = squeeze(T1img_mas(:,:,slice(3)));
-% im1 = im1';  %not sure if need this '
-% im2 = squeeze(T1img_mas(:,slice(2),:));
-% im2 = im2(:,end:-1:1)'; %may not need '
-% im3 = squeeze(T1img_mas(slice(1),:,:));
-% im3 = im3(:,end:-1:1)';
-% 
-% three_plane_img(:,1:size_max) = image_center(im1, size_max);
-% three_plane_img(:,size_max*2+(1:size_max))=image_center(im2,size_max);
-% three_plane_img(:,size_max+(1:size_max))=image_center(im3,size_max);
 
-%figure(198)
-%imagesc(three_plane_img);
-%colormap('gray');
-%caxis([0 1])
-%axis equal;
-%axis tight;
-%axis off;
+voxel_ctr = [-lr_off -ap_off cc_off];
+slice = [round(V.dim(1)/2+voxel_ctr(1)) 
+        round(V.dim(2)/2+voxel_ctr(2)) 
+        round(V.dim(3)/2+voxel_ctr(3))];
+
+size_max=max(size(T1img_mas));
+three_plane_img=zeros([size_max 3*size_max]);
+im1 = squeeze(T1img_mas(:,:,slice(3)));
+im1 = im1';  %not sure if need this '
+im2 = squeeze(T1img_mas(:,slice(2),:));
+im2 = im2(:,end:-1:1)'; %may not need '
+im3 = squeeze(T1img_mas(slice(1),:,:));
+im3 = im3(:,end:-1:1)';
+
+three_plane_img(:,1:size_max) = image_center(im1, size_max);
+three_plane_img(:,size_max*2+(1:size_max))=image_center(im2,size_max);
+three_plane_img(:,size_max+(1:size_max))=image_center(im3,size_max);
+
+figure(198)
+imagesc(three_plane_img);
+colormap('gray');
+caxis([0 1])
+axis equal;
+axis tight;
+axis off;
 
 %end
 

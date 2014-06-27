@@ -47,10 +47,25 @@ MRS_struct.p.coreg = 1;
     end
     %Currently only SDAT is supported
     %Run the script...
-    for ii=1:MRS_struct.ii
+    for ii=1:length(nii_name)
         fname = MRS_struct.gabafile{ii};
         sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
         MRS_struct=GannetMask(sparname,nii_name{ii},MRS_struct);
     end
-        
+    
+    %Build output figure
+    h=figure(103);
+        set(h, 'Position', [100, 100, 1000, 707]);
+        set(h,'Color',[1 1 1]);
+        figTitle = ['GannetCoRegister Output'];
+        set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
+              
+
+        imagesc(three_plane_img);
+        colormap('gray');
+        caxis([0 1])
+        axis equal;
+        axis tight;
+        axis off;
+
 end
