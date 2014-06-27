@@ -189,6 +189,9 @@ T1img_mas = T1img + .2*mask;
 % construct output
 % 
 % voxel_ctr = [-lr_off -ap_off cc_off];
+
+Mask.dim=V.dim;
+Mask.img=T1img_mas;
 % slice = [round(V.dim(1)/2+voxel_ctr(1)) 
 %         round(V.dim(2)/2+voxel_ctr(2)) 
 %         round(V.dim(3)/2+voxel_ctr(3))];

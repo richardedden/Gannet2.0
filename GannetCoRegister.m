@@ -50,7 +50,7 @@ MRS_struct.p.coreg = 1;
     for ii=1:length(nii_name)
         fname = MRS_struct.gabafile{ii};
         sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-        MRS_struct=GannetMask(sparname,nii_name{ii},MRS_struct);
+        [MRS_struct Mask]=GannetMask(sparname,nii_name{ii},MRS_struct);
     end
     
     %Build output figure
@@ -60,7 +60,28 @@ MRS_struct.p.coreg = 1;
         figTitle = ['GannetCoRegister Output'];
         set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
               
+        
+        voxel_ctr = MRS_struct.p.voxoff;
+        voxel_ctr(1:2)=-voxel_ctr(1:2);
+        
+        
+        %This assumes 1-mm iso T1 - need to fix at a later date.
+        slice = [round(Mask.dim(1)/2+voxel_ctr(1)) 
+                round(Mask.dim(2)/2+voxel_ctr(2)) 
+                round(Mask.dim(3)/2+voxel_ctr(3))];
 
+        size_max=max(size(Mask.img));
+        three_plane_img=zeros([size_max 3*size_max]);
+        im1 = squeeze(Mask.img(:,:,slice(3)));
+        im1 = im1';  %not sure if need this '
+        im2 = squeeze(Mask.img(:,slice(2),:));
+        im2 = im2(:,end:-1:1)'; %may not need '
+        im3 = squeeze(Mask.img(slice(1),:,:));
+        im3 = im3(:,end:-1:1)';
+
+        three_plane_img(:,1:size_max) = image_center(im1, size_max);
+        three_plane_img(:,size_max*2+(1:size_max))=image_center(im2,size_max);
+        three_plane_img(:,size_max+(1:size_max))=image_center(im3,size_max);
         imagesc(three_plane_img);
         colormap('gray');
         caxis([0 1])
