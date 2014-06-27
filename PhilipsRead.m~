@@ -25,24 +25,25 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    MRS_struct.p.sw = str2num(sparheader{sparidx+2});
    
    %Pull in geometry information for GannetCoRegister
-   sparidx=find(ismember(sparheader, 'lr_size')==1);
-   MRS_struct.p.geom.size(1) = str2num(sparheader{sparidx+2});
-      sparidx=find(ismember(sparheader, 'ap_size')==1);
-   MRS_struct.p.geom.size(2) = str2num(sparheader{sparidx+2});
-   sparidx=find(ismember(sparheader, 'cc_size')==1);
-   MRS_struct.p.voxdim(3) = str2num(sparheader{sparidx+2});
-   sparidx=find(ismember(sparheader, 'lr_off_center')==1);
-   MRS_struct.p.voxoff(1) = str2num(sparheader{sparidx+2});
-      sparidx=find(ismember(sparheader, 'ap_off_center')==1);
-   MRS_struct.p.voxdim(2) = str2num(sparheader{sparidx+2});
-   sparidx=find(ismember(sparheader, 'cc_off_center')==1);
-   MRS_struct.p.voxdim(3) = str2num(sparheader{sparidx+2});
-      sparidx=find(ismember(sparheader, 'lr_angulation')==1);
-   MRS_struct.p.voxdim(1) = str2num(sparheader{sparidx+2});
-      sparidx=find(ismember(sparheader, 'ap_angulation')==1);
-   MRS_struct.p.voxdim(2) = str2num(sparheader{sparidx+2});
-   sparidx=find(ismember(sparheader, 'cc_angulation')==1);
-   MRS_struct.p.voxdim(3) = str2num(sparheader{sparidx+2});
+%    sparidx=find(ismember(sparheader, 'lr_size')==1);
+%    MRS_struct.p.geom.size(1) = str2num(sparheader{sparidx+2});
+%       sparidx=find(ismember(sparheader, 'ap_size')==1);
+%    MRS_struct.p.geom.size(2) = str2num(sparheader{sparidx+2});
+%    sparidx=find(ismember(sparheader, 'cc_size')==1);
+%    MRS_struct.p.geom.size(3) = str2num(sparheader{sparidx+2});
+%    sparidx=find(ismember(sparheader, 'lr_off_center')==1);
+%    MRS_struct.p.geom.volume = prod(MRS_struct.p.geom.size/10);
+%    MRS_struct.p.geom.offcenter(1) = str2num(sparheader{sparidx+2});
+%       sparidx=find(ismember(sparheader, 'ap_off_center')==1);
+%    MRS_struct.p.geom.offcenter(2) = str2num(sparheader{sparidx+2});
+%    sparidx=find(ismember(sparheader, 'cc_off_center')==1);
+%    MRS_struct.p.geom.offcenter(3) = str2num(sparheader{sparidx+2});
+%       sparidx=find(ismember(sparheader, 'lr_angulation')==1);
+%    MRS_struct.p.geom.angulation(1) = str2num(sparheader{sparidx+2});
+%       sparidx=find(ismember(sparheader, 'ap_angulation')==1);
+%    MRS_struct.p.geom.angulation(2) = str2num(sparheader{sparidx+2});
+%    sparidx=find(ismember(sparheader, 'cc_angulation')==1);
+%    MRS_struct.p.geom.angulation(3) = str2num(sparheader{sparidx+2});
    
    
    MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);

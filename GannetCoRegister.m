@@ -1,14 +1,14 @@
-%MRS_struct = GannetCoRegister(MRS_struct,nii_name)
 
-%Coregistration of MRS voxel volume to imaging dataset, based on headers. 
+function MRS_struct = GannetCoRegister(MRS_struct,nii_name)
+
+%Coregistration of MRS voxel volumes to imaging datasets, based on headers. 
 
 MRS_struct.p.coreg = 1;
-
-switch MRS_struct.p.vendor
+%Ultimately this switch will not be necessary...
+    switch MRS_struct.p.vendor
     
     case 'Philips'
-        %Currently only SDAT is supported
-                
+
     case 'Philips_data'
         if exist(MRS_struct.gabafile_sdat)
                 MRS_struct.p.vendor = 'Philips';
@@ -40,4 +40,15 @@ switch MRS_struct.p.vendor
         error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);        
     case 'GE'
         error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);
+    end
+    
+    if (MRS_struct.ii ~= length(nii_name))
+       error('The number of nifti files does not match the number of MRS files processed by GannetLoad.'); 
+    end
+    %Currently only SDAT is supported
+    %Run the script...
+    for ii=1:MRS_struct.ii
+       CoRegister(MRS_struct.gabafile{ii},nii_name{ii});
+    end
+        
 end
