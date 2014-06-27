@@ -71,8 +71,8 @@ MRS_struct.p.coreg = 1;
         axis off;
         text(10,size(MRS_struct.mask.img,2)/2,'L','Color',[1 1 1]);
         text(size(MRS_struct.mask.img,3)-15,size(MRS_struct.mask.img,2)/2,'R','Color',[1 1 1]);
-        p = get(h,'pos') % get position of axes
-        set(h,'pos',[0.1 0.5 0.8 0.4]) % move the axes slightly
+        p = get(h,'pos'); % get position of axes
+        set(h,'pos',[0.05 0.4 0.9 0.45]) % move the axes slightly
         
         script_path=which('GannetLoad');
               % CJE update for GE
@@ -80,7 +80,7 @@ MRS_struct.p.coreg = 1;
               Gannet_circle_white=[script_path(1:(end-13)) '/GANNET_circle_white.jpg'];
     %          A=imread(Gannet_circle);
               A2=imread(Gannet_circle_white);
-              hax=axes('Position',[0.80, 0.05, 0.15, 0.15]);
+              hax=axes('Position',[0.80, 0.08, 0.15, 0.15]);
               %set(gca,'Units','normalized');set(gca,'Position',[0.05 0.05 1.85 0.15]);
               image(A2);axis off; axis square;
 
