@@ -48,7 +48,7 @@ MRS_struct.p.coreg = 1;
     %Currently only SDAT is supported
     %Run the script...
     for ii=1:MRS_struct.ii
-       CoRegister(MRS_struct.gabafile{ii},nii_name{ii});
+       MRS_struct=GannetMask(MRS_struct.gabafile{ii},nii_name{ii},MRS_struct);
     end
         
 end

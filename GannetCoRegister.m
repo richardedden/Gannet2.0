@@ -19,7 +19,7 @@ MRS_struct.p.coreg = 1;
                 MRS_struct.gabafile = MRS_struct.gabafile_data;
                 MRS_struct.p.vendor = 'Philips_data';
         else
-        error(['MRS_struct.p.vendor ' format does not include voxel location information in the header. See notes in GannetCoRegister.']); 
+        error([MRS_struct.p.vendor ' format does not include voxel location information in the header. See notes in GannetCoRegister.']); 
         %If this comes up, once GannetLoad has been read:
         %1. Switch vendor to Philips
         %       MRS_struct.p.vendor = 'Philips';
@@ -48,7 +48,9 @@ MRS_struct.p.coreg = 1;
     %Currently only SDAT is supported
     %Run the script...
     for ii=1:MRS_struct.ii
-       CoRegister(MRS_struct.gabafile{ii},nii_name{ii});
+        fname = MRS_struct.gabafile{ii};
+        sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
+        MRS_struct=GannetMask(sparname,nii_name{ii},MRS_struct);
     end
         
 end
