@@ -1,4 +1,4 @@
-function [MRS_struct Mask] = GannetMask(sparname, nii_file, MRS_struct)
+function [MRS_struct ] = GannetMask(sparname, nii_file, MRS_struct)
 
 
 
@@ -190,8 +190,9 @@ T1img_mas = T1img + .2*mask;
 % 
 % voxel_ctr = [-lr_off -ap_off cc_off];
 
-Mask.dim=V.dim;
-Mask.img=T1img_mas;
+MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
+MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
+MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
 % slice = [round(V.dim(1)/2+voxel_ctr(1)) 
 %         round(V.dim(2)/2+voxel_ctr(2)) 
 %         round(V.dim(3)/2+voxel_ctr(3))];
