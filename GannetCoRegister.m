@@ -1,5 +1,5 @@
 
-function MRS_struct = GannetCoRegister(MRS_struct,nii_name)
+function MRS_struct = GannetCoRegister(MRS_struct,nii_name,rot_folder)
 
 %Coregistration of MRS voxel volumes to imaging datasets, based on headers. 
 
@@ -51,7 +51,7 @@ end
         for ii=1:length(nii_name)
             fname = MRS_struct.gabafile{ii};
             %sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-            MRS_struct=GannetMask_GE(fname,nii_name{ii},MRS_struct);
+            MRS_struct=GannetMask_GE(fname,nii_name{ii},MRS_struct,rot_folder);
         end
         %error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);
     end
