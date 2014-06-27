@@ -1,4 +1,4 @@
-function MRS_struct = GannetMask(sparname, nii_file, MRS_struct)
+function [MRS_struct Mask] = GannetMask(sparname, nii_file, MRS_struct)
 
 
 
