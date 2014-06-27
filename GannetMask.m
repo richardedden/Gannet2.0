@@ -188,27 +188,33 @@ T1img_mas = T1img + .2*mask;
 
 % construct output
 % 
-% voxel_ctr = [-lr_off -ap_off cc_off];
+ voxel_ctr = [-lr_off -ap_off cc_off];
 
-MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
-MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
+
+
+%MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
+%MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
 MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
-% slice = [round(V.dim(1)/2+voxel_ctr(1)) 
-%         round(V.dim(2)/2+voxel_ctr(2)) 
-%         round(V.dim(3)/2+voxel_ctr(3))];
-% 
-% size_max=max(size(T1img_mas));
-% three_plane_img=zeros([size_max 3*size_max]);
-% im1 = squeeze(T1img_mas(:,:,slice(3)));
-% im1 = im1';  %not sure if need this '
-% im2 = squeeze(T1img_mas(:,slice(2),:));
-% im2 = im2(:,end:-1:1)'; %may not need '
-% im3 = squeeze(T1img_mas(slice(1),:,:));
-% im3 = im3(:,end:-1:1)';
-% 
-% three_plane_img(:,1:size_max) = image_center(im1, size_max);
-% three_plane_img(:,size_max*2+(1:size_max))=image_center(im2,size_max);
-% three_plane_img(:,size_max+(1:size_max))=image_center(im3,size_max);
+%This assumes 1-mm iso T1 - need to fix at a later date.
+slice = [round(V.dim(1)/2+voxel_ctr(1)) 
+        round(V.dim(2)/2+voxel_ctr(2)) 
+        round(V.dim(3)/2+voxel_ctr(3))];
+
+size_max=max(size(T1img_mas));
+three_plane_img=zeros([size_max 3*size_max]);
+im1 = squeeze(T1img_mas(:,:,slice(3)));
+im1 = im1(end:-1:1,:)';  %not sure if need this '
+im3 = squeeze(T1img_mas(:,slice(2),:));
+im3 = im3(end:-1:1,end:-1:1)'; %may not need '
+im2 = squeeze(T1img_mas(slice(1),:,:));
+im2 = im2(:,end:-1:1)';
+
+three_plane_img(:,1:size_max) = image_center(im1, size_max);
+three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
+three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
+
+MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
+
 
 %figure(198)
 %imagesc(three_plane_img);
