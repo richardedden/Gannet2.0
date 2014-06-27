@@ -8,6 +8,11 @@ function MRS_struct = GannetMask(sparname, nii_file, MRS_struct)
 % fix nifti inputs and writing output mask to directory of where the nifti
 % is. 
 
+[pathspar,namespar,ext] = fileparts(sparname);
+[pathnii,namenii,extnii] = fileparts(nii_file);
+
+fidoutmask = fullfile(pathnii,[namespar '_mask.nii'])
+
 
 %function make_voxel
  
@@ -170,7 +175,7 @@ mask(sphere_mask==1) = isinside;
 
 mask = reshape(mask, V.dim);
 
-V_mask.fname=['MaskNew.nii'];
+V_mask.fname=[fidoutmask];
 V_mask.descrip='MRS_Voxel_Mask';
 V_mask.dim=V.dim;
 V_mask.dt=V.dt;
