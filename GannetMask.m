@@ -4,7 +4,9 @@ function MRS_struct = GannetMask(sparname, nii_file, MRS_struct)
 
 % this relies on SPM, nifti exported by Philips, and spar/sdat
 
-% some code to 
+% some code to make ok wth 2 or 3  inputs
+% fix nifti inputs and writing output mask to directory of where the nifti
+% is. 
 
 
 %function make_voxel
@@ -24,9 +26,9 @@ function MRS_struct = GannetMask(sparname, nii_file, MRS_struct)
 sparheadinfo = textread(sparname, '%s');
 
 sparidx=find(ismember(sparheadinfo, 'ap_size')==1);
-MRS_struct.p.voxsize(1) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'lr_size')==1);
 MRS_struct.p.voxsize(2) = str2num(sparheadinfo{sparidx+2});
+sparidx=find(ismember(sparheadinfo, 'lr_size')==1);
+MRS_struct.p.voxsize(1) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'cc_size')==1);
 MRS_struct.p.voxsize(3) = str2num(sparheadinfo{sparidx+2});
 
@@ -45,9 +47,9 @@ sparidx=find(ismember(sparheadinfo, 'cc_angulation')==1);
 MRS_struct.p.voxang(3) = str2num(sparheadinfo{sparidx+2});
 
 
-V=spm_vol(['T1.nii']);
+V=spm_vol(nii_file);
 [T1,XYZ]=spm_read_vols(V);
-H=spm_read_hdr('T1.nii');
+H=spm_read_hdr(nii_file);
 
 %Shift imaging voxel coordinates by half an imaging voxel so that the XYZ matrix
 %tells us the x,y,z coordinates of the MIDDLE of that imaging voxel.
