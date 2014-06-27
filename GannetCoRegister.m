@@ -82,11 +82,26 @@ MRS_struct.p.coreg = 1;
         three_plane_img(:,1:size_max) = image_center(im1, size_max);
         three_plane_img(:,size_max*2+(1:size_max))=image_center(im2,size_max);
         three_plane_img(:,size_max+(1:size_max))=image_center(im3,size_max);
+        h=subplot(2,2,1:2);
         imagesc(three_plane_img);
         colormap('gray');
         caxis([0 1])
         axis equal;
         axis tight;
         axis off;
+        p = get(h,'pos') % get position of axes
+        set(h,'pos',[0.1 0.5 0.8 0.4]) % move the axes slightly
+        
+        script_path=which('GannetLoad');
+              % CJE update for GE
+    %          Gannet_circle=[script_path(1:(end-12)) 'GANNET_circle.png'];
+              Gannet_circle_white=[script_path(1:(end-13)) '/GANNET_circle_white.jpg'];
+    %          A=imread(Gannet_circle);
+              A2=imread(Gannet_circle_white);
+              hax=axes('Position',[0.80, 0.05, 0.15, 0.15]);
+              %set(gca,'Units','normalized');set(gca,'Position',[0.05 0.05 1.85 0.15]);
+              image(A2);axis off; axis square;
+
+        %axis off;
 
 end
