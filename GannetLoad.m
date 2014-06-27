@@ -95,15 +95,15 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             da_xres = MRS_struct.p.npoints;
             da_yres = MRS_struct.p.nrows;
             WaterData = MRS_struct.fids.data_water;
-            MRS_struct.fids.data = MRS_struct.fids.gabadata*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);%I think GE does sum over NEX
-            FullData = MRS_struct.fids.gabadata;
+            MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);%I think GE does sum over NEX
+            FullData = MRS_struct.fids.data;
             ComWater = mean(WaterData,2);
             %Set up vector of which rows of .data are ONs and OFFs.
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.gabadata,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.gabadata,2)/2]);
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
             totalframes = MRS_struct.p.nrows;
         case 'Siemens_twix'
