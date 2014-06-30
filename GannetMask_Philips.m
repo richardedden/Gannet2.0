@@ -224,5 +224,5 @@ MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
 %axis tight;
 %axis off;
 
-%end
+end
 
