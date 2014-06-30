@@ -205,7 +205,7 @@ voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
 voxel_search=sqrt(sum(voxel_search,1));
 [min2,index1]=min(voxel_search);
 
-[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1)
+[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1);
 
 %slice = [round(V.dim(1)/2+voxel_ctr(1)) 
  %       round(V.dim(2)/2+voxel_ctr(2)) 

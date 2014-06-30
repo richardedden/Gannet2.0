@@ -2,7 +2,11 @@ function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2)
 
 
 if(nargin <4)
-    dcm_dir2=dcm_dir;
+    dcm_dir2={dcm_dir};
+    
+end
+if(nargin <3)
+    MRS_struct.ii=1;
 end
 % this relies on SPM, nifti exported by Philips, and spar/sdat
 
@@ -51,14 +55,16 @@ currdir=pwd;
 
 cd(dcm_dir2{MRS_struct.ii});
 dcm_list=dir;
-dcm_list=dcm_list(3).name;
+dcm_list2 =dcm_list(3).name;
+if dcm_list2((end-2:end))=='nii'
+   dcm_list2 =dcm_list(4).name;
+end
 
 
-
-MRSRotHead=dicominfo(dcm_list); 
+MRSRotHead=dicominfo(dcm_list2); 
 MRS_Rot=MRSRotHead.ImageOrientationPatient;
 MRS_Rot=reshape(MRS_Rot',[3 2]);
-MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2))
+MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2));
 MRS_Rot(1,:)=-MRS_Rot(1,:);
 rotmat=-MRS_Rot;
 
@@ -188,10 +194,11 @@ T1img_mas = T1img + .2*mask;
 %FOR NOW NEED TO FIX
 %MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
 
-%This assumes 1-mm iso T1 - need to fix at a later date.
-slice = [round(V.dim(1)/2+voxel_ctr(1)) 
-        round(V.dim(2)/2+voxel_ctr(2)) 
-        round(V.dim(3)/2+voxel_ctr(3))];
+voxel_ctr(1:2)=-voxel_ctr(1:2);
+voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
+voxel_search=sqrt(sum(voxel_search,1));
+[min2,index1]=min(voxel_search);
+[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1);
 
 size_max=max(size(T1img_mas));
 three_plane_img=zeros([size_max 3*size_max]);
@@ -209,13 +216,13 @@ three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
 
 
-%figure(198)
-%imagesc(three_plane_img);
-%colormap('gray');
-%caxis([0 1])
-%axis equal;
-%axis tight;
-%axis off;
+figure(198)
+imagesc(three_plane_img);
+colormap('gray');
+caxis([0 1])
+axis equal;
+axis tight;
+axis off;
 
 %end
 
