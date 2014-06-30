@@ -9,15 +9,17 @@ if (MRS_struct.ii ~= length(nii_name))
        error('The number of nifti files does not match the number of MRS files processed by GannetLoad.'); 
 end
 
+for ii = 1:MRS_struct.ii
+    ii
+    nii_name{ii} 
+
 %Ultimately this switch will not be necessary...
     switch MRS_struct.p.vendor
     
     case 'Philips'
-        for ii=1:length(nii_name)
             fname = MRS_struct.gabafile{ii};
             sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-            MRS_struct=GannetMask_Philips(sparname,nii_name{ii},MRS_struct);
-        end
+            MRS_struct=GannetMask_Philips(sparname,nii_name{ii},MRS_struct, ii);
     case 'Philips_data'
         if exist(MRS_struct.gabafile_sdat)
                 MRS_struct.p.vendor = 'Philips';
@@ -48,22 +50,12 @@ end
     case 'Siemens_twix'
         error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);        
     case 'GE'
-        for ii=1:length(nii_name)
             fname = MRS_struct.gabafile{ii};
             %sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
             MRS_struct=GannetMask_GE(fname,nii_name{ii},MRS_struct,rot_folder);
-        end
-        %error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);
     end
     
     
-    %Currently only SDAT is supported
-    %Run the script...
-%    for ii=1:length(nii_name)
-%        fname = MRS_struct.gabafile{ii};
-%        sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-%        MRS_struct=GannetMask(sparname,nii_name{ii},MRS_struct);
-%    end
     
     %Build output figure
     h=figure(103);
@@ -98,4 +90,69 @@ end
 
         %axis off;
 
+        
+        
+           %%%%  Save EPS %%%%%
+           
+           %110624
+epsdirname = [ './MRSCoReg_' datestr(clock,'yymmdd') ];
+
+           
+%     if strcmp(MRS_struct.p.vendor,'Siemens')
+%     pfil_nopath = MRS_struct.gabafile{ii*2-1};
+%     else
+
+pfil_nopath = MRS_struct.gabafile{ii};
+%     end
+
+tmp = strfind(pfil_nopath,'/');
+    tmp2 = strfind(pfil_nopath,'\');
+    if(tmp)
+        lastslash=tmp(end);
+    elseif (tmp2)
+        %maybe it's Windows...
+        lastslash=tmp2(end);
+    else
+        % it's in the current dir...
+        lastslash=0;
+    end
+    if(strcmpi(MRS_struct.p.vendor,'Philips'))
+        tmp = strfind(pfil_nopath, '.sdat');
+        tmp1= strfind(pfil_nopath, '.SDAT');
+        if size(tmp,1)>size(tmp1,1)
+            dot7 = tmp(end); % just in case there's another .sdat somewhere else...
+        else
+            dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
+        end
+    elseif(strcmpi(MRS_struct.p.vendor,'GE'))
+        tmp = strfind(pfil_nopath, '.7');
+        dot7 = tmp(end); % just in case there's another .7 somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))  % make this be sdat
+        tmp = strfind(pfil_nopath, '.data');
+        dot7 = tmp(end); % just in case there's another .data somewhere else...
+%     elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))
+%         tmp = strfind(pfil_nopath, '.rda');
+%         dot7 = tmp(end); % just in case there's another .data somewhere else...
+%     elseif(strcmpi(MRS_struct.p.vendor,'Siemens_twix'))
+%         tmp = strfind(pfil_nopath, '.dat');
+%         dot7 = tmp(end); % just in case there's another .dat somewhere else...
+    end
+    pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
+    %Save pdf output
+    set(gcf, 'PaperUnits', 'inches');
+    set(gcf,'PaperSize',[11 8.5]);
+    set(gcf,'PaperPosition',[0 0 11 8.5]);
+    if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
+        pdfname=[ epsdirname '/' fullpath '.pdf' ];
+    else
+        pdfname=[ epsdirname '/' pfil_nopath  '.pdf' ];
+    end
+    %epsdirname
+    if(exist(epsdirname,'dir') ~= 7)
+        epsdirname
+        mkdir(epsdirname)
+    end
+    saveas(gcf, pdfname);
+        
+        
 end
