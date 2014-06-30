@@ -55,6 +55,7 @@ MRS_struct.p.voxang(3) = str2num(sparheadinfo{sparidx+2});
 V=spm_vol(nii_file);
 [T1,XYZ]=spm_read_vols(V);
 H=spm_read_hdr(nii_file);
+size(XYZ)
 %Shift imaging voxel coordinates by half an imaging voxel so that the XYZ matrix
 %tells us the x,y,z coordinates of the MIDDLE of that imaging voxel.
 halfpixshift = -H.dime.pixdim(1:3).'/2;
@@ -196,17 +197,17 @@ T1img_mas = T1img + .2*mask;
 MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
 %This assumes 1-mm iso T1 - need to fix at a later date.
 
-voxel_ctr(1:2)=-voxel_ctr(1:2);
-
-voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
+voxel_search=(XYZ(:,:)-repmat(voxel_ctr,[1 size(XYZ,2)])).^2;
 voxel_search=sqrt(sum(voxel_search,1));
-[min2,index1]=min(voxel_search);
+voxel_search=reshape(voxel_search,);
+[min,index1]=min(voxel_search,[],1);
+[min,index1]=min(voxel_search,[],1);
+[min,index1]=min(voxel_search,[],1);
 
-[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1)
 
-%slice = [round(V.dim(1)/2+voxel_ctr(1)) 
- %       round(V.dim(2)/2+voxel_ctr(2)) 
- %       round(V.dim(3)/2+voxel_ctr(3))];
+slice = [round(V.dim(1)/2+voxel_ctr(1)) 
+        round(V.dim(2)/2+voxel_ctr(2)) 
+        round(V.dim(3)/2+voxel_ctr(3))];
 
     
     
@@ -227,13 +228,13 @@ three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
 
 
-figure(198)
-imagesc(three_plane_img);
-colormap('gray');
-caxis([0 1])
-axis equal;
-axis tight;
-axis off;
+%figure(198)
+%imagesc(three_plane_img);
+%colormap('gray');
+%caxis([0 1])
+%axis equal;
+%axis tight;
+%axis off;
 
 end
 
