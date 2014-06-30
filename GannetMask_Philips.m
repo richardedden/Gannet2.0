@@ -1,5 +1,8 @@
 function [MRS_struct ] = GannetMask_Philips(sparname, nii_file, MRS_struct)
 
+if (nargin == 2)
+    MRS_struct.ii=1;
+end
 
 
 % this relies on SPM, nifti exported by Philips, and spar/sdat
