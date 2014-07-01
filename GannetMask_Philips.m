@@ -1,9 +1,11 @@
-function [MRS_struct ] = GannetMask_Philips(sparname, nii_file, MRS_struct)
+function [MRS_struct ] = GannetMask_Philips(sparname, nii_file, MRS_struct, ii)
+
 
 if (nargin == 2)
     MRS_struct.ii=1;
+    ii = 1;
 end
-
+ii
 
 % this relies on SPM, nifti exported by Philips, and spar/sdat
 
@@ -193,10 +195,10 @@ T1img_mas = T1img + .2*mask;
  voxel_ctr = [-lr_off -ap_off cc_off];
 
 
-
+fidoutmask = cellstr(fidoutmask);
 %MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
 %MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
-MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+MRS_struct.mask.outfile(ii,:)=fidoutmask;
 %This assumes 1-mm iso T1 - need to fix at a later date.
 
 voxel_ctr(1:2)=-voxel_ctr(1:2);

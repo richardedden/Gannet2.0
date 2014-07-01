@@ -1,6 +1,5 @@
 function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2)
 
-
 if(nargin <4)
     dcm_dir2={dcm_dir};
     
@@ -8,6 +7,8 @@ end
 if(nargin <3)
     MRS_struct.ii=1;
 end
+
+for ii = 1:MRS_struct.ii
 % this relies on SPM, nifti exported by Philips, and spar/sdat
 
 % some code to make ok wth 2 or 3  inputs
@@ -53,26 +54,31 @@ MRS_struct.p.voxsize = [f e d ]; % works for ob-axial rotator
 %MRS_struct.p.voxang = [0 0 0];
 currdir=pwd;
 
-cd(dcm_dir2{MRS_struct.ii});
+cd(dcm_dir2);
 dcm_list=dir;
 dcm_list2 =dcm_list(3).name;
 if dcm_list2((end-2:end))=='nii'
    dcm_list2 =dcm_list(4).name;
 end
-
-
-MRSRotHead=dicominfo(dcm_list2); 
-MRS_Rot=MRSRotHead.ImageOrientationPatient;
-MRS_Rot=reshape(MRS_Rot',[3 2]);
-MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2));
-MRS_Rot(1,:)=-MRS_Rot(1,:);
-rotmat=-MRS_Rot;
-
+%%
+% check to see if this works...
+%
+ MRSRotHead=dicominfo(dcm_list2); 
+% MRS_Rot=MRSRotHead.ImageOrientationPatient;
+% MRS_Rot=reshape(MRS_Rot',[3 2]);
+% MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2));
+% % MRS_Rot(1,:)=-MRS_Rot(1,:);
+% % MRS_Rot(3,2) = -MRS_Rot(3,2);
+% % MRS_Rot(2,3) = -MRS_Rot(2,3);
+% rotmat=MRS_Rot;
+% 
 
 %hdr = spm_dicom_headers(char(dcm_list.name));
 %spm_dicom_convert(hdr, 'all','flat','nii');
 %nii_file_dir=dir('s*.nii');
 %Vrot=spm_vol(nii_file);
+%%
+
 cd(currdir);
 
 
@@ -144,13 +150,37 @@ vox_ctr = ...
        lr_size/2 -ap_size/2 -cc_size/2 ;
        -lr_size/2 -ap_size/2 -cc_size/2 ];
    
-vox_rot=rotmat*vox_ctr.';
+%vox_rot=rotmat*vox_ctr.';
+
+
+
+
+
 
 % calculate corner coordinates relative to xyz origin
 vox_ctr_coor = [lr_off ap_off cc_off];
 vox_ctr_coor = repmat(vox_ctr_coor.', [1,8]);
-vox_corner = vox_rot+vox_ctr_coor;
+% vox_corner = vox_rot+vox_ctr_coor;
 
+%NEw cose RAEE
+
+MRS_Rot_RE=MRSRotHead.ImageOrientationPatient;
+MRS_Rot_RE=reshape(MRS_Rot_RE',[3 2]);
+edge1=repmat(MRS_Rot_RE(:,1), [1 8]);
+edge1(:,2:3)=-edge1(:,2:3);
+edge1(:,5)=-edge1(:,5);
+edge1(:,8)=-edge1(:,8);
+edge1(1:2,:)=-edge1(1:2,:);
+
+edge2=repmat(MRS_Rot_RE(:,2), [1 8]);
+edge2(:,1:2)=-edge2(:,1:2);
+edge2(:,7)=-edge2(:,7);
+edge2(:,8)=-edge2(:,8);
+edge2(1:2,:)=-edge2(1:2,:);
+edge3=repmat(cross(MRS_Rot_RE(:,1),MRS_Rot_RE(:,2)),[1 8]);
+edge3(:,5:8)=-edge3(:,5:8);
+edge3(1:2,:)=-edge3(1:2,:);
+vox_corner=vox_ctr_coor+lr_size/2*edge1+ap_size/2*edge2+cc_size/2*edge3;
 
 
 %%% make new comment
@@ -224,5 +254,7 @@ axis equal;
 axis tight;
 axis off;
 
-%end
+
+
+end
 
