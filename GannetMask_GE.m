@@ -1,11 +1,18 @@
 function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2)
 
-if(nargin <4)
-    dcm_dir2={dcm_dir};
+if(nargin ==3)
+    if isstruct(MRS_struct)
+        dcm_dir2={dcm_dir};
+    else
+        dcm_dir2=MRS_struct;
+        clear MRS_struct;
+        MRS_struct.ii=1;
+    end
     
 end
-if(nargin <3)
+if(nargin <3)    
     MRS_struct.ii=1;
+    dcm_dir2={dcm_dir};
 end
 
 for ii = 1:MRS_struct.ii
