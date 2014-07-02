@@ -52,7 +52,7 @@ for ii = 1:MRS_struct.ii
     case 'GE'
             fname = MRS_struct.gabafile{ii};
             %sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
-            MRS_struct=GannetMask_GE(fname,nii_name{ii},MRS_struct,rot_folder);
+            MRS_struct=GannetMask_GE(fname,nii_name{ii},MRS_struct,rot_folder{ii});
     end
     
     
