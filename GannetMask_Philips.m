@@ -5,7 +5,7 @@ if (nargin == 2)
     MRS_struct.ii=1;
     ii = 1;
 end
-ii
+
 
 % this relies on SPM, nifti exported by Philips, and spar/sdat
 
@@ -230,9 +230,10 @@ three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
 MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
+MRS_struct.mask.T1image = nii_file;
 
 if(nargin==2)
-figure(198)
+figure(198);
 imagesc(three_plane_img);
 colormap('gray');
 caxis([0 1])
