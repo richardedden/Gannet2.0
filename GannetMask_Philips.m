@@ -36,25 +36,25 @@ fidoutmask = fullfile(pathnii,[namespar '_mask.nii'])
 sparheadinfo = textread(sparname, '%s');
 
 sparidx=find(ismember(sparheadinfo, 'ap_size')==1);
-MRS_struct.p.voxsize(2) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxsize(ii,2) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'lr_size')==1);
-MRS_struct.p.voxsize(1) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxsize(ii,1) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'cc_size')==1);
-MRS_struct.p.voxsize(3) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxsize(ii,3) = str2num(sparheadinfo{sparidx+2});
 
 sparidx=find(ismember(sparheadinfo, 'ap_off_center')==1);
-MRS_struct.p.voxoff(2) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxoff(ii,2) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'lr_off_center')==1);
-MRS_struct.p.voxoff(1) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxoff(ii,1) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'cc_off_center')==1);
-MRS_struct.p.voxoff(3) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxoff(ii,3) = str2num(sparheadinfo{sparidx+2});
 
 sparidx=find(ismember(sparheadinfo, 'ap_angulation')==1);
-MRS_struct.p.voxang(2) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxang(ii,2) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'lr_angulation')==1);
-MRS_struct.p.voxang(1) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxang(ii,1) = str2num(sparheadinfo{sparidx+2});
 sparidx=find(ismember(sparheadinfo, 'cc_angulation')==1);
-MRS_struct.p.voxang(3) = str2num(sparheadinfo{sparidx+2});
+MRS_struct.p.voxang(ii,3) = str2num(sparheadinfo{sparidx+2});
 
 
 V=spm_vol(nii_file);
@@ -229,8 +229,8 @@ three_plane_img(:,1:size_max) = image_center(im1, size_max);
 three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
-MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
-MRS_struct.mask.T1image = nii_file;
+MRS_struct.mask.img(ii,:,:)=three_plane_img;
+MRS_struct.mask.T1image(ii) = nii_file;
 
 if(nargin==2)
 figure(198);
