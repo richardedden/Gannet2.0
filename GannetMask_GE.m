@@ -1,17 +1,20 @@
-function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2)
+function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2,ii)
 
 if(nargin ==3)
     if isstruct(MRS_struct)
         dcm_dir2={dcm_dir};
+        ii =1;
     else
         dcm_dir2=MRS_struct;
         clear MRS_struct;
         MRS_struct.ii=1;
+        ii = 1;
     end
     
 end
 if(nargin <3)    
     MRS_struct.ii=1;
+    ii = 1;
     dcm_dir2={dcm_dir};
 end
 
@@ -44,7 +47,7 @@ k = findstr(' user12:', MRSHead);
 c=str2num(MRSHead(k+11:k+18));
 k = findstr(' user13:', MRSHead);
 a=str2num(MRSHead(k+11:k+18));
-MRS_struct.p.voxoff=[ -b -c a];
+MRS_struct.p.voxoff(ii,:)=[ -b -c a];
 
 k = findstr(' user8:', MRSHead);
 d=str2num(MRSHead(k+10:k+17));
@@ -53,12 +56,12 @@ e=str2num(MRSHead(k+10:k+17));
 %e = 0.5*e; %e is the anterior posterior direction
 k = findstr(' user10:', MRSHead);
 f=str2num(MRSHead(k+11:k+18));
-MRS_struct.p.voxsize = [f e d ]; % works for ob-axial rotator 
+MRS_struct.p.voxsize(ii,:) = [d e f ]; % works for ob-axial rotator 
 
 % MRS_struct.p.voxang is not contained in P-file header (really!)
 % The rotation is adopted from the image on which the voxel was placed
 % i.e. either the 3D T1 or a custom rotated localizer. 
-%MRS_struct.p.voxang = [0 0 0];
+MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
 currdir=pwd;
 
 
@@ -129,12 +132,12 @@ halfpixshift = -H.dime.pixdim(1:3).'/2;
 %halfpixshift(3) = -halfpixshift(3);
 XYZ=XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
 
-ap_size = MRS_struct.p.voxsize(2);
-lr_size = MRS_struct.p.voxsize(1);
-cc_size = MRS_struct.p.voxsize(3);
-ap_off = MRS_struct.p.voxoff(2);
-lr_off = MRS_struct.p.voxoff(1);
-cc_off = MRS_struct.p.voxoff(3);
+ap_size = MRS_struct.p.voxsize(ii,2);
+lr_size = MRS_struct.p.voxsize(ii,1);
+cc_size = MRS_struct.p.voxsize(ii,3);
+ap_off = MRS_struct.p.voxoff(ii,2);
+lr_off = MRS_struct.p.voxoff(ii,1);
+cc_off = MRS_struct.p.voxoff(ii,3);
 %ap_ang = MRS_struct.p.voxang(2);
 %lr_ang = MRS_struct.p.voxang(1);
 %cc_ang = MRS_struct.p.voxang(3);
@@ -238,7 +241,7 @@ T1img_mas = T1img + .2*mask;
 %MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
 
 %FOR NOW NEED TO FIX
-%MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
 
 voxel_ctr(1:2)=-voxel_ctr(1:2);
 voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
@@ -260,7 +263,7 @@ three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
 MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
-
+MRS_struct.mask.T1image = nii_file;
 
 figure(198)
 imagesc(three_plane_img);
