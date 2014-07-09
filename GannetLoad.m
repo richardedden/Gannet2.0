@@ -386,13 +386,14 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              end
              tmp = regexprep(tmp, '_','-');
              text(0,0.9, tmp, 'FontName', 'Helvetica','FontSize',13);
-             tmp = [ 'Navg        : ' num2str(MRS_struct.p.Navg(ii)) ];
+             tmp = [ 'Navg        : ' num2str(MRS_struct.p.Navg(ii))  ' averages'];
              text(0,0.8, tmp, 'FontName', 'Helvetica','FontSize',13);
              if isfield(MRS_struct.p,'voxsize')
              tmp = [ 'Volume     : '  num2str(MRS_struct.p.voxsize(ii,1)*MRS_struct.p.voxsize(ii,2)*MRS_struct.p.voxsize(ii,3)*.001) ' ml'];
              text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',13);
              end          
-             tmp = sprintf('Cr FWHM (Hz)   : %.2f', MRS_struct.out.CrFWHMHz(ii) );
+             tmp = sprintf('Cr FWHM   : %.2f Hz', MRS_struct.out.CrFWHMHz(ii) );
+             
              text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',13);
              %tmp = sprintf('FreqSTD (Hz): %.2f', MRS_struct.FreqStdevHz(ii));
              %text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
