@@ -446,9 +446,24 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
 
     %and running the plot
-    if isfield(MRS_struct.mask.img
+    if isstruct(MRS_struct.mask)
+    h=subplot(2,2,2)
+    p = get(h,'pos') % get position of axes
+    set(h,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
+
+    input=MRS_struct.mask.img(MRS_struct.ii,:,1:round(size(MRS_struct.mask.img,3)/3));
+    size(input)
+    imagesc(squeeze(MRS_struct.mask.img(MRS_struct.ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
+    colormap('gray');
+    caxis([0 1])
+    axis equal;
+    axis tight;
+    axis off;
+    subplot(2,2,4,'replace')
+    else
+    subplot(2,2,2)        
+    end
     
-    subplot(2,2,2)
     axis off
       if strcmp(MRS_struct.p.vendor,'Siemens')
          tmp = [ 'filename    : ' MRS_struct.gabafile{ii*2-1} ];
@@ -497,7 +512,12 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         text(0,0.0, tmp);
     end
     %Add Gannet logo
+    if isstruct(MRS_struct.mask)
+    
+    subplot(2,2,4)
+    else
     subplot(2,2,4,'replace')
+    end
     axis off;
     script_path=which('GannetFit');
     Gannet_circle_white=[script_path(1:(end-12)) '/GANNET_circle_white.jpg'];
@@ -601,12 +621,12 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
 
 
-        if(isfield(MRS_struct, 'waterfile') == 1)
+       if(isfield(MRS_struct, 'waterfile') == 1)
             structorder = {'versionload', 'versionfit', 'ii', ...
-                'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out'};
+                'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
         else 
              structorder = {'versionload', 'versionfit','ii', ...
-                 'gabafile', 'p', 'fids', 'spec', 'out'};
+                 'gabafile', 'p', 'fids', 'spec', 'out', 'mask'};
         end
 
 MRS_struct = orderfields(MRS_struct, structorder);

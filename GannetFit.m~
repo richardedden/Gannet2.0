@@ -446,9 +446,13 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
 
     %and running the plot
-    if isfield(MRS_struct.mask.img
+    if isstruct(MRS_struct.mask)
     
-    subplot(2,2,2)
+    subplot(2,2,4)
+    else
+    subplot(2,2,3)        
+    end
+    
     axis off
       if strcmp(MRS_struct.p.vendor,'Siemens')
          tmp = [ 'filename    : ' MRS_struct.gabafile{ii*2-1} ];
@@ -601,12 +605,12 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
 
 
-        if(isfield(MRS_struct, 'waterfile') == 1)
+       if(isfield(MRS_struct, 'waterfile') == 1)
             structorder = {'versionload', 'versionfit', 'ii', ...
-                'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out'};
+                'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
         else 
              structorder = {'versionload', 'versionfit','ii', ...
-                 'gabafile', 'p', 'fids', 'spec', 'out'};
+                 'gabafile', 'p', 'fids', 'spec', 'out', 'mask'};
         end
 
 MRS_struct = orderfields(MRS_struct, structorder);
