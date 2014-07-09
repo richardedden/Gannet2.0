@@ -18,7 +18,7 @@ freq=MRS_struct.spec.freq;
 if strcmp(MRS_struct.p.Reference_compound,'H2O')
     WaterData=MRS_struct.spec.water;
 end
-MRS_struct.versionfit = '2 140116';
+MRS_struct.versionfit = '140709';
 disp(['GABA Fit Version is ' MRS_struct.versionfit ]);
 fitwater=1;
 numscans=size(GABAData);
@@ -471,45 +471,45 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = [ 'filename    : ' MRS_struct.gabafile{ii} ];
      end
     tmp = regexprep(tmp, '_','-');
-    text(0,0.9, tmp);
+    text(0,0.9, tmp, 'FontName', 'Hevetica');
     tmp =       [ 'Navg         : ' num2str(MRS_struct.p.Navg(ii)) ];
-    text(0,0.8, tmp);
+    text(0,0.8, tmp, 'FontName', 'Hevetica');
     %Remove this - more useful to add in Cr fWHM at a later date
     %tmp = sprintf('GABA+ FWHM   : %.2f Hz', MRS_struct.out.GABAFWHM(ii) );
     %text(0,0.7, tmp);
     if isfield(MRS_struct.p,'voxsize')
              tmp = [ 'Volume     : '  num2str(MRS_struct.p.voxsize(ii,1)*MRS_struct.p.voxsize(ii,2)*MRS_struct.p.voxsize(ii,3)*.001) ' ml'];
-             text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',13);
+             text(0,0.7, tmp, 'FontName', 'Helvetica');
              end          
              
     tmp = sprintf('GABA+ Area   : %.4f', MRS_struct.out.GABAArea(ii) );
     text(0,0.6, tmp);
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
         tmp = sprintf('H2O/Cr Area   :%.3f/%.3f ', MRS_struct.out.WaterArea(ii),MRS_struct.out.CrArea(ii) );
-        text(0,0.5, tmp);
+        text(0,0.5, tmp, 'FontName', 'Hevetica');
         tmp = sprintf('%.2f, %.2f ',  MRS_struct.out.GABAIU_Error_w(ii),  MRS_struct.out.GABAIU_Error_cr(ii));
         tmp = [tmp '%'];
         tmp = ['FtErr (H/Cr) : ' tmp];
-        text(0,0.4, tmp);
+        text(0,0.4, tmp, 'FontName', 'Hevetica');
         tmp = sprintf('GABA+ / H_2O  : %.4f inst. units.', MRS_struct.out.GABAconciu(ii) );
-        text(0,0.3, tmp);
+        text(0,0.3, tmp, 'FontName', 'Hevetica');
         tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
-        text(0,0.2, tmp);
+        text(0,0.2, tmp, 'FontName', 'Hevetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
-        text(0,0.1, tmp);
+        text(0,0.1, tmp, 'FontName', 'Hevetica');
         tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
-        text(0,-0.1, tmp, 'FontName', 'Courier');
+        text(0,-0.1, tmp, 'FontName', 'Hevetica');
     else
         tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.CrArea(ii) );
-        text(0,0.5, tmp);
+        text(0,0.5, tmp, 'FontName', 'Hevetica');
         tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr);
-        text(0,0.4, tmp);
+        text(0,0.4, tmp, 'FontName', 'Hevetica');
         tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
-        text(0,0.3, tmp);
+        text(0,0.3, tmp, 'FontName', 'Hevetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
-        text(0,0.2, tmp);
+        text(0,0.2, tmp, 'FontName', 'Hevetica');
         tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
-        text(0,0.0, tmp);
+        text(0,0.0, tmp, 'FontName', 'Hevetica');
     end
     %Add Gannet logo
     if isstruct(MRS_struct.mask)

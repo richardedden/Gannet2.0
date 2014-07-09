@@ -41,7 +41,7 @@ if missing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MRS_struct.versionload = 'G2 140116';
+MRS_struct.versionload = '140709';
 MRS_struct.ii=0;
 MRS_struct.gabafile=gabafile;
 MRS_struct=GannetPreInitialise(MRS_struct);
