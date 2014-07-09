@@ -380,30 +380,30 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              subplot(2,2,4);
              axis off;
              if strcmp(MRS_struct.p.vendor,'Siemens')
-                 tmp = [ 'Filename    : ' MRS_struct.gabafile{ii*2-1} ];
+                 tmp = [ 'filename    : ' MRS_struct.gabafile{ii*2-1} ];
              else
-                tmp = [ 'Filename    : ' MRS_struct.gabafile{ii} ];
+                tmp = [ 'filename    : ' MRS_struct.gabafile{ii} ];
              end
              tmp = regexprep(tmp, '_','-');
-             text(0,0.9, tmp, 'FontName', 'Helvetica','FontSize',13);
+             text(0,0.9, tmp, 'FontName', 'Helvetica','FontSize',12);
              tmp = [ 'Navg        : ' num2str(MRS_struct.p.Navg(ii)) ];
-             text(0,0.8, tmp, 'FontName', 'Helvetica','FontSize',13);
-             if isfield(MRS_struct.p,'voxsize')
-             tmp = [ 'Volume     : '  num2str(MRS_struct.p.voxsize(ii,1)*MRS_struct.p.voxsize(ii,2)*MRS_struct.p.voxsize(ii,3)*.001) ' ml'];
-             text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',13);
-             end          
+             text(0,0.8, tmp, 'FontName', 'Helvetica','FontSize',12);
              tmp = sprintf('Cr FWHM (Hz)   : %.2f', MRS_struct.out.CrFWHMHz(ii) );
-             text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',13);
+             text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',12);
              %tmp = sprintf('FreqSTD (Hz): %.2f', MRS_struct.FreqStdevHz(ii));
              %text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
              tmp = [ 'LB (Hz)     : ' num2str(MRS_struct.p.LB,2) ];
-             text(0,0.5, tmp, 'FontName', 'Helvetica','FontSize',13);
+             text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
              %tmp = [ 'Align/Reject: ' num2str(MRS_struct.out.FreqPhaseAlign) ];
              %text(0,0.5, tmp, 'FontName', 'Courier');
+             if exist('MRS_struct.p.voxsize')
+             tmp = [ 'Volume     : '  num2str(MRS_struct.p.voxsize(ii,1)*MRS_struct.p.voxsize(ii,2)*MRS_struct.p.voxsize(ii,3)*.001) ];
+             text(0,0.5, tmp, 'FontName', 'Courier');
+             end
              tmp = [ 'Rejects     : '  num2str(sum(MRS_struct.out.reject(:,ii),1)) ];
-             text(0,0.4, tmp, 'FontName', 'Helvetica','FontSize',13);
+             text(0,0.4, tmp, 'FontName', 'Courier');
              tmp = [ 'LoadVer     : ' MRS_struct.versionload ];
-             text(0,0.3, tmp, 'FontName', 'Helvetica','FontSize',13);
+             text(0,0.3, tmp, 'FontName', 'Helvetica','FontSize',12);
     %         
               script_path=which('GannetLoad');
               % CJE update for GE
