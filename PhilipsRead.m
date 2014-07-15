@@ -25,26 +25,31 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    MRS_struct.p.sw = str2num(sparheader{sparidx+2});
    
    %Pull in geometry information for GannetCoRegister
-sparidx=find(ismember(sparheadinfo, 'ap_size')==1);
-MRS_struct.p.voxsize(ii,2) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'lr_size')==1);
-MRS_struct.p.voxsize(ii,1) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'cc_size')==1);
-MRS_struct.p.voxsize(ii,3) = str2num(sparheadinfo{sparidx+2});
+   %NP edit 150714; Below section is broken and now commented out as a temporary fix.
+   %sparheadinfo is not set and may have to be sparheader instead. Also,
+   %not looped yet (added edit0
 
-sparidx=find(ismember(sparheadinfo, 'ap_off_center')==1);
-MRS_struct.p.voxoff(ii,2) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'lr_off_center')==1);
-MRS_struct.p.voxoff(ii,1) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'cc_off_center')==1);
-MRS_struct.p.voxoff(ii,3) = str2num(sparheadinfo{sparidx+2});
-
-sparidx=find(ismember(sparheadinfo, 'ap_angulation')==1);
-MRS_struct.p.voxang(ii,2) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'lr_angulation')==1);
-MRS_struct.p.voxang(ii,1) = str2num(sparheadinfo{sparidx+2});
-sparidx=find(ismember(sparheadinfo, 'cc_angulation')==1);
-MRS_struct.p.voxang(ii,3) = str2num(sparheadinfo{sparidx+2});
+   %for ii = 
+% sparidx=find(ismember(sparheadinfo, 'ap_size')==1);
+% MRS_struct.p.voxsize(ii,2) = str2num(sparheadinfo{sparidx+2});
+% sparidx=find(ismember(sparheadinfo, 'lr_size')==1);
+% MRS_struct.p.voxsize(ii,1) = str2num(sparheadinfo{sparidx+2});
+% sparidx=find(ismember(sparheadinfo, 'cc_size')==1);
+% MRS_struct.p.voxsize(ii,3) = str2num(sparheadinfo{sparidx+2});
+% 
+% sparidx=find(ismember(sparheadinfo, 'ap_off_center')==1);
+% MRS_struct.p.voxoff(ii,2) = str2num(sparheadinfo{sparidx+2});
+% sparidx=find(ismember(sparheadinfo, 'lr_off_center')==1);
+% MRS_struct.p.voxoff(ii,1) = str2num(sparheadinfo{sparidx+2});
+% sparidx=find(ismember(sparheadinfo, 'cc_off_center')==1);
+% MRS_struct.p.voxoff(ii,3) = str2num(sparheadinfo{sparidx+2});
+% 
+% sparidx=find(ismember(sparheadinfo, 'ap_angulation')==1);
+% MRS_struct.p.voxang(ii,2) = str2num(sparheadinfo{sparidx+2});
+% sparidx=find(ismember(sparheadinfo, 'lr_angulation')==1);
+% MRS_struct.p.voxang(ii,1) = str2num(sparheadinfo{sparidx+2});
+% sparidx=find(ismember(sparheadinfo, 'cc_angulation')==1);
+% MRS_struct.p.voxang(ii,3) = str2num(sparheadinfo{sparidx+2});
 
    
    
