@@ -197,6 +197,8 @@ for ii=1:numscans
     text(2.8,tailtop+gabamax/20,'data','Color',[0 0 1]);
     text(2.8,tailbottom-gabamax/20,'model','Color',[1 0 0]);
     set(gca,'YTick',[]);
+    set(gca,'Box','off');
+    set(gca,'YColor','white');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % 2.  Water Fit 
@@ -302,6 +304,8 @@ for ii=1:numscans
             freq(freqbounds), residw, 'k');
         set(gca,'XDir','reverse');
         set(gca,'YTick',[]);
+        set(gca,'Box','off');
+        set(gca,'YColor','white');
         xlim([4.2 5.2]);
         %Add on some labels
         hwat=text(4.8,watmax/2,'Water');
@@ -388,17 +392,23 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
             set(gca,'XDir','reverse');
             set(gca,'YTick',[],'Box','off');
             xlim([2.6 3.6]);
+            set(gca,'YColor','white');
             hcr=text(2.94,Crmax*0.75,'Creatine');
             set(hcr,'horizontalAlignment', 'left')
             %Transfer Cr plot into insert
             subplot(2,2,3)
             [h_m h_i]=inset(hb,h2);
-            set(h_i,'fontsize',6)
+            set(h_i,'fontsize',6);
+            insert=get(h_i,'pos');
+            axi=get(hb,'pos');
+            set(h_i,'pos',[axi(1)+axi(3)-insert(3) insert(2:4)]);
             %Add labels
             hwat=text(4.8,watmax/2,'Water');
             set(hwat,'horizontalAlignment', 'right')
             set(h_m,'YTickLabel',[]);
             set(h_m,'XTickLabel',[]);
+            set(gca,'Box','off')
+            set(gca,'YColor','white');
         else
             %Plot the Cr fit
             hb=subplot(2, 2, 3);
@@ -410,7 +420,6 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
                 freqrangecc,real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc)), 'r', ...
                 MRS_struct.spec.freq,real(Cr_OFF(:)),'b', ...
                 freqrange, residCr, 'k');
-            
             
             set(gca,'XDir','reverse');
             set(gca,'YTick',[]);
@@ -496,25 +505,25 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = [tmp '%'];
         tmp = ['FitErr (H/Cr)   : ' tmp];
         text(0,0.4, tmp, 'FontName', 'Hevetica');
-        tmp = sprintf('GABA+ / H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) );
+        tmp = [MRS_struct.p.target sprintf( '/H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) )];
         text(0,0.3, tmp, 'FontName', 'Hevetica');
-        tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.3f'], MRS_struct.out.GABAconcCr(ii) );
+        tmp = [ MRS_struct.p.target sprintf('+/Cr i.r.: %.3f', MRS_struct.out.GABAconcCr(ii) )];
         text(0,0.2, tmp, 'FontName', 'Hevetica');
-        tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
+        tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload  ',' MRS_struct.versionfit];
         text(0,0.1, tmp, 'FontName', 'Hevetica');
-        tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
-        text(0,-0.1, tmp, 'FontName', 'Hevetica');
+        %tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
+        %text(0,-0.1, tmp, 'FontName', 'Hevetica');
     else
         tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.CrArea(ii) );
         text(0,0.5, tmp, 'FontName', 'Hevetica');
         tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr);
         text(0,0.4, tmp, 'FontName', 'Hevetica');
-        tmp = sprintf([MRS_struct.p.target '/Cr i.r.: %.4f'], MRS_struct.out.GABAconcCr(ii) );
+        tmp = [MRS_struct.p.target sprintf( '+/Cr i.r.: %.4f', MRS_struct.out.GABAconcCr(ii) )];
         text(0,0.3, tmp, 'FontName', 'Hevetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
         text(0,0.2, tmp, 'FontName', 'Hevetica');
-        tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
-        text(0,0.0, tmp, 'FontName', 'Hevetica');
+        %tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
+        %text(0,0.0, tmp, 'FontName', 'Hevetica');
     end
     %Add Gannet logo
     if isstruct(MRS_struct.mask)
