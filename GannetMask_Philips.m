@@ -230,7 +230,7 @@ three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
 MRS_struct.mask.img(ii,:,:)=three_plane_img;
-MRS_struct.mask.T1image(ii) = nii_file;
+MRS_struct.mask.T1image(ii,:) = nii_file;
 
 if(nargin==2)
 figure(198);
