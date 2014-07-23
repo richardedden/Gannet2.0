@@ -122,7 +122,7 @@ cd(currdir);
 nii_file=[dcm_dir '/' nii_file_dir(1).name];
 
 V=spm_vol(nii_file);
-V.dim
+%V.dim
 [T1,XYZ]=spm_read_vols(V);
 H=spm_read_hdr(nii_file);
 
@@ -147,15 +147,9 @@ cc_off = MRS_struct.p.voxoff(ii,3);
 ap_off = -ap_off;
 lr_off = -lr_off;
 
-%LINE 118
-
-%ap_ang = -ap_ang;
-%lr_ang = -lr_ang;
 
 
 % define the voxel - use x y z  
-% currently have spar convention that have in AUD voxel - will need to
-% check for everything in future...
 % x - left = positive
 % y - posterior = postive
 % z - superior = positive
@@ -181,7 +175,7 @@ vox_ctr_coor = [lr_off ap_off cc_off];
 vox_ctr_coor = repmat(vox_ctr_coor.', [1,8]);
 % vox_corner = vox_rot+vox_ctr_coor;
 
-%NEw cose RAEE
+%New code RAEE
 
 MRS_Rot_RE=MRSRotHead.ImageOrientationPatient;
 MRS_Rot_RE=reshape(MRS_Rot_RE',[3 2]);
@@ -202,13 +196,10 @@ edge3(1:2,:)=-edge3(1:2,:);
 vox_corner=vox_ctr_coor+lr_size/2*edge1+ap_size/2*edge2+cc_size/2*edge3;
 
 
-%%% make new comment
-
 mask = zeros(1,size(XYZ,2));
 sphere_radius = sqrt((lr_size/2)^2+(ap_size/2)^2+(cc_size/2)^2);
 distance2voxctr=sqrt(sum((XYZ-repmat([lr_off ap_off cc_off].',[1 size(XYZ, 2)])).^2,1));
 sphere_mask(distance2voxctr<=sphere_radius)=1;
-%sphere_mask2=ones(1,(sum(sphere_mask)));
 
 mask(sphere_mask==1) = 1;
 XYZ_sphere = XYZ(:,sphere_mask == 1);
@@ -233,14 +224,8 @@ T1img_mas = T1img + .2*mask;
 
 % construct output
 % 
- voxel_ctr = [-lr_off -ap_off cc_off];
+voxel_ctr = [-lr_off -ap_off cc_off];
 
-
-
-%MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
-%MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
-
-%FOR NOW NEED TO FIX
 MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
 
 voxel_ctr(1:2)=-voxel_ctr(1:2);
@@ -268,7 +253,7 @@ MRS_struct.mask.T1image = nii_file;
 figure(198)
 imagesc(three_plane_img);
 colormap('gray');
-caxis([0 1])
+caxis([0 1]);
 axis equal;
 axis tight;
 axis off;

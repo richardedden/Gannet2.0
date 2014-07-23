@@ -150,10 +150,9 @@ for ii = 1:MRS_struct.ii
         t = regexprep(t, '_','-');
 
         
-        size(squeeze(MRS_struct.mask.img(ii,:,:)))
         imagesc(squeeze(MRS_struct.mask.img(ii,:,:)));
         colormap('gray');
-        caxis([0 1])
+        caxis([0 .5]) % range of 0 to 0.5 seems to work best for now - could calc optimal range later
         axis equal;
         axis tight;
         axis off;
@@ -162,7 +161,7 @@ for ii = 1:MRS_struct.ii
         p = get(h,'pos'); % get position of axes
         set(h,'pos',[0.0 0.15 1 1]) % move the axes slightly
         htitle=title(t, 'FontName', 'Helvetica','FontSize',15);
-        position = get(htitle,'Position')
+        position = get(htitle,'Position');
         position(2)=position(2)-20;
         set(htitle,'Position',position)       
         script_path=which('GannetLoad');
