@@ -89,15 +89,15 @@ XYZ=XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
 % lr_ang = 20.98232651;
 % cc_ang = 10.02927208;
 % 
-ap_size = MRS_struct.p.voxsize(2);
-lr_size = MRS_struct.p.voxsize(1);
-cc_size = MRS_struct.p.voxsize(3);
-ap_off = MRS_struct.p.voxoff(2);
-lr_off = MRS_struct.p.voxoff(1);
-cc_off = MRS_struct.p.voxoff(3);
-ap_ang = MRS_struct.p.voxang(2);
-lr_ang = MRS_struct.p.voxang(1);
-cc_ang = MRS_struct.p.voxang(3);
+ap_size = MRS_struct.p.voxsize(ii, 2);
+lr_size = MRS_struct.p.voxsize(ii, 1);
+cc_size = MRS_struct.p.voxsize(ii, 3);
+ap_off = MRS_struct.p.voxoff(ii, 2);
+lr_off = MRS_struct.p.voxoff(ii, 1);
+cc_off = MRS_struct.p.voxoff(ii, 3);
+ap_ang = MRS_struct.p.voxang(ii, 2);
+lr_ang = MRS_struct.p.voxang(ii, 1);
+cc_ang = MRS_struct.p.voxang(ii, 3);
 % 
 % 
 %We need to flip ap and lr axes to match NIFTI convention

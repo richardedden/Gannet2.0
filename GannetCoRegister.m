@@ -59,6 +59,10 @@ for ii = 1:MRS_struct.ii
     
     
     %Build output figure
+        if(ishandle(103))
+            close(103)
+        end
+    
     h=figure(103);
         set(h, 'Position', [100, 100, 1000, 707]);
         set(h,'Color',[1 1 1]);
@@ -142,12 +146,12 @@ for ii = 1:MRS_struct.ii
               
         h=subplot(2,3,1:3);
 
-        t = ['Voxel from ' MRS_struct.gabafile{ii} ' on ' MRS_struct.mask.T1image(ii)];
+        t = ['Voxel from ' MRS_struct.gabafile{ii} ' on ' MRS_struct.mask.T1image(ii,:)];
         t = regexprep(t, '_','-');
 
         
-        size(squeeze(MRS_struct.mask.img(MRS_struct.ii,:,:)))
-        imagesc(squeeze(MRS_struct.mask.img(MRS_struct.ii,:,:)));
+        size(squeeze(MRS_struct.mask.img(ii,:,:)))
+        imagesc(squeeze(MRS_struct.mask.img(ii,:,:)));
         colormap('gray');
         caxis([0 1])
         axis equal;
