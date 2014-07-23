@@ -634,6 +634,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 %140116: ADH reorder structure
 
 
+      if(isfield(MRS_struct, 'mask') == 1)
 
        if(isfield(MRS_struct, 'waterfile') == 1)
             structorder = {'versionload', 'versionfit', 'ii', ...
@@ -641,7 +642,19 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         else 
              structorder = {'versionload', 'versionfit','ii', ...
                  'gabafile', 'p', 'fids', 'spec', 'out', 'mask'};
-        end
+       end
+       
+      else
+             
+       if(isfield(MRS_struct, 'waterfile') == 1)
+            structorder = {'versionload', 'versionfit', 'ii', ...
+                'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out'};
+        else 
+             structorder = {'versionload', 'versionfit','ii', ...
+                 'gabafile', 'p', 'fids', 'spec', 'out'};
+       end
+      end
+        
 
 MRS_struct = orderfields(MRS_struct, structorder);
 
