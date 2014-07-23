@@ -455,7 +455,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
 
     %and running the plot
-    if isstruct(MRS_struct.mask)
+    if any(strcmp('mask',fieldnames(MRS_struct))) == 1
     h=subplot(2,2,2)
     p = get(h,'pos') % get position of axes
     set(h,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
@@ -526,7 +526,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         %text(0,0.0, tmp, 'FontName', 'Hevetica');
     end
     %Add Gannet logo
-    if isstruct(MRS_struct.mask)
+    if any(strcmp('mask',fieldnames(MRS_struct))) == 1
     
     subplot(2,2,4)
     else
