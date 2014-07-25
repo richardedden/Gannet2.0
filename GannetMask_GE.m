@@ -226,7 +226,7 @@ T1img_mas = T1img + .2*mask;
 % 
 voxel_ctr = [-lr_off -ap_off cc_off];
 
-MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+MRS_struct.mask.outfile(ii,:)=fidoutmask;
 
 voxel_ctr(1:2)=-voxel_ctr(1:2);
 voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
@@ -247,7 +247,7 @@ three_plane_img(:,1:size_max) = image_center(im1, size_max);
 three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
-MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
+MRS_struct.mask.img(ii,:,:)=three_plane_img;
 MRS_struct.mask.T1image = nii_file;
 
 figure(198)

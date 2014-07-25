@@ -19,20 +19,7 @@ end
 fidoutmask = fullfile(pathnii,[namespar '_mask.nii'])
 
 
-%function make_voxel
- 
-%if nargin =2;   
-%     lastchar = sdatfile;   
-%     last4char=lastchar((end-3):end);
-%     
-%     if(strcmp(last4char,'SDAT'))
-%        MRS_struct.p.spar_string='SPAR';
-%     else
-%         MRS_struct.p.spar_string='spar';
-%     end
-%     
-%     sparname = [sdatfile MRS_struct.p.spar_string]
-%end
+
 sparheadinfo = textread(sparname, '%s');
 
 sparidx=find(ismember(sparheadinfo, 'ap_size')==1);
@@ -67,27 +54,6 @@ halfpixshift(3) = -halfpixshift(3);
 XYZ=XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
 
 % get information from SPAR - change later to be read in
-
-% ap_size = 30;
-% lr_size = 30;
-% cc_size = 30;
-% ap_off = 61.8508873;
-% lr_off = -7.173314571;
-% cc_off = -0.3336545825;
-% ap_ang = -2.264750719;
-% lr_ang = -28.66100502;
-% cc_ang = 3.604790211;
-% 
-
-% ap_size = 40;
-% lr_size = 30;
-% cc_size = 20;
-% ap_off = -3.092470646;
-% lr_off = 36.38365555;
-% cc_off = -23.80636787;
-% ap_ang = 3.970147133;
-% lr_ang = 20.98232651;
-% cc_ang = 10.02927208;
 % 
 ap_size = MRS_struct.p.voxsize(ii, 2);
 lr_size = MRS_struct.p.voxsize(ii, 1);
