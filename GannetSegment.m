@@ -1,10 +1,11 @@
 function [MRS_struct] =  GannetSegment(MRS_struct)
 
-% should actually be 
-% []MRS_struct= GannetSegment(MRS_struct)
-% but thats a thing for later
-% can jsut name the files in a struct for testing
-
+% relies on spm being installed
+%
+% Runs segmentation script if segmented images not present according to
+% file convention of c1 c2 and c3 as prefixes on the anatomical image name
+% for the GM WM and CSF segmentations. If these files are present, they are
+% loaded and used for the voxel segmentation
 
 MRS_struct.out.tissue.version= '20140730';
 
@@ -15,11 +16,17 @@ for ii = 1:MRS_struct.ii
 %1 - take nifti from GannetCoRegister and segment it in spm
 
 anatimage = MRS_struct.mask.T1image(ii,:);
-callspmsegmentation(anatimage)
-garbage = [T1dir '/c4' T1name T1ext];
-delete(garbage)
-garbage = [T1dir '/c5' T1name T1ext];
-delete(garbage)
+
+%check to see if segmentation done - if its not done, do it
+
+tmp = [T1dir '/c1' T1name T1ext];
+if exist(tmp) ~= 2
+    callspmsegmentation(anatimage)
+    garbage = [T1dir '/c4' T1name T1ext];
+    delete(garbage)
+    garbage = [T1dir '/c5' T1name T1ext];
+    delete(garbage)
+end
 
 %2 - determing GM,WM and CSF fractions for each voxel
 
@@ -118,9 +125,10 @@ h=subplot(2, 2, 3);    % replot of GABA fit spec
     upperbound=find(min(z)==z);
     freqbounds=lowerbound:upperbound;
     freq=MRS_struct.spec.freq(1,freqbounds);
-    plot(MRS_struct.spec.freq(1,:),MRS_struct.spec.diff(1,:),'k',freq,GaussModel(MRS_struct.out.GABAModelFit(1,:),freq),'r');
-    
-    
+    plot( ...
+        real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(1,:)), ...
+        'k',freq,GaussModel(MRS_struct.out.GABAModelFit(1,:),freq),'r');
+        
 zz=abs(MRS_struct.spec.freq-3.6);
 Glx_right=find(min(zz)==zz);
 zz=abs(MRS_struct.spec.freq-3.3);
@@ -160,11 +168,24 @@ text(0,0.51, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
 
-tmp = ['Spectra:  ' MRS_struct.gabafile(ii)];
+C = MRS_struct.gabafile{ii}; 
+if size(C,2) >30
+    [x y z] = fileparts(C);
+else
+    y = MRS_struct.gabafile(ii);
+end
+tmp = ['Spectra:  ' y];
 tmp = regexprep(tmp, '_','-');
 text(0,0.39, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
+        
+D = MRS_struct.mask.T1image{ii} ;
+if size(D,2) >30
+    [x y z] = fileparts(D);
+else
+    y = MRS_struct.gabafile(ii);
+end
 tmp = ['Anatomical image:  ' MRS_struct.mask.T1image(ii,:)];
 tmp = regexprep(tmp, '_','-');
 text(0,0.27, tmp, 'HorizontalAlignment', 'left', ...
