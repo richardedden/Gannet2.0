@@ -11,11 +11,11 @@ MRS_struct.out.tissue.version= '20140730';
 
 for ii = 1:MRS_struct.ii
     
-[T1dir T1name T1ext] = fileparts(MRS_struct.mask.T1image(ii,:));
+[T1dir T1name T1ext] = fileparts(MRS_struct.mask.T1image{ii});
 
 %1 - take nifti from GannetCoRegister and segment it in spm
 
-anatimage = MRS_struct.mask.T1image(ii,:);
+anatimage = MRS_struct.mask.T1image{ii};
 
 %check to see if segmentation done - if its not done, do it
 
