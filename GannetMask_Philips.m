@@ -162,8 +162,6 @@ T1img_mas = T1img + .2*mask;
 
 
 fidoutmask = cellstr(fidoutmask);
-%MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
-%MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
 MRS_struct.mask.outfile(ii,:)=fidoutmask;
 %This assumes 1-mm iso T1 - need to fix at a later date.
 
@@ -196,7 +194,7 @@ three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
 MRS_struct.mask.img(ii,:,:)=three_plane_img;
-MRS_struct.mask.T1image(ii,:) = nii_file;
+MRS_struct.mask.T1image(ii,:) = {nii_file};
 
 if(nargin==2)
 figure(198);

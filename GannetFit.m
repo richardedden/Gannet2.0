@@ -456,12 +456,12 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
     %and running the plot
     if any(strcmp('mask',fieldnames(MRS_struct))) == 1
-    h=subplot(2,2,2)
-    p = get(h,'pos') % get position of axes
+    h=subplot(2,2,2);
+    p = get(h,'pos'); % get position of axes
     set(h,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
 
     input=MRS_struct.mask.img(MRS_struct.ii,:,1:round(size(MRS_struct.mask.img,3)/3));
-    size(input)
+   
     imagesc(squeeze(MRS_struct.mask.img(MRS_struct.ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
     colormap('gray');
     caxis([0 1])
@@ -625,8 +625,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         matname =[ epsdirname '/' 'MRS_struct' '.mat' ];
        end
        
-       whos matname
-       save(matname,'MRS_struct'); 
+         save(matname,'MRS_struct'); 
     end
     end
     

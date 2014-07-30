@@ -76,7 +76,14 @@ for ii = 1:MRS_struct.ii
         text(.5,0.75, tmp,'HorizontalAlignment','right',...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
-        tmp = [ MRS_struct.mask.outfile(ii) ];
+        
+        
+        D = MRS_struct.mask.outfile{ii} ;
+        if size(D,2) >30
+            [x tmp z] = fileparts(D);
+        else
+            tmp = [ MRS_struct.mask.outfile(ii) ];
+        end
         tmp = regexprep(tmp, '_','-');
         tmp=[': ' tmp]; 
         text(.5,0.75, tmp, ...
