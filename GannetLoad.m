@@ -495,31 +495,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
 
 
-                  %hax=axes('Position',[0.85, 0.05, 0.15, 0.15]);
-         %          %set(gca,'Units','normalized');set(gca,'Position',[0.05 0.05 1.85 0.15]);
-
-        %          
-        %          
-        %          
-        %         
-        %         
-        %         
-        %         
-        %         
-        %         
-
-
-
-
-
-
-
-
-
-
-
                 %Save the processed data into an SDAT file.
-                 %if(MRS_struct.p.sdat)
+                 if((MRS_struct.p.sdat) == 1)
                    if(strcmpi(MRS_struct.p.vendor,'Philips'))
                         if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
                           %sdat_G_name=[ 'MRSload_output/' fullpath '_G.data' ]
@@ -549,11 +526,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                             fwriteVAXD(fileid,[ff.' gg.'],'float');
                             fclose(fileid);
                         end
-                   end
-                   
-                   
-                   
-              %  end
+                   end                   
+                end
 
                 % 140116: ADH reorder structure
                 
@@ -565,9 +539,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 'p', 'fids', 'spec', 'out'};
         end
 
-MRS_struct = orderfields(MRS_struct, structorder);
+        MRS_struct = orderfields(MRS_struct, structorder);
 
-
-
-          end%end of load-and-processing loop over datasets
+end%end of load-and-processing loop over datasets
 end

@@ -263,15 +263,15 @@ set(gcf, 'PaperUnits', 'inches');
         mkdir(epsdirname)
     end
     saveas(gcf, pdfname);
-    
-if(ii==MRS_struct.ii)
-    if(isfield(MRS_struct.p, 'mat') == 1)
-       matname =[ epsdirname '/' 'MRS_struct' '.mat' ];
-       save(matname,'MRS_struct'); 
-    end
-end
-
-        
+%     
+% if(ii==MRS_struct.ii)
+%     if(isfield(MRS_struct.p, 'mat') == 1)
+%        matname =[ epsdirname '/' 'MRS_struct' '.mat' ];
+%        save(matname,'MRS_struct'); 
+%     end
+% end
+% 
+%         
   
 
 end
