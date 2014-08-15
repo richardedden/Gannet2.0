@@ -206,7 +206,7 @@ for ii=1:numscans
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
         T1=20;
         %estimate height and baseline from data
-        maxinWater=max(real(WaterData(:)));
+        [maxinWater watermaxindex]=max(real(WaterData(:)));
         waterbase = mean(real(WaterData(1:500))); % avg
 
         %Philips data do not phase well based on first point, so do a preliminary
@@ -273,7 +273,12 @@ for ii=1:numscans
                 nlinopts = statset(nlinopts, 'MaxIter', 1e5);
                 %This double fit doesn't seem to work too well with the GE
                 %data... dig a little deeper
-                LGPModelInit = [maxinWater 20 4.7 0 waterbase -50 0];
+                maxinWater
+                freq(watermaxindex)
+                LGPModelInit = [maxinWater 20 freq(watermaxindex) 0 waterbase -50 0];
+                figure(7)
+                plot(freq(freqbounds), real(WaterData(ii,freqbounds)),freq(freqbounds),LorentzGaussModelP(LGPModelInit,freq(freqbounds)))
+                figure(8)
                 [LGPModelParam(ii,:),residw] = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)),...
                     @(xdummy,ydummy)	LorentzGaussModelP(xdummy,ydummy),...
                     LGPModelInit, nlinopts);
