@@ -206,7 +206,7 @@ for ii=1:numscans
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
         T1=20;
         %estimate height and baseline from data
-        [maxinWater watermaxindex]=max(real(WaterData(:)));
+        [maxinWater, watermaxindex]=max(real(WaterData(ii,:)),[],2);
         waterbase = mean(real(WaterData(1:500))); % avg
 
         %Philips data do not phase well based on first point, so do a preliminary
