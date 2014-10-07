@@ -3,6 +3,7 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             MRS_struct.p.global_rescale=1;
 %121106 RAEE moving code from GAnnetLoad to GERead (to match other file
 %formats and tidy things up some.
+%RTN edits to accommodate Noeske version RAEE 141007
             fid = fopen(fname,'r', 'ieee-be');
             if fid == -1
                 tmp = [ 'Unable to locate Pfile ' fname ];
@@ -45,6 +46,8 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             npasses = hdr_value(33);
             nslices = hdr_value(35);
             nechoes = hdr_value(36);
+            %RTN - number of phase cycles
+            navs = hdr_value(37);
             nframes = hdr_value(38);
             point_size = hdr_value(42);
             MRS_struct.p.npoints = hdr_value(52);
@@ -74,10 +77,10 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             my_echo = 1;
             my_frame = 1;
 
-            FullData=zeros(nreceivers, MRS_struct.p.npoints , MRS_struct.p.nrows-my_frame+1);
+            FullData=zeros(nreceivers, MRS_struct.p.npoints , (MRS_struct.p.nrows-my_frame+1)*nechoes); %RTN nechoes multiplication;
 
             %Start to read data into Eightchannel structure.
-            totalframes=MRS_struct.p.nrows-my_frame+1;
+            totalframes=(MRS_struct.p.nrows-my_frame+1)*nechoes; % RTN nechoes mulitply;
             MRS_struct.p.nrows=totalframes;
             data_elements2 = data_elements*totalframes*nreceivers;
 
@@ -99,18 +102,52 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             % 110303 CJE
             % calculate Navg from nframes, 8 water frames, 2 phase cycles
             % Needs to be specific to single experiment - for frame rejection
-            MRS_struct.p.Navg(ii) = (nframes-8)*2;
-            MRS_struct.p.Nwateravg = 8; %moved from MRSGABAinstunits RE 110726
-            ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints totalframes nreceivers]);
-            ZeroData = ShapeData(:,:,1,:);
-            WaterData = ShapeData(:,:,2:9,:);
-            FullData = ShapeData(:,:,10:end,:);
+            %RTN edits to accommodate Noeske version raee 20141007
+            if (nechoes == 1)
+                MRS_struct.p.Navg(ii) = (nframes-8)*2;
+                MRS_struct.p.Nwateravg = 8; %moved from MRSGABAinstunits RE 110726
+                ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints totalframes nreceivers]);
+                ZeroData = ShapeData(:,:,1,:);
+                WaterData = ShapeData(:,:,2:9,:);
+                FullData = ShapeData(:,:,10:end,:);
 
-            totalframes = totalframes-9;
-            MRS_struct.p.nrows=totalframes;
+                totalframes = totalframes-9;
+                MRS_struct.p.nrows=totalframes;
 
-            Frames_for_Water = 8;
-
+                Frames_for_Water = 8;
+            else
+               dataframes = f_hdr_value(59)/navs;
+               refframes = f_hdr_value(74);
+               
+               MRS_struct.p.Navg(ii) = dataframes*navs;
+               MRS_struct.p.Nwateravg = refframes*2;
+               MRS_struct.p.TR = 1.8;
+               
+               if ((dataframes+refframes) ~= nframes)
+                   noadd = 1;
+                   dataframes = dataframes*navs;
+                   refframes = refframes*navs;
+               else
+                   noadd = 0;
+               end
+               if (totalframes ~= ((dataframes+refframes+1)*2))
+                   error('# of totalframes not same as (dataframes+refframes+1)*2');
+               end
+                ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints totalframes nreceivers]);
+                ZeroData = ShapeData(:,:,1,:);
+                WaterData = zeros([2 MRS_struct.p.npoints refframes*2 nreceivers]);
+                for loop = 1:refframes
+                   WaterData(:,:,2*loop,:)=(-1)^(noadd*(loop-1))*ShapeData(:,:,1+loop,:);
+                   WaterData(:,:,2*loop-1,:)=(-1)^(noadd*(loop-1))*ShapeData(:,:,totalframes/2+1+loop,:);
+                end
+                FullData = zeros([2 MRS_struct.p.npoints dataframes*2 nreceivers]);
+                for loop = 1:dataframes
+                   FullData(:,:,2*loop,:)=(-1)^(noadd*(loop-1))*ShapeData(:,:,1+refframes+loop,:);
+                   FullData(:,:,2*loop-1,:)=(-1)^(noadd*(loop-1))*ShapeData(:,:,totalframes/2+refframes+1+loop,:);
+                end
+                totalframes=totalframes-refframes*2-2;
+                Frames_for_Water=refframes*2; 
+            end
             FullData = FullData.*repmat([1;i],[1 MRS_struct.p.npoints totalframes nreceivers]);
             WaterData = WaterData.*repmat([1;i],[1 MRS_struct.p.npoints Frames_for_Water nreceivers]);
 
