@@ -116,8 +116,8 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
 
                 Frames_for_Water = 8;
             else
-               dataframes = f_hdr_value(59)/navs;
-               refframes = f_hdr_value(74);
+               dataframes = hdr_value(59)/navs;
+               refframes = hdr_value(74);
                
                MRS_struct.p.Navg(ii) = dataframes*navs;
                MRS_struct.p.Nwateravg = refframes*2;
