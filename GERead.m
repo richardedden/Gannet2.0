@@ -43,6 +43,9 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
             % Read header information
             status = fseek(fid, 0, 'bof');
             [hdr_value, count] = fread(fid, 102, 'integer*2');
+            % RTN - read rhuser
+            status = fseek(fid, 0, 'bof');
+            [f_hdr_value, count] = fread(fid, 74, 'real*4');
             npasses = hdr_value(33);
             nslices = hdr_value(35);
             nechoes = hdr_value(36);
@@ -116,8 +119,8 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
 
                 Frames_for_Water = 8;
             else
-               dataframes = hdr_value(59)/navs;
-               refframes = hdr_value(74);
+               dataframes = f_hdr_value(59)/navs;
+               refframes = f_hdr_value(74);
                
                MRS_struct.p.Navg(ii) = dataframes*navs;
                MRS_struct.p.Nwateravg = refframes*2;
@@ -146,6 +149,7 @@ function [ MRS_struct ] = GERead(MRS_struct, fname)
                    FullData(:,:,2*loop-1,:)=(-1)^(noadd*(loop-1))*ShapeData(:,:,totalframes/2+refframes+1+loop,:);
                 end
                 totalframes=totalframes-refframes*2-2;
+                MRS_struct.p.nrows=totalframes;
                 Frames_for_Water=refframes*2; 
             end
             FullData = FullData.*repmat([1;i],[1 MRS_struct.p.npoints totalframes nreceivers]);
