@@ -621,7 +621,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     end
     saveas(gcf, pdfname);
     if(ii==numscans)
-    if(isfield(MRS_struct.p, 'mat') == 1)
+    if((MRS_struct.p.mat) == 1)
        if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
        matname=[ epsdirname '/' 'MRS_struct'  '.mat' ];
        else
