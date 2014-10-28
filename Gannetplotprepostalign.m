@@ -33,4 +33,9 @@ set(gca,'XDir','reverse');
 oldaxis = axis;
 yaxismax = (numspec + 2) *gabaheight; % top spec + 2* height of gaba
 yaxismin =  - 2* gabaheight; % extend 2* gaba heights below zero
+if (yaxismax<yaxismin)
+    dummy=yaxismin;
+    yaxismin=yaxismax;
+    yaxismax=dummy;
+end
 axis([0 5  yaxismin yaxismax])
