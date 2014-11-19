@@ -10,7 +10,6 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             %This handles the GABA data - it is needed whatever..
             %Use mapVBVD to pull in data.        
             twix_obj=mapVBVD(fname);
-            
             %This code included by kind permission of Jamie Near.
             %Pull in some header information not accessed by mapVBVD
             %Find the magnetic field strength:
@@ -77,21 +76,31 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             rc_yres = double(twix_obj.image.NAcq);
             nreceivers = double(twix_obj.image.NCha);
             % Copy it into FullData
-            if twix_obj.image.NEco>twix_obj.image.NIda
-                FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]),[2 1 3 4]);
-                %Undo Plus-minus 
-                %FullData(:,:,2,:)=-FullData(:,:,2,:);
-                FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NEco]);
-            else
-                FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NSet twix_obj.image.NIda]),[2 1 4 3]);
-                %Undo Plus-minus 
-                FullData(:,:,2,:)=-FullData(:,:,2,:);
-                FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NIda]);
+            switch MRS_struct.p.Siemens_type
+                case 1 
+                    FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]),[2 1 3 4]);
+                    %Undo Plus-minus 
+                    %FullData(:,:,2,:)=-FullData(:,:,2,:);
+                    FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NEco]);
+                case 2
+                   FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NSet twix_obj.image.NIda]),[2 1 4 3]);
+                    %Undo Plus-minus 
+                    FullData(:,:,2,:)=-FullData(:,:,2,:);
+                    FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NIda]);
+                case 3
+                    size(twix_obj.image())
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
+                    FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
+                    %Undo Plus-minus 
+                    %FullData(:,:,2,:)=-FullData(:,:,2,:);
+                    size(FullData)
+                    FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
+                    
             end
                 MRS_struct.p.Navg(ii) = double(twix_obj.image.NAcq);
             %size(FullData)
             %Left-shift data by number_to_shift
-            
+            save FullData
             FullData=FullData(:,1:MRS_struct.p.npoints,:);
             %size(FullData)
             %Combine data based upon first point of FIDs (mean over all

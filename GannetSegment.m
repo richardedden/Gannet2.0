@@ -126,8 +126,8 @@ h=subplot(2, 2, 3);    % replot of GABA fit spec
     freqbounds=lowerbound:upperbound;
     freq=MRS_struct.spec.freq(1,freqbounds);
     plot( ...
-        real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(1,:)), ...
-        'k',freq,GaussModel(MRS_struct.out.GABAModelFit(1,:),freq),'r');
+        real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(ii,:)), ...
+        'k',freq,GaussModel(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
         
 zz=abs(MRS_struct.spec.freq-3.6);
 Glx_right=find(min(zz)==zz);
