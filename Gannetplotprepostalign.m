@@ -38,4 +38,6 @@ if (yaxismax<yaxismin)
     yaxismin=yaxismax;
     yaxismax=dummy;
 end
+yaxismax
+yaxismin
 axis([0 5  yaxismin yaxismax])
