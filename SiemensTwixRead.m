@@ -10,6 +10,10 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             %This handles the GABA data - it is needed whatever..
             %Use mapVBVD to pull in data.        
             twix_obj=mapVBVD(fname);
+            if(MRS_struct.p.Siemens_type==4)
+                twix_obj=twix_obj{2};
+            end
+            save twix_obj
             %This code included by kind permission of Jamie Near.
             %Pull in some header information not accessed by mapVBVD
             %Find the magnetic field strength:
@@ -70,6 +74,9 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             %End of Jamie Near's code
             %Calculate some parameters:
             MRS_struct.p.sw=spectralwidth;
+            if MRS_struct.p.Siemens_type == 4
+                MRS_struct.p.sw=MRS_struct.p.sw/100;
+            end
             MRS_struct.p.LarmorFreq = Bo*42.577;          
             MRS_struct.p.nrows = twix_obj.image.NAcq;
             rc_xres = double(twix_obj.image.NCol);
@@ -88,6 +95,13 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     FullData(:,:,2,:)=-FullData(:,:,2,:);
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NIda]);
                 case 3
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
+                    FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
+                    %Undo Plus-minus 
+                    %FullData(:,:,2,:)=-FullData(:,:,2,:);
+                    size(FullData)
+                    FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
+                case 4
                     size(twix_obj.image())
                     [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
