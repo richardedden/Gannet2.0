@@ -132,6 +132,9 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
         if(nargin==3)
            %Then we additionally need to pull in the water data. 
            twix_obj_water=mapVBVD(fname_water);
+           if(MRS_struct.p.Siemens_type==4)
+                twix_obj=twix_obj{2};
+           end
            MRS_struct.p.nrows_water = twix_obj_water.image.NAcq;
            MRS_struct.p.npoints_water = twix_obj_water.image.NCol;
             
