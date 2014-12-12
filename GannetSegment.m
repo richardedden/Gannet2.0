@@ -30,6 +30,10 @@ end
 
 %2 - determing GM,WM and CSF fractions for each voxel
 
+if strcmp(T1dir,'')
+    T1dir='.';
+end
+
 GM = [T1dir '/c1' T1name T1ext];
 WM = [T1dir '/c2' T1name T1ext];
 CSF = [T1dir '/c3' T1name T1ext];

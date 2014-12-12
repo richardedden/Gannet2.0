@@ -138,7 +138,6 @@ for ii=1:numscans
         GABAheight = GSHGaussModelParam(ii,1);
         MRS_struct.out.GABAFitError(ii)=  100*std(residg)/GABAheight;
     elseif strcmp(MRS_struct.p.target,'Lac')    
-        %This is a work in progress - currenly mainly code copied form GSH
         %Hard code it to fit from 0.8 ppm to 1.8 ppm
         z=abs(MRS_struct.spec.freq-1.8);
         lowerbound=find(min(z)==z);
