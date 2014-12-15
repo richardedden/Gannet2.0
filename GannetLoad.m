@@ -303,7 +303,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'NAA'
                    [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
                case 'SpecReg'
-                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_stuct,0);
+                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0);
                case 'SpecRegDual'
                    %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after... 
                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
