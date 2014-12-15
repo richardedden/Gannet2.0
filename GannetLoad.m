@@ -303,7 +303,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'NAA'
                    [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
                case 'SpecReg'
-                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0);
+                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_stuct,0);
                case 'SpecRegDual'
                    %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after... 
                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
@@ -325,6 +325,9 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         if(strcmp(MRS_struct.p.target,'GSH'))
             residual_phase=pi-atan2(imag(sum(MRS_struct.spec.diff(ii,:))),real(sum(MRS_struct.spec.diff(ii,:))));
             MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
+            if(MRS_struct.p.Water_Positive==0)
+              MRS_struct.spec.diff(ii,:)=-MRS_struct.spec.diff(ii,:);  
+            end
         end
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
