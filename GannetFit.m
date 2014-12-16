@@ -823,7 +823,7 @@ T1_GABA = 0.80 ; % "empirically determined"...! Gives same values as RE's spread
 %Not yet putting in measured GABA T1, but it is in the pipeline - 1.35ish
 
 T2_GABA = 0.13; % from occipital Cr-CH2, Traber 2004
-T2_GABA = 0.088; % from JMRI paper 2011 Eden et al.
+T2_GABA = 0.088; % from JMRI paper 2012 Edden et al.
 
 T1_Water = 1.100; % average of WM and GM, estimated from Wansapura 1999
 T2_Water = 0.095; % average of WM and GM, estimated from Wansapura 1999
