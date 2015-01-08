@@ -258,9 +258,9 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
             AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale
-            MRS_struct.p.sw
-            MRS_struct.p.LarmorFreq
-            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq
+%             MRS_struct.p.sw
+%             MRS_struct.p.LarmorFreq
+            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
             MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
 
             %  Frame-by-frame Determination of max Frequency in spectrum (assumed water) maximum
