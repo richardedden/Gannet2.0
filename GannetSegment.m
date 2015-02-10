@@ -133,13 +133,13 @@ h=subplot(2, 2, 3);    % replot of GABA fit spec
         'k',freq,GaussModel_area(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
         
 zz=abs(MRS_struct.spec.freq-3.6);
-GABA_right=find(min(zz)==zz);
+Glx_right=find(min(zz)==zz);
 zz=abs(MRS_struct.spec.freq-3.3);
 GABA_left=find(min(zz)==zz);
 zz=abs(MRS_struct.spec.freq-2.8);
 GABA_right=find(min(zz)==zz);
 %specbaseline = mean(real(SpectraToPlot(1,GABA_right:GABA_left)),2);
-gabaheight = abs(max(MRS_struct.spec.diff(1,GABA_right:GABA_right),[],2));
+gabaheight = abs(max(MRS_struct.spec.diff(1,Glx_right:GABA_right),[],2));
 gabaheight = mean(gabaheight);
 
 yaxismax =  2 *gabaheight; % top spec + 2* height of gaba
