@@ -122,7 +122,6 @@ axis off;
  
 
 h=subplot(2, 2, 3);    % replot of GABA fit spec
-% find peak of GABA plot... plot residuals above this...
     z=abs(MRS_struct.spec.freq-3.55);
     lowerbound=find(min(z)==z);
     z=abs(MRS_struct.spec.freq-2.79);
@@ -131,20 +130,25 @@ h=subplot(2, 2, 3);    % replot of GABA fit spec
     freq=MRS_struct.spec.freq(1,freqbounds);
     plot( ...
         real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(ii,:)), ...
-        'k',freq,GaussModel(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
+        'k',freq,GaussModel_area(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
         
 zz=abs(MRS_struct.spec.freq-3.6);
-Glx_right=find(min(zz)==zz);
+GABA_right=find(min(zz)==zz);
 zz=abs(MRS_struct.spec.freq-3.3);
 GABA_left=find(min(zz)==zz);
 zz=abs(MRS_struct.spec.freq-2.8);
 GABA_right=find(min(zz)==zz);
-%specbaseline = mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2);
-gabaheight = abs(max(MRS_struct.spec.diff(1,Glx_right:GABA_right),[],2));
+%specbaseline = mean(real(SpectraToPlot(1,GABA_right:GABA_left)),2);
+gabaheight = abs(max(MRS_struct.spec.diff(1,GABA_right:GABA_right),[],2));
 gabaheight = mean(gabaheight);
 
 yaxismax =  2 *gabaheight; % top spec + 2* height of gaba
 yaxismin =  -2* gabaheight; % extend 2* gaba heights below zero
+if (yaxismax<yaxismin)
+    dummy=yaxismin;
+    yaxismin=yaxismax;
+    yaxismax=dummy;
+end
 axis([0 5  yaxismin yaxismax])
 set(gca,'YTick',[]);
 set(gca,'XLim',[0 4.5]);
