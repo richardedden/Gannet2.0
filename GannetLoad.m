@@ -286,6 +286,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     %This quite possibly doesn't carry through, as it seems
                     %that the later stuff all starts with AllFramesFT, no
                     %AllFramesFTrealign.
+                case 'Siemens_twix'
+                      AllFramesFTrealign=AllFramesFT;
             end %end of switch for Water max alignment p[re-initialisation
 
             MRS_struct.fids.waterfreq(ii,:) = MRS_struct.spec.freq(FrameMaxPos);%to be used for the output figure

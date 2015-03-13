@@ -95,19 +95,19 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     FullData(:,:,2,:)=-FullData(:,:,2,:);
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NIda]);
                 case 3
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]    ;              
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
-                    size(FullData)
+                    %size(FullData)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
                 case 4
-                    size(twix_obj.image())
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
+                    %size(twix_obj.image())
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]    ;              
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
-                    size(FullData)
+                    %size(FullData)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
                     
             end
@@ -132,7 +132,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
         if(nargin==3)
            %Then we additionally need to pull in the water data. 
            twix_obj_water=mapVBVD(fname_water);
-           if(MRS_struct.p.Siemens_type==4)
+            if(MRS_struct.p.Siemens_type==4)
                 twix_obj=twix_obj{2};
            end
            MRS_struct.p.nrows_water = twix_obj_water.image.NAcq;
@@ -142,12 +142,38 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NEco twix_obj_water.image.NSet]),[2 1 3 4]);
             WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NEco]);
            else
-           % Copy it into WaterData
-            WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
-            %Undo Plus-minus 
-            WaterData(:,:,2,:)=-WaterData(:,:,2,:);
-            WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
-           end
+               % added below to make work for Skyra, other cases not tested
+               % and are copies of what was there originally was there but
+               % according to above, in some the undo plus-mins on the
+               % WaterData(:,:,2,:) may not be needed 
+               switch MRS_struct.p.Siemens_type
+                    case 1 % this was the original code - made it into case 1, 2 and 4 
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+                    case 2 % this was the original code - made it into case 1, 2 and 4  
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+                    case 3 % above in case 3 didn't do the WaterData(:,:,2,:)=-WaterData(:,:,2,:); so commented out here. 
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        %WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+                    case 4 % this was the original code - made it into case 1, 2 and 4
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        %WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+               end
+
+          end
             
             firstpoint_water=mean(conj(WaterData(:,1,:)),3);
             channels_scale=squeeze(sqrt(sum(firstpoint_water.*conj(firstpoint_water))));
