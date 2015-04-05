@@ -11,9 +11,9 @@ matlabbatch{1}.spm.spatial.preproc.output.CSF = [0 0 1];
 matlabbatch{1}.spm.spatial.preproc.output.biascor = 1;
 matlabbatch{1}.spm.spatial.preproc.output.cleanup = 0;
 matlabbatch{1}.spm.spatial.preproc.opts.tpm = {
-                                               '/Users/ashleyharris/matlab/spm8/tpm/grey.nii'
-                                               '/Users/ashleyharris/matlab/spm8/tpm/white.nii'
-                                               '/Users/ashleyharris/matlab/spm8/tpm/csf.nii'
+                                               '/matlab/spm8/tpm/grey.nii'
+                                               '/matlab/spm8/tpm/white.nii'
+                                               '/matlab/spm8/tpm/csf.nii'
                                                };
 matlabbatch{1}.spm.spatial.preproc.opts.ngaus = [2
                                                  2
