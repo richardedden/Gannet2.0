@@ -14,6 +14,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                 twix_obj=twix_obj{2};
             end
             save twix_obj
+            pointsBeforeEcho=twix_obj.image.freeParam(1);
             %This code included by kind permission of Jamie Near.
             %Pull in some header information not accessed by mapVBVD
             %Find the magnetic field strength:
@@ -112,6 +113,8 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     
             end
                 MRS_struct.p.Navg(ii) = double(twix_obj.image.NAcq);
+                %Trim off points at the start! RE 4/16/15 (Uncertain whether this should be done for all acquisitions or just some)
+                FullData=FullData(:,(pointsBeforeEcho+1):end,:);
             %size(FullData)
             %Left-shift data by number_to_shift
             save FullData
