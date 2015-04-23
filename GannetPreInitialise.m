@@ -20,7 +20,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.Water_Positive=1; %For Philips MOIST ws, set to 0.
     %Siemens header information differs between versions
     %switch for different versions
-    MRS_struct.p.Siemens_type = 1; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C)
+    MRS_struct.p.Siemens_type = 5; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
     
     
 %Analysis Parameters

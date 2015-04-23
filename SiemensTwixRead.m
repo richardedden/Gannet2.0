@@ -10,7 +10,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             %This handles the GABA data - it is needed whatever..
             %Use mapVBVD to pull in data.        
             twix_obj=mapVBVD(fname);
-            if(MRS_struct.p.Siemens_type==4)
+            if(MRS_struct.p.Siemens_type==4)||(MRS_struct.p.Siemens_type==5)
                 twix_obj=twix_obj{2};
             end
             save twix_obj
@@ -86,6 +86,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             % Copy it into FullData
             switch MRS_struct.p.Siemens_type
                 case 1 
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]     
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]),[2 1 3 4]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
@@ -104,13 +105,24 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
                 case 4
                     %size(twix_obj.image())
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]    ;              
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
                     %size(FullData)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
+                case 5
+                    %size(twix_obj.image())
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]
                     
+                    FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
+                    size(FullData)
+                    %Undo Plus-minus 
+                    %FullData(:,:,2,:)=-FullData(:,:,2,:);
+                    %size(FullData)
+                    FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);    
             end
                 MRS_struct.p.Navg(ii) = double(twix_obj.image.NAcq);
                 %Trim off points at the start! RE 4/16/15 (Uncertain whether this should be done for all acquisitions or just some)
