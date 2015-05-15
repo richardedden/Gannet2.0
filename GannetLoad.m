@@ -258,9 +258,9 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
             AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale
-            MRS_struct.p.sw
-            MRS_struct.p.LarmorFreq
-            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq
+%             MRS_struct.p.sw
+%             MRS_struct.p.LarmorFreq
+            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
             MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
 
             %  Frame-by-frame Determination of max Frequency in spectrum (assumed water) maximum
@@ -286,6 +286,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     %This quite possibly doesn't carry through, as it seems
                     %that the later stuff all starts with AllFramesFT, no
                     %AllFramesFTrealign.
+                case 'Siemens_twix'
+                      AllFramesFTrealign=AllFramesFT;
             end %end of switch for Water max alignment p[re-initialisation
 
             MRS_struct.fids.waterfreq(ii,:) = MRS_struct.spec.freq(FrameMaxPos);%to be used for the output figure

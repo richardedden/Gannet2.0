@@ -10,10 +10,11 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             %This handles the GABA data - it is needed whatever..
             %Use mapVBVD to pull in data.        
             twix_obj=mapVBVD(fname);
-            if(MRS_struct.p.Siemens_type==4)
+            if(MRS_struct.p.Siemens_type==4)||(MRS_struct.p.Siemens_type==5)
                 twix_obj=twix_obj{2};
             end
             save twix_obj
+            pointsBeforeEcho=twix_obj.image.freeParam(1);
             %This code included by kind permission of Jamie Near.
             %Pull in some header information not accessed by mapVBVD
             %Find the magnetic field strength:
@@ -85,6 +86,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             % Copy it into FullData
             switch MRS_struct.p.Siemens_type
                 case 1 
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]     
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]),[2 1 3 4]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
@@ -95,23 +97,36 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     FullData(:,:,2,:)=-FullData(:,:,2,:);
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NSet*twix_obj.image.NIda]);
                 case 3
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]    ;              
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
-                    size(FullData)
+                    %size(FullData)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
                 case 4
-                    size(twix_obj.image())
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]                  
+                    %size(twix_obj.image())
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
-                    size(FullData)
+                    %size(FullData)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
+                case 5
+                    %size(twix_obj.image())
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]
                     
+                    FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
+                    size(FullData)
+                    %Undo Plus-minus 
+                    %FullData(:,:,2,:)=-FullData(:,:,2,:);
+                    %size(FullData)
+                    FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);    
             end
                 MRS_struct.p.Navg(ii) = double(twix_obj.image.NAcq);
+                %Trim off points at the start! RE 4/16/15 (Uncertain whether this should be done for all acquisitions or just some)
+                FullData=FullData(:,(pointsBeforeEcho+1):end,:);
             %size(FullData)
             %Left-shift data by number_to_shift
             save FullData
@@ -132,7 +147,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
         if(nargin==3)
            %Then we additionally need to pull in the water data. 
            twix_obj_water=mapVBVD(fname_water);
-           if(MRS_struct.p.Siemens_type==4)
+            if(MRS_struct.p.Siemens_type==4)
                 twix_obj=twix_obj{2};
            end
            MRS_struct.p.nrows_water = twix_obj_water.image.NAcq;
@@ -142,12 +157,38 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NEco twix_obj_water.image.NSet]),[2 1 3 4]);
             WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NEco]);
            else
-           % Copy it into WaterData
-            WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
-            %Undo Plus-minus 
-            WaterData(:,:,2,:)=-WaterData(:,:,2,:);
-            WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
-           end
+               % added below to make work for Skyra, other cases not tested
+               % and are copies of what was there originally was there but
+               % according to above, in some the undo plus-mins on the
+               % WaterData(:,:,2,:) may not be needed 
+               switch MRS_struct.p.Siemens_type
+                    case 1 % this was the original code - made it into case 1, 2 and 4 
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+                    case 2 % this was the original code - made it into case 1, 2 and 4  
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+                    case 3 % above in case 3 didn't do the WaterData(:,:,2,:)=-WaterData(:,:,2,:); so commented out here. 
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        %WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+                    case 4 % this was the original code - made it into case 1, 2 and 4
+                       % Copy it into WaterData
+                        WaterData=permute(reshape(double(twix_obj_water.image()),[twix_obj_water.image.NCol twix_obj_water.image.NCha twix_obj_water.image.NSet twix_obj_water.image.NIda]),[2 1 4 3]);
+                        %Undo Plus-minus 
+                        %WaterData(:,:,2,:)=-WaterData(:,:,2,:);
+                        WaterData=reshape(WaterData,[twix_obj_water.image.NCha twix_obj_water.image.NCol twix_obj_water.image.NSet*twix_obj_water.image.NIda]);
+               end
+
+          end
             
             firstpoint_water=mean(conj(WaterData(:,1,:)),3);
             channels_scale=squeeze(sqrt(sum(firstpoint_water.*conj(firstpoint_water))));

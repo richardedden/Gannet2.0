@@ -70,7 +70,7 @@ fclose(fid)
 MRS_struct.p.voxoff=[ rda.position(1) rda.position(2) rda.position(2)];
 MRS_struct.p.voxsize = [rda.VOIThickness rda.VOIReadoutFOV rda.VOIPhaseFOV ]; % works for ob-axial rotator 
 MRS_Rot(:,1)=rda.row.';
-MRS_Rot(:,1)=rda.column.';
+MRS_Rot(:,2)=rda.column.';
 MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2));
 MRS_Rot(1,:)=-MRS_Rot(1,:);
 rotmat=-MRS_Rot
