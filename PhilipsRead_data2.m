@@ -60,21 +60,6 @@ function [ MRS_struct ] = PhilipsRead_data(MRS_struct, fname, fname_water )
            %MRS_struct.p.ptr_offset_data=str2num(sparheader{sparidx(3+MRS_struct.Navg_water(MRS_struct.ii))+20});
             ptr_offset_water=str2num(sparheader{sparidx(3)+20});
             ptr_offset_data=str2num(sparheader{sparidx(3+MRS_struct.p.Navg_water(MRS_struct.ii))+20});
-           
-            %RAEE Now read in both sets, and then disentagle after.
-            total_rows=size(sparidx,1)-2;
-            ptr_offset=str2num(sparheader{sparidx(3)+20});
-            data=readraw_Gannet(fname, 'float', ...
-               [2 MRS_struct.p.npoints 1 total_rows], 'l',ptr_offset); 
-            for ii=1:total_rows
-               water_ws(ii)=str2num(sparheader{sparidx(ii+2)+1}) 
-            end
-            
-           MRS_struct.fids.data = data(:,:,:,(water_ws==0));
-
-           MRS_struct.fids.data =reshape(MRS_struct.fids.data,[2 MRS_struct.p.npoints 1 MRS_struct.p.Navg(MRS_struct.ii)/MRS_struct.p.nrows MRS_struct.p.nrows]);          
-           MRS_struct.fids.data_water = data(:,:,:,(water_ws==1));
-           MRS_struct.fids.data_water =reshape(MRS_struct.fids.data_water,[2 MRS_struct.p.npoints 1 MRS_struct.p.Navg_water(MRS_struct.ii) MRS_struct.p.nrows_water]);
            %ADH the actual reading of the data happens with readraw_Gannet - just
            % takes in the real data to analyse so need to decide on the offsets
            % proior to this. will need to decide it for both the water data and the
@@ -83,15 +68,15 @@ function [ MRS_struct ] = PhilipsRead_data(MRS_struct, fname, fname_water )
            % out the skips of data...- ADH 20130701
 
            %Need to skip rows associated with the '
-           %MRS_struct.fids.data = readraw_Gannet(fname, 'float', ...
-               %[2 MRS_struct.p.npoints 1 MRS_struct.p.Navg(MRS_struct.ii)/MRS_struct.p.nrows MRS_struct.p.nrows], 'l',ptr_offset_data);
+           MRS_struct.fids.data = readraw_Gannet(fname, 'float', ...
+               [2 MRS_struct.p.npoints 1 MRS_struct.p.Navg(MRS_struct.ii)/MRS_struct.p.nrows MRS_struct.p.nrows], 'l',ptr_offset_data);
            %  Make data complex.
            MRS_struct.fids.data = squeeze(MRS_struct.fids.data(1,:,:,:,:)+ 1i*MRS_struct.fids.data(2,:,:,:,:));
 
 
            % then the same for the water data- ADH 20130701
-           %MRS_struct.fids.data_water = readraw_Gannet(fname, 'float', ...
-               %[2 MRS_struct.p.npoints_water 1 MRS_struct.p.Navg_water(MRS_struct.ii) MRS_struct.p.nrows_water], 'l',ptr_offset_water);
+           MRS_struct.fids.data_water = readraw_Gannet(fname, 'float', ...
+               [2 MRS_struct.p.npoints_water 1 MRS_struct.p.Navg_water(MRS_struct.ii) MRS_struct.p.nrows_water], 'l',ptr_offset_water);
            %  Make data complex.- ADH 20130701
            MRS_struct.fids.data_water = squeeze(MRS_struct.fids.data_water(1,:,:,:)+ 1i*MRS_struct.fids.data_water(2,:,:,:));
 

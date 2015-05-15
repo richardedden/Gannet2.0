@@ -229,7 +229,7 @@ for ii=1:numscans
             FourGaussModel(FourGaussModelParam(ii,:), freqrange),'r',freqrange, ...
             FourGaussModel(MMGaussModelParam(ii,:), freqrange),'r',...
             MRS_struct.spec.freq(freqbounds),residg,'k');
-        set(gca,'XLim',[0.8 2.0]);
+        set(gca,'XLim',[0.7 1.9]);
     end
     
     if(strcmpi(MRS_struct.p.vendor,'Siemens'))
