@@ -159,8 +159,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
             MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
             MRS_struct.out.FreqPhaseAlign=0;
-            %Data are always read in OFF then ON
-            
+            %Data are always read in OFF then ON            
             totalframes = 2;
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'

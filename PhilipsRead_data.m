@@ -67,7 +67,7 @@ function [ MRS_struct ] = PhilipsRead_data(MRS_struct, fname, fname_water )
             data=readraw_Gannet(fname, 'float', ...
                [2 MRS_struct.p.npoints 1 total_rows], 'l',ptr_offset); 
             for ii=1:total_rows
-               water_ws(ii)=str2num(sparheader{sparidx(ii+2)+1}) 
+               water_ws(ii)=str2num(sparheader{sparidx(ii+2)+1}) ;
             end
             
            MRS_struct.fids.data = data(:,:,:,(water_ws==0));
