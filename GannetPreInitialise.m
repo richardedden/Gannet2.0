@@ -21,7 +21,6 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     %Siemens header information differs between versions
     %switch for different versions
     MRS_struct.p.Siemens_type = 5; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
-
     
 %Analysis Parameters
     MRS_struct.p.LB = 3;
