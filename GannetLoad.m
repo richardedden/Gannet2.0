@@ -157,7 +157,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             MRS_struct.p.LarmorFreq;
             % work out frequency scale 121106 (remving CSize)
             freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
-            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
+            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
             MRS_struct.out.FreqPhaseAlign=0;
             %Data are always read in OFF then ON
             
@@ -261,7 +261,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 %             MRS_struct.p.sw
 %             MRS_struct.p.LarmorFreq
             freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
-            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.7-freqrange/2.0;
+            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
 
             %  Frame-by-frame Determination of max Frequency in spectrum (assumed water) maximum
             % find peak location for frequency realignment
