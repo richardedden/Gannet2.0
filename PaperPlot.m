@@ -12,7 +12,7 @@ switch nargin
         upperbound=find(min(z)==z);
         freqbounds=lowerbound:upperbound;
         freq=x.spec.freq(1,freqbounds);
-        plot(x.spec.freq(1,:),x.spec.diff(1,:),'k',freq,GaussModel(x.out.GABAModelFit(1,:),freq),'r');
+        plot(x.spec.freq(1,:),x.spec.diff(11,:),'k',freq,GaussModel(x.out.GABAModelFit(11,:),freq),'r');
     case 2
     plot(x,y)
     case 3

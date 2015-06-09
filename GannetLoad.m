@@ -316,8 +316,12 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         
         MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
         MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+        
         MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on(ii,:)-MRS_struct.spec.off(ii,:))/2; %Not sure whether we want a two here.
         MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+        FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
+        MRS_struct.spec.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+        
         
         %For GSH data, the residual water signal in the DIFF spectrum is
         %helpful for an additional phasing step... and messes up fitting
