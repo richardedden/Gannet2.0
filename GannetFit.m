@@ -52,7 +52,8 @@ for ii=1:numscans
         upperbound=find(min(z)==z);
         freqbounds=lowerbound:upperbound;
         plotbounds=(lowerbound-150):(upperbound+150);
-        maxinGABA=max(real(GABAData(MRS_struct.ii,freqbounds)));
+        maxinGABA=abs(max(real(GABAData(MRS_struct.ii,freqbounds)))-min(real(GABAData(MRS_struct.ii,freqbounds))));
+        
         % smarter estimation of baseline params, Krish's idea (taken from Johns
         % code; NAP 121211
         grad_points = (real(GABAData(ii,upperbound)) - real(GABAData(ii,lowerbound))) ./ ...
@@ -66,6 +67,7 @@ for ii=1:numscans
         GaussModelInit = [maxinGABA -90 3.026 -LinearInit constInit]; %default in 131016
         lb = [0 -200 2.87 -40*maxinGABA -2000*maxinGABA]; %NP; our bounds are 0.03 less due to creatine shift
         ub = [4000*maxinGABA -40 3.12 40*maxinGABA 1000*maxinGABA];
+        %plot(freq(freqbounds),real(GABAData(ii,freqbounds)),freq(freqbounds),GaussModel_area(GaussModelInit,freq(freqbounds)))
         options = optimset('lsqcurvefit');
         options = optimset(options,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
         nlinopts = statset('nlinfit');

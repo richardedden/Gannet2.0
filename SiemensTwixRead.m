@@ -13,7 +13,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             if(MRS_struct.p.Siemens_type==4)||(MRS_struct.p.Siemens_type==5)
                 twix_obj=twix_obj{2};
             end
-            save twix_obj
+  %          save twix_obj
             pointsBeforeEcho=twix_obj.image.freeParam(1);
             %This code included by kind permission of Jamie Near.
             %Pull in some header information not accessed by mapVBVD
@@ -86,7 +86,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
             % Copy it into FullData
             switch MRS_struct.p.Siemens_type
                 case 1 
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]     
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet] ;    
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]),[2 1 3 4]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
@@ -105,8 +105,8 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
                 case 4
                     %size(twix_obj.image())
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde];
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet];
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     %Undo Plus-minus 
                     %FullData(:,:,2,:)=-FullData(:,:,2,:);
@@ -114,8 +114,8 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                     FullData=reshape(FullData,[twix_obj.image.NCha twix_obj.image.NCol twix_obj.image.NAve*twix_obj.image.NIde]);
                 case 5
                     %size(twix_obj.image())
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]
-                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet]
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde];
+                    [twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NEco twix_obj.image.NSet];
                     
                     FullData=permute(reshape(double(twix_obj.image()),[twix_obj.image.NCol twix_obj.image.NCha twix_obj.image.NAve twix_obj.image.NIde]),[2 1 4 3]);
                     size(FullData)
@@ -129,7 +129,7 @@ function [ MRS_struct ] = SiemensTwixRead(MRS_struct, fname,fname_water)
                 FullData=FullData(:,(pointsBeforeEcho+1):end,:);
             %size(FullData)
             %Left-shift data by number_to_shift
-            save FullData
+            %save FullData
             FullData=FullData(:,1:MRS_struct.p.npoints,:);
             %size(FullData)
             %Combine data based upon first point of FIDs (mean over all
