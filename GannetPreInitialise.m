@@ -15,12 +15,12 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     %In general, LarmorFreq is 127.8 on Philips,
     MRS_struct.p.Nwateravg = 8; %Needed for GE
     MRS_struct.p.target='GABA'; %Other option is GSH
-    MRS_struct.p.ONOFForder='offfirst';
+    MRS_struct.p.ONOFForder='onfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
     MRS_struct.p.Water_Positive=0; %For Philips MOIST ws, set to 0.
     %Siemens header information differs between versions
     %switch for different versions
-    MRS_struct.p.Siemens_type = 3; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
+    MRS_struct.p.Siemens_type = 1; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
     
 %Analysis Parameters
     MRS_struct.p.LB = 3;
