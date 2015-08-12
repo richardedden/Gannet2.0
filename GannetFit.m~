@@ -328,8 +328,17 @@ for ii=1:numscans
       plot(freq(freqbounds),DoubleGaussModel_area(GaussModelParam(ii,:),freq(freqbounds)),'r',...
                 freq(plotbounds),real(GABAData(ii,plotbounds)),'b', ...
                 freq(freqbounds),residg,'k');
+
         set(gca,'XLim',[3.4 4.2])    
-    end    
+        
+        
+        
+        
+        
+        
+        
+    end
+    
     if(strcmpi(MRS_struct.p.vendor,'Siemens'))
         legendtxt = regexprep(MRS_struct.gabafile{ii*2-1}, '_','-');
     else
@@ -338,33 +347,18 @@ for ii=1:numscans
     title(legendtxt);
     set(gca,'XDir','reverse');
     
-    if strcmp(MRS_struct.p.target,'GABA')
-        %%%%From here on is cosmetic - adding labels (and deciding where to).
-        hgaba=text(3,gabamax/4,MRS_struct.p.target);
-        set(hgaba,'horizontalAlignment', 'center');
-        %determine values of GABA tail (below 2.8 ppm.
-        z=abs(MRS_struct.spec.freq-2.79);%2.75
-        upperbound=find(min(z)==z);
-        tailtop=max(real(GABAData(ii,upperbound:(upperbound+150))));
-        tailbottom=min(real(GABAData(ii,upperbound:(upperbound+150))));
-        hgabares=text(2.8,min(residg),'residual');
-        set(hgabares,'horizontalAlignment', 'left');
-        text(2.8,tailtop+gabamax/20,'data','Color',[0 0 1]);
-        text(2.8,tailbottom-gabamax/20,'model','Color',[1 0 0]);
-    elseif strcmp(MRS_struct.p.target,'Glx')
-        %%%%From here on is cosmetic - adding labels (and deciding where to).
-        hgaba=text(3,gabamax/4,MRS_struct.p.target);
-        set(hgaba,'horizontalAlignment', 'center');
-        %determine values of GABA tail (below 2.8 ppm.
-        z=abs(MRS_struct.spec.freq-2.79);%2.75
-        upperbound=find(min(z)==z);
-        tailtop=max(real(GABAData(ii,upperbound:(upperbound+150))));
-        tailbottom=min(real(GABAData(ii,upperbound:(upperbound+150))));
-        hgabares=text(3.5,min(residg),'residual');
-        set(hgabares,'horizontalAlignment', 'left');
-        text(3.5,tailtop+gabamax/20,'data','Color',[0 0 1]);
-        text(3.5,tailbottom-gabamax/20,'model','Color',[1 0 0]);
-    end
+    %%%%From here on is cosmetic - adding labels (and deciding where to).
+    hgaba=text(3,gabamax/4,MRS_struct.p.target);
+    set(hgaba,'horizontalAlignment', 'center');
+    %determine values of GABA tail (below 2.8 ppm.
+    z=abs(MRS_struct.spec.freq-2.79);%2.75
+    upperbound=find(min(z)==z);
+    tailtop=max(real(GABAData(ii,upperbound:(upperbound+150))));
+    tailbottom=min(real(GABAData(ii,upperbound:(upperbound+150))));
+    hgabares=text(2.8,min(residg),'residual');
+    set(hgabares,'horizontalAlignment', 'left');
+    text(2.8,tailtop+gabamax/20,'data','Color',[0 0 1]);
+    text(2.8,tailbottom-gabamax/20,'model','Color',[1 0 0]);
     set(gca,'YTick',[]);
     set(gca,'Box','off');
     set(gca,'YColor','white');
@@ -672,8 +666,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = sprintf('Glx Area : %.3g', MRS_struct.out.GABAArea(ii));
     elseif strcmp (MRS_struct.p.target, 'GABA')
         tmp = sprintf('GABA+ Area : %.3g', MRS_struct.out.GABAArea(ii));
-    end
-    text(0,0.6, tmp);
+    end    text(0,0.6, tmp);
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
         tmp = sprintf('H2O/Cr Area : %.3g/%.3g ', MRS_struct.out.WaterArea(ii),MRS_struct.out.CrArea(ii) );
         text(0,0.5, tmp, 'FontName', 'Helvetica');
