@@ -174,13 +174,13 @@ Col(1) = ColMat(1,1);
 Col(2) = ColMat(2,1);
 Col(3) = ColMat(3,1);
 
-Col
+%Col
 
 Row(1) = Col(2) * ZED(3) - Col(3) * ZED(2);
 Row(2) = Col(3) * ZED(1) - Col(1) * ZED(3);
 Row(3) = Col(1) * ZED(2) - Col(2) * ZED(1);
 
-Row
+%Row
 
 
 
@@ -190,12 +190,12 @@ MRS_struct.p.voxsize = [VoI_RoFOV VoI_PeFOV VOIThickness];
 MRS_Rot(:,1) = Row';
 MRS_Rot(:,2) = Col';
 
-MRS_Rot(:,1)= MRS_Rot(:,1) .* [ -1 -1 1]'
-MRS_Rot(:,2)= MRS_Rot(:,2) .* [ -1 -1 1]'
+MRS_Rot(:,1)= MRS_Rot(:,1) .* [ -1 -1 1]';
+MRS_Rot(:,2)= MRS_Rot(:,2) .* [ -1 -1 1]';
 
-MRS_Rot(:,3)=cross(MRS_Rot(:,2),MRS_Rot(:,1))
+MRS_Rot(:,3)=cross(MRS_Rot(:,2),MRS_Rot(:,1));
 
-rotmat=MRS_Rot % used to be rotmat = -MRS_rot but doesn't seem to do anything 
+rotmat=MRS_Rot; % used to be rotmat = -MRS_rot but doesn't seem to do anything 
     %- bc of corners defn in mat - the values just get reorded in the vox_corner mat
 %rotmat(:,3) = [1 1 1];
 %error('gothere');
@@ -268,12 +268,12 @@ vox_ctr = ...
 %        0 0 0];
 
    
-vox_rot=rotmat*vox_ctr.'
+vox_rot=rotmat*vox_ctr.';
 
 % calculate corner coordinates relative to xyz origin
 vox_ctr_coor = [lr_off ap_off cc_off];
 vox_ctr_coor = repmat(vox_ctr_coor.', [1,8]);
-vox_corner = vox_rot+vox_ctr_coor
+vox_corner = vox_rot+vox_ctr_coor;
 
 
 
@@ -316,7 +316,10 @@ T1img_mas = T1img + .2*mask;
 %MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
 
 %FOR NOW NEED TO FIX
-%MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+fidoutmask = cellstr(fidoutmask);
+MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
+% this is similar to GE - don't have the angles directly - can fix later
 
 voxel_ctr(1:2)=-voxel_ctr(1:2);
 voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
@@ -338,6 +341,7 @@ three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
 MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
+MRS_struct.mask.T1image(ii,:) = {nii_file};
 
 
 figure(198)
@@ -348,5 +352,5 @@ axis equal;
 axis tight;
 axis off;
 
-%end
+end
 
