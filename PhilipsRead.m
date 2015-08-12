@@ -54,6 +54,7 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    
    
    MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);
+      
    if nargin>2
        % work out data header name
        sparnameW = [fname_water(1:(end-4)) 'spar'];
