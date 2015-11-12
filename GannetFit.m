@@ -12,7 +12,7 @@ function [MRS_struct] = GannetFit(MRS_struct, varargin)
 % varargin = Optional arguments if user wants to overwrite fitting
 %            parameters set in GannetPreInitialise; can include several
 %            options, which are:
-%               'GABA' or 'Glx': target metabolite
+%            'GABA' or 'Glx': target metabolite
 if nargin > 1
 switch varargin{1}
             case 'GABA'

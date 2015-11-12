@@ -300,7 +300,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'Cho'
                     %AllFramesFTrealign=AlignUsingCho(AllFramesFTrealign);
                case 'H20'
-                   %AllFramesFTrealign=AlignUsingH2O(AllFramesFTrealign);
+                   [AllFramesFTrealign MRS_struct]=AlignUsingH2O(AllFramesFTrealign,MRS_struct);
                case 'NAA'
                    [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
                case 'SpecReg'
