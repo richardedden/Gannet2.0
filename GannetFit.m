@@ -328,7 +328,7 @@ for ii=1:numscans
                 lb,ub,options);
             residg = -residg;
             if(fit_method == FIT_NLINFIT)
-                GaussModelInit = GaussModelParam(ii,:)
+                GaussModelInit = GaussModelParam(ii,:);
                 % 111013 restart the optimisation, to ensure convergence
                 figure(99)
                 plot(freq(freqbounds),GABAGlxModel_area(GaussModelInit,freq(freqbounds)),freq(freqbounds),real(GABAData(ii,freqbounds)))
