@@ -428,7 +428,7 @@ for ii=1:numscans
         text(2.8,tailbottom-gabamax/20,'model','Color',[1 0 0]);
     elseif strcmp(MRS_struct.p.target,'Glx')
         %%%%From here on is cosmetic - adding labels (and deciding where to).
-        hgaba=text(3,gabamax/4,MRS_struct.p.target);
+        hgaba=text(3.8,gabamax/4,MRS_struct.p.target);
         set(hgaba,'horizontalAlignment', 'center');
         %determine values of GABA tail (below 2.8 ppm.
         z=abs(MRS_struct.spec.freq-2.79);%2.75
@@ -755,10 +755,17 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = sprintf('%.1f, %.1f ',  MRS_struct.out.GABAIU_Error_w(ii),  MRS_struct.out.GABAIU_Error_cr(ii));
         tmp = [tmp '%'];
         tmp = ['FitErr (H/Cr)   : ' tmp];
-        text(0,0.4, tmp, 'FontName', 'Helvetica');
-        tmp = [MRS_struct.p.target sprintf( '/H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) )];
-        text(0,0.3, tmp, 'FontName', 'Helvetica');
-        tmp = [ MRS_struct.p.target sprintf('+/Cr i.r.: %.3f', MRS_struct.out.GABAconcCr(ii) )];
+        if strcmp (MRS_struct.p.target, 'Glx')
+            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            tmp = [MRS_struct.p.target sprintf( '/H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) )];
+            text(0,0.3, tmp, 'FontName', 'Helvetica');
+            tmp = [ MRS_struct.p.target sprintf('/Cr i.r.: %.3f', MRS_struct.out.GABAconcCr(ii) )];    
+        elseif strcmp (MRS_struct.p.target, 'GABA')
+            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            tmp = [MRS_struct.p.target sprintf( '+/H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) )];
+            text(0,0.3, tmp, 'FontName', 'Helvetica');
+            tmp = [ MRS_struct.p.target sprintf('+/Cr i.r.: %.3f', MRS_struct.out.GABAconcCr(ii) )];
+        end
         text(0,0.2, tmp, 'FontName', 'Helvetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload  ',' MRS_struct.versionfit];
         text(0,0.1, tmp, 'FontName', 'Helvetica');
@@ -767,9 +774,16 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     else
         tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.CrArea(ii) );
         text(0,0.5, tmp, 'FontName', 'Helvetica');
-        tmp = sprintf('FitError (Cr): %.2f%%', MRS_struct.out.GABAIU_Error_cr);
-        text(0,0.4, tmp, 'FontName', 'Helvetica');
-        tmp = [MRS_struct.p.target sprintf( '+/Cr i.r.: %.4f', MRS_struct.out.GABAconcCr(ii) )];
+        tmp = sprintf('%.1f',  MRS_struct.out.GABAIU_Error_cr(ii));
+        tmp = [tmp '%'];
+        tmp = ['FitErr (H/Cr)   : ' tmp];
+        if strcmp (MRS_struct.p.target, 'Glx')
+            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            tmp = [MRS_struct.p.target sprintf( '/Cr i.r.: %.4f', MRS_struct.out.GABAconcCr(ii) )];
+        elseif strcmp (MRS_struct.p.target, 'GABA')       
+            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            tmp = [MRS_struct.p.target sprintf( '+/Cr i.r.: %.4f', MRS_struct.out.GABAconcCr(ii) )];
+        end
         text(0,0.3, tmp, 'FontName', 'Helvetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
         text(0,0.2, tmp, 'FontName', 'Helvetica');
