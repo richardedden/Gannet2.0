@@ -3,6 +3,7 @@ function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2,ii)
 if(nargin ==3)
     if isstruct(MRS_struct)
         dcm_dir2={dcm_dir};
+               dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
         ii =1;
     else
         dcm_dir2=MRS_struct;
@@ -12,10 +13,22 @@ if(nargin ==3)
     end
     
 end
+
+if(nargin == 4)
+    if isnumeric(dcm_dir2)
+        ii = dcm_dir2;
+        dcm_dir2 = dcm_dir;
+    else
+        ii = 1;
+    end
+end
+
+
 if(nargin <3)    
     MRS_struct.ii=1;
     ii = 1;
     dcm_dir2={dcm_dir};
+        dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
 end
 
 % this relies on SPM and anatomical images as dicoms 
