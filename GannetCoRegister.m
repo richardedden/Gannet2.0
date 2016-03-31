@@ -46,7 +46,8 @@ for ii = 1:MRS_struct.ii
     case 'Siemens'
         error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);        
     case 'Siemens_twix'
-        error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);        
+            fname = MRS_struct.gabafile{ii};
+            MRS_struct=GannetMask_SiemensTWIX(fname,nii_name{ii},MRS_struct, ii);
     case 'GE'
             fname = MRS_struct.gabafile{ii};
             %sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
