@@ -458,7 +458,7 @@ for ii=1:numscans
         
         if(strcmpi(MRS_struct.p.vendor,'Philips'))
             %Run preliminary Fit of data
-            LGModelInit = [maxinWater 20 4.7 0.0 waterbase -50 ]; %works
+            LGModelInit = [maxinWater 20 freq(watermaxindex) 0.0 waterbase -50 ]; %works
 
             lblg = [0.01*maxinWater 1 4.6 0 0 -50 ];
             ublg = [40*maxinWater 100 4.8 0.000001 1 0 ];
