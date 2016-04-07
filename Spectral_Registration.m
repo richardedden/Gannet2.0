@@ -54,6 +54,7 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
         transient=squeeze(flatdata(:,:,corrloop));
         input.data=transient(:);
         parsFit(corrloop,:)=nlinfit(input,target,@FreqPhaseShiftNest,parsGuess);
+        parsGuess = parsFit(corrloop,:); %Carry parameters from point to point
     end   
     if(OnWhat)
         %Applyng frequency and phase corrections.
@@ -179,6 +180,9 @@ function [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct, OnW
             
             %Some Output
             MRS_struct.out.FreqStdevHz(MRS_struct.ii)=std(parsFit(:,1),1);
+            % GO 01/29/16: output frequency correction in Hz for every
+            % average
+            MRS_struct.out.FreqHz(MRS_struct.ii,:)=parsFit(:,1).';
             MRS_struct.out.CrFWHMHz(MRS_struct.ii)=CrMeanSpecFit(2);
             %Decide which rows to reject based on 3-sigma
             
