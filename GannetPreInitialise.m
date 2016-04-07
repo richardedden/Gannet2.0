@@ -9,16 +9,13 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
    % MRS_struct.p.sw=5000; %This should be parsed from headers where possible
    % MRS_struct.p.npoints=4096; %This is twice the acquired points for TWIX data;
     %This should be parsed from headers where possible
-    MRS_struct.p.TR=1800;%This should be parsed from headers where possible
-    MRS_struct.p.TE=144; %This should be parsed from headers where possible
+    MRS_struct.p.TR=2000;%This should be parsed from headers where possible
+    MRS_struct.p.TE=68; %This should be parsed from headers where possible
     MRS_struct.p.LarmorFreq=127; %This should be parsed from headers where possible
     %In general, LarmorFreq is 127.8 on Philips,
     MRS_struct.p.Nwateravg = 8; %Needed for GE
-<<<<<<< Updated upstream
     MRS_struct.p.target='GABA'; %Other options are 'GSH' and 'Glx' (now also implemented) 'GABAGlx' in dev
-=======
-    MRS_struct.p.target='GABA'; %Other options are 'GSH' and 'Glx' (now also implemented)
->>>>>>> Stashed changes
+    %MRS_struct.p.target='GABA'; %Other options are 'GSH' and 'Glx' (now also implemented)
     MRS_struct.p.ONOFForder='offfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
     MRS_struct.p.Water_Positive=1; %For Philips MOIST ws, set to 0.
