@@ -2,7 +2,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
 
 % Some of these parameters will be overwritten by correct values are stored
 % in the data headers.
-
+%mgs
 
 %Acquisition Parameters
 %    MRS_struct.sw=5000;  % sw taken from header for all formats except Philips .data

@@ -9,6 +9,10 @@ function [MRS_struct] = GannetFit(MRS_struct, varargin)
 %   3. Cr Fit
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% GABA and Glx outputs are saved in seperate mat structures -- MSaleh 29 June 2016
+
+
+
 % varargin = Optional arguments if user wants to overwrite fitting
 %            parameters set in GannetPreInitialise; can include several
 %            options, which are:
@@ -19,6 +23,7 @@ switch varargin{1}
                 MRS_struct.p.target = 'GABA';
             case 'Glx'
                 MRS_struct.p.target = 'Glx';
+            
 end
 end
 
@@ -44,7 +49,7 @@ epsdirname = [ './MRSfit_' datestr(clock,'yymmdd') ];
 for ii=1:numscans
     MRS_struct.gabafile{ii};
 
-    if strcmp(MRS_struct.p.target,'GABA')
+    if strcmp(MRS_struct.p.target,'GABA') 
     
     
     
@@ -99,19 +104,24 @@ for ii=1:numscans
                     @(xdummy,ydummy) GaussModel_area(xdummy,ydummy), ...
                     GaussModelInit, ...
                     nlinopts);
-                MRS_struct.out.fitparams_iter(fit_iter,:,ii) = GaussModelParam(ii,:);
+                MRS_struct.out.GABA.fitparams_iter(fit_iter,:,ii) = GaussModelParam(ii,:); %specifically for GABA - MSaleh
                 GaussModelInit = GaussModelParam(ii,:);
                 ci = nlparci(GaussModelParam(ii,:), residg,'covar',COVB); %copied over
             end
         end
         GABAheight = GaussModelParam(ii,1);
         % FitSTD reports the standard deviation of the residuals / gaba HEIGHT
-        MRS_struct.out.GABAFitError(ii)  =  100*std(residg)/GABAheight;
+        MRS_struct.out.GABA.GABAFitError(ii)  =  100*std(residg)/GABAheight;
         % This sets GabaArea as the area under the curve.
-        MRS_struct.out.GABAArea(ii)=GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi);
+        MRS_struct.out.GABA.GABAArea(ii)=GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi);
         sigma = ( 1 / (2 * (abs(GaussModelParam(ii,2)))) ).^(1/2);
-        MRS_struct.out.GABAFWHM(ii) =  abs( (2* MRS_struct.p.LarmorFreq) * sigma);
-        MRS_struct.out.GABAModelFit(ii,:)=GaussModelParam(ii,:);
+        MRS_struct.out.GABA.GABAFWHM(ii) =  abs( (2* MRS_struct.p.LarmorFreq) * sigma);
+        MRS_struct.out.GABA.GABAModelFit(ii,:)=GaussModelParam(ii,:);
+        MRS_struct.out.GABA.GABAresid(ii,:) = residg;
+        MRS_struct.out.GABA.GABAsnr(ii) = GABAheight / std(residg);  % Added by Msaleh
+
+        
+        
     elseif strcmp(MRS_struct.p.target,'GSH')
         %GSH fit
         
@@ -262,25 +272,27 @@ for ii=1:numscans
                         @(xdummy,ydummy) DoubleGaussModel_area(xdummy,ydummy), ...
                         GaussModelInit, ...
                         nlinopts);
-                    MRS_struct.out.fitparams_iter(fit_iter,:,ii) = GaussModelParam(ii,:);
+                    MRS_struct.out.Glx.fitparams_iter(fit_iter,:,ii) = GaussModelParam(ii,:);
                     GaussModelInit = GaussModelParam(ii,:);
                     ci = nlparci(GaussModelParam(ii,:), residg,'covar',COVB); %copied over
                 end
             end
 
 
-            GABAheight = max(GaussModelParam(ii,[1,4]));
+            Glxheight = max(GaussModelParam(ii,[1,4]));
         % GABAFitError reports the standard deviation of the residuals / GABAheight
-        MRS_struct.out.GABAFitError(ii) = 100*std(residg)/GABAheight;
+        MRS_struct.out.Glx.GlxFitError(ii) = 100*std(residg)/Glxheight;
         % This sets GABAArea as the area under the curve
-            MRS_struct.out.GABAArea(ii) = (GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi)) + ...
+            MRS_struct.out.Glx.GlxArea(ii) = (GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi)) + ...
                 (GaussModelParam(ii,4)./sqrt(-GaussModelParam(ii,5))*sqrt(pi));
             sigma = ((1/(2*(abs(GaussModelParam(ii,2))))).^(1/2)) + ((1/(2*(abs(GaussModelParam(ii,5))))).^(1/2));
-        MRS_struct.out.GABAFWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
-        MRS_struct.out.GABAModelFit(ii,:) = GaussModelParam(ii,:);
-        MRS_struct.out.GABAresid(ii,:) = residg;
-        MRS_struct.out.GABAsnr(ii) = GABAheight / std(residg);
-    elseif strcmp (MRS_struct.p.target,'GABAGlx')
+        MRS_struct.out.Glx.GlxFWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
+        MRS_struct.out.Glx.GlxModelFit(ii,:) = GaussModelParam(ii,:);
+        MRS_struct.out.Glx.Glxresid(ii,:) = residg;
+        MRS_struct.out.Glx.Glxsnr(ii) = Glxheight / std(residg);
+        
+        
+    elseif strcmp (MRS_struct.p.target,'GABAGlx')  % Need to quantify GABA and Glx separately  --MSaleh
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %  TEsting a GABA and Glx Fit
@@ -337,21 +349,23 @@ for ii=1:numscans
                         @(xdummy,ydummy) GABAGlxModel_area(xdummy,ydummy), ...
                         GaussModelInit, ...
                         nlinopts);
-                    MRS_struct.out.fitparams_iter(fit_iter,:,ii) = GaussModelParam(ii,:);
+                    MRS_struct.out.GABA_Glx.fitparams_iter(fit_iter,:,ii) = GaussModelParam(ii,:);
                     GaussModelInit = GaussModelParam(ii,:)
                     ci = nlparci(GaussModelParam(ii,:), residg,'covar',COVB); %copied over
                 end
             end
             GABAheight = GaussModelParam(ii,1);
-        % FitSTD reports the standard deviation of the residuals / gaba HEIGHT
-        MRS_struct.out.GABAFitError(ii)  =  100*std(residg)/GABAheight;
-         MRS_struct.out.GABAArea(ii) = (GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi)) + ...
+        % FitSTD reports the standard deviation of the residuals / gaba
+        % HEIGHT  
+        % Need to quantify GABA and Glx separately --MSaleh
+        MRS_struct.out.GABA_Glx.GABAFitError(ii)  =  100*std(residg)/GABAheight;
+         MRS_struct.out.GABA_Glx.GABAArea(ii) = (GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi)) + ...
                 (GaussModelParam(ii,4)./sqrt(-GaussModelParam(ii,5))*sqrt(pi));
             sigma = ((1/(2*(abs(GaussModelParam(ii,2))))).^(1/2)) + ((1/(2*(abs(GaussModelParam(ii,5))))).^(1/2));
-        MRS_struct.out.GABAFWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
-        MRS_struct.out.GABAModelFit(ii,:) = GaussModelParam(ii,:);
-        MRS_struct.out.GABAresid(ii,:) = residg;
-        MRS_struct.out.GABAsnr(ii) = GABAheight / std(residg);
+        MRS_struct.out.GABA_Glx.GABAFWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
+        MRS_struct.out.GABA_Glx.GABAModelFit(ii,:) = GaussModelParam(ii,:);
+        MRS_struct.out.GABA_Glx.GABAresid(ii,:) = residg;
+        MRS_struct.out.GABA_Glx.GABAsnr(ii) = GABAheight / std(residg);
     else
         error('Fitting MRS_struct.p.target not recognised');
     end
@@ -534,18 +548,26 @@ for ii=1:numscans
                 end
                 residw = -residw;
             end
-        MRS_struct.out.WaterModelParam(ii,:) = LGPModelParam(ii,:);
+        MRS_struct.out.Water.WaterModelParam(ii,:) = LGPModelParam(ii,:);
 
         hb=subplot(2, 2, 3);
         waterheight = LGPModelParam(ii,1);
         watmin = min(real(WaterData(ii,:)));
         watmax = max(real(WaterData(ii,:)));
         resmax = max(residw);
-        MRS_struct.out.WaterFitError(ii)  =  100 * std(residw) / waterheight; %raee changed to residw
+        MRS_struct.out.Water.WaterFitError(ii)  =  100 * std(residw) / waterheight; %raee changed to residw
         residw = residw + watmin - resmax;
         stdevresidw=std(residw);
-        MRS_struct.out.GABAIU_Error_w = (MRS_struct.out.GABAFitError .^ 2 + ...
-            MRS_struct.out.WaterFitError .^ 2 ) .^ 0.5;
+       
+        if strcmp (MRS_struct.p.target,'GABA')
+        MRS_struct.out.GABA.GABAIU_Error_w = (MRS_struct.out.GABA.GABAFitError .^ 2 + ...
+            MRS_struct.out.Water.WaterFitError .^ 2 ) .^ 0.5;
+        
+        elseif strcmp (MRS_struct.p.target,'Glx')
+            MRS_struct.out.Glx.GlxIU_Error_w = (MRS_struct.out.Glx.GlxFitError .^ 2 + ...
+            MRS_struct.out.Water.WaterFitError .^ 2 ) .^ 0.5;
+        end
+            
         plot(freq(freqbounds),real(LorentzGaussModelP(LGPModelParam(ii,:),freq(freqbounds))), 'r', ...
             freq(freqbounds),real(WaterData(ii,freqbounds)),'b', ...
             freq(freqbounds), residw, 'k');
@@ -571,13 +593,19 @@ for ii=1:numscans
         WaterArea(ii)=sum(real(LorentzGaussModel(LGModelParam(ii,:),freq(freqbounds))) ...
       - BaselineModel(LGModelParam(ii,3:5),freq(freqbounds)),2);
         % convert watersum to integral
-        MRS_struct.out.WaterArea(ii)=WaterArea(ii) * (freq(1) - freq(2));
+        MRS_struct.out.Water.WaterArea(ii)=WaterArea(ii) * (freq(1) - freq(2));
         %MRS_struct.H20 = MRS_struct.out.WaterArea(ii) ./ std(residw); %This line doesn't make sense - commenting pending delete. RE
         %generate scaled spectrum (for plotting) CJE Jan2011
         MRS_struct.spec.diff_scaled(ii,:) = MRS_struct.spec.diff(ii,:) .* ...
-            repmat((1 ./ MRS_struct.out.WaterArea(ii)), [1 32768]);
-    %Concentration of GABA to water determined here.
-        [MRS_struct]=MRSGABAinstunits(MRS_struct, ii);
+            repmat((1 ./ MRS_struct.out.Water.WaterArea(ii)), [1 32768]);
+    %Concentration of GABA and Glx to water determined here. -- MSaleh
+        if strcmp (MRS_struct.p.target,'GABA')
+            [MRS_struct]=MRSGABAinstunits(MRS_struct, ii);
+        elseif strcmp (MRS_struct.p.target,'Glx')
+            [MRS_struct]=MRSGlxinstunits(MRS_struct, ii);
+        end
+
+            
     end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % 3.  Cr Fit 
@@ -618,14 +646,33 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         Crmax = max(real(Cr_OFF(lb:ub)));
         resmaxCr = max(residCr);
         stdresidCr = std(residCr);
-        MRS_struct.out.CrFitError(ii)  =  100 * stdresidCr / Crheight;
-        MRS_struct.out.GABAIU_Error_cr(ii) = (MRS_struct.out.GABAFitError(ii) .^ 2 + ...
-            MRS_struct.out.CrFitError(ii) .^ 2 ) .^ 0.5;
+        MRS_struct.out.Creatine.CrFitError(ii)  =  100 * stdresidCr / Crheight;
+       
+        if strcmp (MRS_struct.p.target,'GABA')
+        MRS_struct.out.GABA.GABAIU_Error_cr(ii) = (MRS_struct.out.GABA.GABAFitError(ii) .^ 2 + ...
+            MRS_struct.out.Creatine.CrFitError(ii) .^ 2 ) .^ 0.5;
+        elseif strcmp (MRS_struct.p.target,'Glx')
+             MRS_struct.out.Glx.GlxIU_Error_cr(ii) = (MRS_struct.out.Glx.GlxFitError(ii) .^ 2 + ...
+            MRS_struct.out.Creatine.CrFitError(ii) .^ 2 ) .^ 0.5;
+        end
+            
         %MRS_struct.out.CrArea(ii)=sum(real(LorentzModel(CrFitParams(ii,:),freqrange)-LorentzModel([0 CrFitParams(ii,2:end)],freqrange))) * (freq(1) - freq(2));
-        MRS_struct.out.CrArea(ii)=sum(real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc)-TwoLorentzModel([0 MRS_struct.out.ChoCrMeanSpecFit(ii,2:(end-1)) 0],freqrangecc))) * (freq(1) - freq(2));
-        MRS_struct.out.ChoArea(ii)=sum(real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end))],freqrangecc)-TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc))) * (freq(1) - freq(2));
-        MRS_struct.out.GABAconcCr(ii)=MRS_struct.out.GABAArea(ii)./MRS_struct.out.CrArea(ii);           
-        MRS_struct.out.GABAconcCho(ii)=MRS_struct.out.GABAArea(ii)./MRS_struct.out.ChoArea(ii);           
+        
+        MRS_struct.out.Creatine.CrArea(ii)=sum(real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc)-TwoLorentzModel([0 MRS_struct.out.ChoCrMeanSpecFit(ii,2:(end-1)) 0],freqrangecc))) * (freq(1) - freq(2));
+        MRS_struct.out.Choline.ChoArea(ii)=sum(real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end))],freqrangecc)-TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc))) * (freq(1) - freq(2));
+        
+        if strcmp (MRS_struct.p.target,'GABA')
+            MRS_struct.out.GABA.GABAconcCr(ii)=MRS_struct.out.GABA.GABAArea(ii)./MRS_struct.out.Creatine.CrArea(ii);   
+            MRS_struct.out.GABA.GABAconcCho(ii)=MRS_struct.out.GABA.GABAArea(ii)./MRS_struct.out.Choline.ChoArea(ii);    
+            
+        elseif strcmp (MRS_struct.p.target,'Glx')
+            MRS_struct.out.Glx.GlxconcCr(ii)=MRS_struct.out.Glx.GlxArea(ii)./MRS_struct.out.Creatine.CrArea(ii);   
+            MRS_struct.out.Glx.GlxconcCho(ii)=MRS_struct.out.Glx.GlxArea(ii)./MRS_struct.out.Choline.ChoArea(ii); 
+            
+        end
+        
+        
+                
         %alter resid Cr for plotting.
         residCr = residCr + Crmin - resmaxCr;
         if strcmp(MRS_struct.p.Reference_compound,'H2O')
@@ -744,27 +791,34 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
     end          
              
     if strcmp (MRS_struct.p.target, 'Glx')
-        tmp = sprintf('Glx Area : %.3g', MRS_struct.out.GABAArea(ii));
+        tmp = sprintf('Glx Area : %.3g', MRS_struct.out.Glx.GlxArea(ii));
     elseif strcmp (MRS_struct.p.target, 'GABA')
-        tmp = sprintf('GABA+ Area : %.3g', MRS_struct.out.GABAArea(ii));
+        tmp = sprintf('GABA+ Area : %.3g', MRS_struct.out.GABA.GABAArea(ii));
     end
     text(0,0.6, tmp);
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
-        tmp = sprintf('H2O/Cr Area : %.3g/%.3g ', MRS_struct.out.WaterArea(ii),MRS_struct.out.CrArea(ii) );
+        tmp = sprintf('H2O/Cr Area : %.3g/%.3g ', MRS_struct.out.Water.WaterArea(ii),MRS_struct.out.Creatine.CrArea(ii) );
         text(0,0.5, tmp, 'FontName', 'Helvetica');
-        tmp = sprintf('%.1f, %.1f ',  MRS_struct.out.GABAIU_Error_w(ii),  MRS_struct.out.GABAIU_Error_cr(ii));
+        
+        if strcmp (MRS_struct.p.target, 'GABA')
+            tmp = sprintf('%.1f, %.1f ',  MRS_struct.out.GABA.GABAIU_Error_w(ii),  MRS_struct.out.GABA.GABAIU_Error_cr(ii));
+        elseif strcmp (MRS_struct.p.target, 'Glx')
+            tmp = sprintf('%.1f, %.1f ',  MRS_struct.out.Glx.GlxIU_Error_w(ii),  MRS_struct.out.Glx.GlxIU_Error_cr(ii));
+        end
+
+                
         tmp = [tmp '%'];
         tmp = ['FitErr (H/Cr)   : ' tmp];
         if strcmp (MRS_struct.p.target, 'Glx')
             text(0,0.4, tmp, 'FontName', 'Helvetica');
-            tmp = [MRS_struct.p.target sprintf( '/H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) )];
+            tmp = [MRS_struct.p.target sprintf( '/H_2O  : %.3f inst. units.', MRS_struct.out.Glx.Glxconciu(ii) )];
             text(0,0.3, tmp, 'FontName', 'Helvetica');
-            tmp = [ MRS_struct.p.target sprintf('/Cr i.r.: %.3f', MRS_struct.out.GABAconcCr(ii) )];    
+            tmp = [ MRS_struct.p.target sprintf('/Cr i.r.: %.3f', MRS_struct.out.Glx.GlxconcCr(ii) )];    
         elseif strcmp (MRS_struct.p.target, 'GABA')
             text(0,0.4, tmp, 'FontName', 'Helvetica');
-            tmp = [MRS_struct.p.target sprintf( '+/H_2O  : %.3f inst. units.', MRS_struct.out.GABAconciu(ii) )];
+            tmp = [MRS_struct.p.target sprintf( '+/H_2O  : %.3f inst. units.', MRS_struct.out.GABA.GABAconciu(ii) )];
             text(0,0.3, tmp, 'FontName', 'Helvetica');
-            tmp = [ MRS_struct.p.target sprintf('+/Cr i.r.: %.3f', MRS_struct.out.GABAconcCr(ii) )];
+            tmp = [ MRS_struct.p.target sprintf('+/Cr i.r.: %.3f', MRS_struct.out.GABA.GABAconcCr(ii) )];
         end
         text(0,0.2, tmp, 'FontName', 'Helvetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload  ',' MRS_struct.versionfit];
@@ -772,9 +826,9 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         %tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
         %text(0,-0.1, tmp, 'FontName', 'Helvetica');
     else
-        tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.CrArea(ii) );
+        tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.Creatine.CrArea(ii) );
         text(0,0.5, tmp, 'FontName', 'Helvetica');
-        tmp = sprintf('%.1f',  MRS_struct.out.GABAIU_Error_cr(ii));
+        tmp = sprintf('%.1f',  MRS_struct.out.GABA.GABAIU_Error_cr(ii));
         tmp = [tmp '%'];
         tmp = ['FitErr (H/Cr)   : ' tmp];
         if strcmp (MRS_struct.p.target, 'Glx')
@@ -782,7 +836,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
             tmp = [MRS_struct.p.target sprintf( '/Cr i.r.: %.4f', MRS_struct.out.GABAconcCr(ii) )];
         elseif strcmp (MRS_struct.p.target, 'GABA')       
             text(0,0.4, tmp, 'FontName', 'Helvetica');
-            tmp = [MRS_struct.p.target sprintf( '+/Cr i.r.: %.4f', MRS_struct.out.GABAconcCr(ii) )];
+            tmp = [MRS_struct.p.target sprintf( '+/Cr i.r.: %.4f', MRS_struct.out.GABA.GABAconcCr(ii) )];
         end
         text(0,0.3, tmp, 'FontName', 'Helvetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
@@ -1131,15 +1185,58 @@ T1_factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_GABA));
 T2_factor = exp(-TE./T2_Water) ./ exp(-TE./T2_GABA);
 
 if(strcmpi(MRS_struct.p.vendor,'Siemens'))
-    MRS_struct.out.GABAconciu(ii) = (MRS_struct.out.GABAArea(ii)  ./  MRS_struct.out.WaterArea(ii))  ...
+    MRS_struct.out.GABA.GABAconciu(ii) = (MRS_struct.out.GABA.GABAArea(ii)  ./  MRS_struct.out.Water.WaterArea(ii))  ...
     * PureWaterConc*WaterVisibility*T1_factor*T2_factor*(N_H_Water./N_H_GABA) ...
     * MM /2.0 ./ EditingEfficiency; %Factor of 2.0 is appropriate for averaged data, read in separately as on and off (Siemens).
 else
-    MRS_struct.out.GABAconciu(ii) = (MRS_struct.out.GABAArea(ii)  ./  MRS_struct.out.WaterArea(ii))  ...
+    MRS_struct.out.GABA.GABAconciu(ii) = (MRS_struct.out.GABA.GABAArea(ii)  ./  MRS_struct.out.Water.WaterArea(ii))  ...
     * PureWaterConc*WaterVisibility*T1_factor*T2_factor*(N_H_Water./N_H_GABA) ...
     * MM ./ EditingEfficiency;
 end
 FAC=PureWaterConc*WaterVisibility*(N_H_Water./N_H_GABA) ...
+    * MM ./ EditingEfficiency*T1_factor*T2_factor;
+
+
+function [MRS_struct] = MRSGlxinstunits(MRS_struct,ii)
+% function [MRS_struct] = MRSGlxinstunits(MRS_struct)
+% Convert Glx and Water amplitudes to institutional units
+% (pseudo-concentration in mmol per litre).
+%  Written by MSaleh -- 29 June 2016. Still needs variable inputs, such as
+%  T1, etc.
+
+PureWaterConc = 55000; % mmol/litre
+WaterVisibility = 0.65; % This is approx the value from Ernst, Kreis, Ross
+EditingEfficiency = 1; % Need to verify -- Msaleh
+
+T1_Glx = 1 ; % Not yet in the literature -- Msaleh
+
+T2_Glx = 1; % Not yet in the literature -- Msaleh
+T2_Glx = 1; % Not yet in the literature -- Msaleh
+
+T1_Water = 1.100; % average of WM and GM, estimated from Wansapura 1999
+T2_Water = 0.095; % average of WM and GM, estimated from Wansapura 1999
+MM=1;  % Not affected by MM -- Msaleh 
+%
+TR=MRS_struct.p.TR/1000;
+TE=MRS_struct.p.TE/1000;
+N_H_Glx=2; % maybe -- Msaleh
+N_H_Water=2;
+Nspectra = length(MRS_struct.gabafile);
+%Nwateravg=8;
+
+T1_factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Glx));
+T2_factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Glx);
+
+if(strcmpi(MRS_struct.p.vendor,'Siemens'))
+    MRS_struct.out.Glx.Glxconciu(ii) = (MRS_struct.out.Glx.GlxArea(ii)  ./  MRS_struct.out.Water.WaterArea(ii))  ...
+    * PureWaterConc*WaterVisibility*T1_factor*T2_factor*(N_H_Water./N_H_Glx) ...
+    * MM /2.0 ./ EditingEfficiency; %Factor of 2.0 is appropriate for averaged data, read in separately as on and off (Siemens).
+else
+    MRS_struct.out.Glx.Glxconciu(ii) = (MRS_struct.out.Glx.GlxArea(ii)  ./  MRS_struct.out.Water.WaterArea(ii))  ...
+    * PureWaterConc*WaterVisibility*T1_factor*T2_factor*(N_H_Water./N_H_Glx) ...
+    * MM ./ EditingEfficiency;
+end
+FAC=PureWaterConc*WaterVisibility*(N_H_Water./N_H_Glx) ...
     * MM ./ EditingEfficiency*T1_factor*T2_factor;
 
 
