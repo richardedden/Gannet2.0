@@ -403,7 +403,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',13);
              end          
 %             tmp = sprintf('Cr FWHM   : %.2f Hz', MRS_struct.out.CrFWHMHz(ii) );
-             
+             tmp = [ 'Alignment   : '  MRS_struct.p.AlignTo];
+             text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',13);
  %            text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',13);
              %tmp = sprintf('FreqSTD (Hz): %.2f', MRS_struct.FreqStdevHz(ii));
              %text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
