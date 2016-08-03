@@ -7,7 +7,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
 %Acquisition Parameters
 %    MRS_struct.sw=5000;  % sw taken from header for all formats except Philips .data
    % MRS_struct.p.sw=5000; %This should be parsed from headers where possible
-   % MRS_struct.p.npoints=4096; %This is twice the acquired points for TWIX data;
+%    MRS_struct.p.npoints=4096; %This is twice the acquired points for TWIX data;
     %This should be parsed from headers where possible
     MRS_struct.p.TR=2000;%This should be parsed from headers where possible
     MRS_struct.p.TE=68; %This should be parsed from headers where possible
