@@ -1,6 +1,12 @@
-function MRS_struct=GannetLoad(gabafile, waterfile)
+function MRS_struct=GannetLoad(gabafile, waterfile, data_phase_correction, water_phase_correction)
 %Gannet 2.0 GannetLoad
 %Started by RAEE Nov 5, 2012
+%Eddy current correction added by MGSaleh (2016) using the formula described by
+%Jiru (2008), EJR,67:202-217. This is an option which can switched off by
+%a Gannet user. Default vslue is 1, which means apply correction to both
+%unsuppressed (water) and suppressed data. The correction has not been 
+%tested during batch processing.
+
 
 %Aim to make the GannetLoad more modular and easier to understand/edit, and
 %especially to integrate the workflow for different filetypes more.
@@ -35,7 +41,20 @@ if(nargin > 1)
 end
 if missing
         error('Not all the files are there, so I give up.');
-    end
+end
+
+% A choice to perform phase correction on the water or not. 
+% Default = 1. Yes, perform the correction -- MGSaleh 2016    
+if nargin < 4
+    water_phase_correction = 1;
+    
+end
+
+if  nargin < 3
+    data_phase_correction = 1;
+    
+end
+    
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -227,10 +246,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   5. Apply appropriate pre-processing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
+
     %There are some decisions to be made on what processing is applied to
     %what data
-
     %First steps
     MRS_struct.p.zf=MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
     time=(1:1:size(FullData,1))/MRS_struct.p.sw;
@@ -239,7 +258,16 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
         % Finish processing water data. 
         if(strcmpi(MRS_struct.p.Reference_compound,'H2O'))     
-
+        
+            % Performing phase corrrection on the water
+            % based on the Klose (1990), MRM,14:26-30. The equation was
+            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
+            if water_phase_correction
+                
+                WaterData=phase_correction_fids(WaterData,WaterData);
+            end
+            
+            
             if(strcmpi(MRS_struct.p.vendor,'GE'))           %CHECK
                 ComWater = mean(WaterData,2);           %CHECK
             elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))       %CHECK
@@ -251,9 +279,22 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             end           %CHECK
             
             ComWater = ComWater.*exp(-(time')*MRS_struct.p.LB*pi);
+
             MRS_struct.spec.water(ii,:)=fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
         end %End of H20 reference loop
+            
+        
+            % Performing phase corrrection on the water
+            % based on the Klose (1990), MRM,14:26-30. The equation was
+            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
+            if data_phase_correction                
+                
+                MRS_struct.fids.data=phase_correction_fids(MRS_struct.fids.data.',WaterData);
+                MRS_struct.fids.data=MRS_struct.fids.data.';
 
+            end
+            
+            
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
             AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale

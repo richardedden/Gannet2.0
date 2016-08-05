@@ -387,7 +387,7 @@ for ii=1:numscans
             MRS_struct.out.Glx.FitError(ii)  =  100*std(residg([1:(midbound2-(lowerbound-1))],:))/Glxheight; % The residuals is from the whole range specified above for the the fitting --MGSaleh
             sigma = ((1/(2*(abs(GaussModelParam(ii,2))))).^(1/2)) + ((1/(2*(abs(GaussModelParam(ii,5))))).^(1/2));
             MRS_struct.out.Glx.FWHM(ii) =  abs( (2* MRS_struct.p.LarmorFreq) * sigma);
-            MRS_struct.out.Glx.ModelFit(ii,:)=GaussModelParam(ii,[1:6,10:13]);
+            MRS_struct.out.Glx.ModelFit(ii,:)=GaussModelParam(ii,:); % GaussModelParam(ii,[1:6]) are related to Glx -- MGSaleh;
             MRS_struct.out.Glx.resid(ii,:) = residg([1:(midbound2-(lowerbound-1))],:);
             MRS_struct.out.Glx.snr(ii) = Glxheight / std(residg([1:(midbound2-(lowerbound-1))],:));  % Added by MGSaleh            
             
@@ -399,7 +399,7 @@ for ii=1:numscans
             MRS_struct.out.GABA.FitError(ii)  =  100*std(residg([1:(upperbound-(midbound1-1))],:))/GABAheight; % The residuals is from the whole range specified above for the the fitting --MGSaleh
             sigma = ( 1 / (2 * (abs(GaussModelParam(ii,8)))) ).^(1/2);
             MRS_struct.out.GABA.FWHM(ii) =  abs( (2* MRS_struct.p.LarmorFreq) * sigma);
-            MRS_struct.out.GABA.ModelFit(ii,:)=GaussModelParam(ii,7:end);
+            MRS_struct.out.GABA.ModelFit(ii,:)=GaussModelParam(ii,:); % GaussModelParam(ii,7:9) are related to GABA  -- MGSaleh;
             MRS_struct.out.GABA.resid(ii,:) = residg([1:(upperbound-(midbound1-1))],:);
             MRS_struct.out.GABA.snr(ii) = GABAheight / std(residg([1:(upperbound-(midbound1-1))],:));  % Added by MGSaleh
 
@@ -599,6 +599,10 @@ for ii=1:numscans
         MRS_struct.out.Water.FitError(ii)  =  100 * std(residw) / waterheight; %raee changed to residw
         residw = residw + watmin - resmax;
         stdevresidw=std(residw);
+        
+        % Measuring the FWHM of the water peak using the Model -- MGSaleh
+        % 2016.
+        MRS_struct.out.Water.FWHM(ii) = abs(fwhm(MRS_struct.spec.freq,real(LorentzGaussModelP(LGPModelParam(ii,:),MRS_struct.spec.freq))))*MRS_struct.p.LarmorFreq
        
         if strcmp (MRS_struct.p.target,'GABA') || strcmp (MRS_struct.p.target,'GABAGlx') % Added by MGSaleh 
         MRS_struct.out.GABA.IU_Error_w = (MRS_struct.out.GABA.FitError(ii) .^ 2 + ...
@@ -642,7 +646,8 @@ for ii=1:numscans
         %generate scaled spectrum (for plotting) CJE Jan2011
         MRS_struct.spec.diff_scaled(ii,:) = MRS_struct.spec.diff(ii,:) .* ...
             repmat((1 ./ MRS_struct.out.Water.Area(ii)), [1 32768]);
-    %Concentration of GABA and Glx to water determined here. -- MGSaleh
+    
+        % Concentration of GABA and Glx to water determined here. -- MGSaleh
         if strcmp (MRS_struct.p.target,'GABA') || strcmp (MRS_struct.p.target,'GABAGlx')
             [MRS_struct]=MRSGABAinstunits(MRS_struct, ii);
         end
@@ -653,6 +658,8 @@ for ii=1:numscans
 
             
     end
+    
+    
     
 %% Creatine fitting
    
@@ -827,20 +834,23 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
         tmp = [ 'filename    : ' MRS_struct.gabafile{ii} ];
      end
     tmp = regexprep(tmp, '_','-');
-    text(0,0.9, tmp, 'FontName', 'Helvetica');
+    
+    var_pos=0.9; % A variable added to determine position of the printout on the PDF/matlab-output window -- Added by MGSaleh
+    
+    text(0,var_pos, tmp, 'FontName', 'Helvetica');
     if isfield(MRS_struct.p,'voxsize')
     tmp =       [ num2str(MRS_struct.p.Navg(ii)) ' averages of a ' num2str(MRS_struct.p.voxsize(ii,1)*MRS_struct.p.voxsize(ii,2)*MRS_struct.p.voxsize(ii,3)*.001) ' ml voxel'];
     else
     tmp =       [ num2str(MRS_struct.p.Navg(ii)) ' averages'];
     end
-    text(0,0.8, tmp, 'FontName', 'Helvetica');
+    text(0,var_pos-0.1, tmp, 'FontName', 'Helvetica');
     %Remove this - more useful to add in Cr fWHM at a later date
     %tmp = sprintf('GABA+ FWHM   : %.2f Hz', MRS_struct.out.GABAFWHM(ii) );
     %text(0,0.7, tmp);
     if isfield(MRS_struct.p,'voxsize')
              SNRfactor=round(sqrt(MRS_struct.p.Navg(ii))*MRS_struct.p.voxsize(ii,1)*MRS_struct.p.voxsize(ii,2)*MRS_struct.p.voxsize(ii,3)*.001);
              tmp = ['SNR factor         :  '  num2str(SNRfactor)];
-             text(0,0.7, tmp, 'FontName', 'Helvetica');
+             text(0,var_pos-0.2, tmp, 'FontName', 'Helvetica');
     end
     
     % Some changes to the printout to accomodate GABAGlx fitting output
@@ -853,12 +863,14 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
     end
     
-    text(0,0.6, tmp);
+    text(0,var_pos-0.3, tmp);
 
     % Made some changes to FitErr printout to accommodate GABAGlx printouts
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
+        tmp = sprintf('FWHM of Water: %.2f Hz ', MRS_struct.out.Water.FWHM(ii)  );
+        text(0,var_pos-0.5, tmp, 'FontName', 'Helvetica');
         tmp = sprintf('H_2O/Cr Area : %.3g/%.3g ', MRS_struct.out.Water.Area(ii),MRS_struct.out.Creatine.Area(ii) );
-        text(0,0.5, tmp, 'FontName', 'Helvetica');
+        text(0,var_pos-0.4, tmp, 'FontName', 'Helvetica');
         
         if strcmp (MRS_struct.p.target, 'GABA') % Added by MGSaleh
             tmp = sprintf('%.1f, %.1f ',  MRS_struct.out.GABA.IU_Error_w(ii),  MRS_struct.out.GABA.IU_Error_cr(ii));
@@ -875,45 +887,45 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
                
         if strcmp (MRS_struct.p.target, 'GABA') % Added by MGSaleh
-            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.6, tmp, 'FontName', 'Helvetica');
             tmp = [MRS_struct.p.target sprintf( '+/H_2O: %.3f inst. units.', MRS_struct.out.GABA.conciu(ii) )];
-            text(0,0.3, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.7, tmp, 'FontName', 'Helvetica');
             tmp = [ MRS_struct.p.target sprintf('+/Cr i.r.: %.3f', MRS_struct.out.GABA.GABAconcCr(ii) )]; 
         
         elseif strcmp (MRS_struct.p.target, 'Glx') % Added by MGSaleh
-            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.6, tmp, 'FontName', 'Helvetica');
             tmp = [MRS_struct.p.target sprintf( '/H_2O: %.3f inst. units.', MRS_struct.out.Glx.conciu(ii) )];
-            text(0,0.3, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.7, tmp, 'FontName', 'Helvetica');
             tmp = [ MRS_struct.p.target sprintf('/Cr i.r.: %.3f', MRS_struct.out.Glx.GlxconcCr(ii) )];  
             
         elseif strcmp (MRS_struct.p.target, 'GABAGlx') % Added by MGSaleh
-            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.6, tmp, 'FontName', 'Helvetica');
             tmp = [ sprintf( '[GABA+]/H_2O:   %.3f;   [Glx]/H_2O:   %.3f inst. units.', MRS_struct.out.GABA.conciu(ii), MRS_struct.out.Glx.conciu(ii) )];
-            text(0,0.3, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.7, tmp, 'FontName', 'Helvetica');
             tmp = [ sprintf( '[GABA+]/Cr i.r.:   %.3f;   [Glx]/Cr i.r.:   %.3f', MRS_struct.out.GABA.GABAconcCr(ii),MRS_struct.out.Glx.GlxconcCr(ii) )];
             
         end
-        text(0,0.2, tmp, 'FontName', 'Helvetica');
+        text(0,var_pos-0.8, tmp, 'FontName', 'Helvetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload  ',' MRS_struct.versionfit];
-        text(0,0.1, tmp, 'FontName', 'Helvetica');
+        text(0,var_pos-0.9, tmp, 'FontName', 'Helvetica');
         %tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
         %text(0,-0.1, tmp, 'FontName', 'Helvetica');
     else
         tmp = sprintf('Cr Area      : %.4f', MRS_struct.out.Creatine.Area(ii) );
-        text(0,0.5, tmp, 'FontName', 'Helvetica');
+        text(0,var_pos-0.5, tmp, 'FontName', 'Helvetica');
         tmp = sprintf('%.1f',  MRS_struct.out.GABA.IU_Error_cr(ii));
         tmp = [tmp '%'];
         tmp = ['FitErr (H/Cr)   : ' tmp];
         if strcmp (MRS_struct.p.target, 'GABA')       
-            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.6, tmp, 'FontName', 'Helvetica');
             tmp = [MRS_struct.p.target sprintf( '+/Cr i.r.: %.4f', MRS_struct.out.GABA.GABAconcCr(ii) )];
         elseif strcmp (MRS_struct.p.target, 'Glx')
-            text(0,0.4, tmp, 'FontName', 'Helvetica');
+            text(0,var_pos-0.6, tmp, 'FontName', 'Helvetica');
             tmp = [MRS_struct.p.target sprintf( '/Cr i.r.: %.4f', MRS_struct.out.Glx.GlxconcCr(ii) )];
         end
-        text(0,0.3, tmp, 'FontName', 'Helvetica');
+        text(0,var_pos-0.7, tmp, 'FontName', 'Helvetica');
         tmp =       [ 'Ver(Load/Fit): ' MRS_struct.versionload ',' tmp2 ',' MRS_struct.versionfit];
-        text(0,0.2, tmp, 'FontName', 'Helvetica');
+        text(0,var_pos-.7, tmp, 'FontName', 'Helvetica');
         %tmp =        [MRS_struct.p.target ', Water fit alg. :' tmp4 ];
         %text(0,0.0, tmp, 'FontName', 'Helvetica');
     end
@@ -1049,7 +1061,6 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
       end
         
 
-MRS_struct = orderfields(MRS_struct, structorder);
 
     
 % Dec 09: based on FitSeries.m:  Richard's GABA Fitting routine
@@ -1239,6 +1250,26 @@ function F = BaselineModel(x,freq)
 %% Function for Baseline Model  
 
 F = x(2)*(freq-x(1))+x(3);
+
+
+
+
+%%%%%%%%%%%%%%% BASELINE %%%%%%%%%%%%%%%%%%%%%%%
+function data_corr = klose_eddy_correction(data,H2O_fid)
+%% Phase correction using Klose method
+
+K=abs(H2O_fid);
+Kphase=phase(H2O_fid);
+
+
+K_data=abs(data);
+Kphase_data=phase(data);
+
+Kphase_corr=Kphase_data-Kphase;
+
+data_corr=K_data.* exp(i*Kphase_corr);
+
+
 
 
 %%%%%%%%%%%%%%%%%%% GABA INST UNITS CALC %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
