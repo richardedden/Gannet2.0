@@ -259,15 +259,6 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         % Finish processing water data. 
         if(strcmpi(MRS_struct.p.Reference_compound,'H2O'))     
         
-            % Performing phase corrrection on the water
-            % based on the Klose (1990), MRM,14:26-30. The equation was
-            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if water_phase_correction
-                
-                WaterData=phase_correction_fids(WaterData,WaterData);
-            end
-            
-            
             if(strcmpi(MRS_struct.p.vendor,'GE'))           %CHECK
                 ComWater = mean(WaterData,2);           %CHECK
             elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))       %CHECK
@@ -275,8 +266,48 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             elseif (strcmpi(MRS_struct.p.vendor,'Siemens_twix')) %CHECK
                 ComWater = WaterData;
             else
-                ComWater = WaterData.';           %CHECK
+                ComWater = WaterData.'; 
+                size(ComWater)%CHECK
             end           %CHECK
+            
+            
+            % Performing phase corrrection on the suppressed data
+            % based on the Klose (1990), MRM,14:26-30. The equation was
+            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
+            if data_phase_correction                
+                
+               if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data')) 
+                    MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater.');
+                    MRS_struct.fids.data=MRS_struct.fids.data.';
+                    FullData = MRS_struct.fids.data;
+                    
+               else
+                    MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater);
+                    MRS_struct.fids.data=MRS_struct.fids.data.';
+                    FullData = MRS_struct.fids.data;
+                   
+                  
+               end
+            end
+            
+            % Performing phase corrrection on the water
+            % based on the Klose (1990), MRM,14:26-30. The equation was
+            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
+            if water_phase_correction
+                
+                if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data'))  
+                    ComWater=phase_correction_fids(MRS_struct,ComWater.',ComWater.');
+                    ComWater=ComWater.';
+                else
+                    
+                    ComWater=phase_correction_fids(MRS_struct,ComWater,ComWater);
+                    
+                end
+                    
+
+            end
+            
+            
             
             ComWater = ComWater.*exp(-(time')*MRS_struct.p.LB*pi);
 
@@ -284,15 +315,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         end %End of H20 reference loop
             
         
-            % Performing phase corrrection on the water
-            % based on the Klose (1990), MRM,14:26-30. The equation was
-            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if data_phase_correction                
-                
-                MRS_struct.fids.data=phase_correction_fids(MRS_struct.fids.data.',WaterData);
-                MRS_struct.fids.data=MRS_struct.fids.data.';
-
-            end
+            
             
             
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
