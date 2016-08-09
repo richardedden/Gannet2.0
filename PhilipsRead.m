@@ -21,6 +21,12 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    sparidx=find(ismember(sparheader, 'repetition_time')==1);
    MRS_struct.p.TR = str2num(sparheader{sparidx+2});
    
+   sparidx=find(ismember(sparheader, 'echo_time')==1); % Added by MGSaleh 2016.
+   MRS_struct.p.TE = str2num(sparheader{sparidx+2});   % Added by MGSaleh 2016.
+
+   sparidx=find(ismember(sparheader, 'synthesizer_frequency')==1); % Added by MGSaleh 2016.
+   MRS_struct.p.LarmorFreq = str2num(sparheader{sparidx+2})/1e6;   % Added by MGSaleh 2016.
+   
    sparidx=find(ismember(sparheader, 'sample_frequency')==1);
    MRS_struct.p.sw = str2num(sparheader{sparidx+2});
    

@@ -11,9 +11,9 @@ sz_mat=size(data);
 fids=zeros(sz_mat);
 
 
-figure,plot(real(fftshift(fft(data.'))))
-xlim([1100 1400])
-title('Before eddy current correction')
+% figure,plot(real(fftshift(fft(data.'))))
+% xlim([1100 1400])
+% title('Before eddy current correction')
 
 
 
@@ -30,9 +30,9 @@ for kk=1:sz_mat(1)
 
 end
 
-figure,plot(real(fftshift(fft(fids.'))))
-xlim([1100 1400])
-title('After eddy current correction')
+% figure,plot(real(fftshift(fft(fids.'))))
+% xlim([1100 1400])
+% title('After eddy current correction')
 
 out = fids;
 

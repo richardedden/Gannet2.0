@@ -10,11 +10,15 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
 %    MRS_struct.p.npoints=4096; %This is twice the acquired points for TWIX data;
     %This should be parsed from headers where possible
     MRS_struct.p.TR=2000;%This should be parsed from headers where possible
-    MRS_struct.p.TE=68; %This should be parsed from headers where possible
-    MRS_struct.p.LarmorFreq=127; %This should be parsed from headers where possible
+    MRS_struct.p.TE=68; %This should be parsed from headers where possible. It is parsed from the header -- MGSaleh 2016.
+    MRS_struct.p.LarmorFreq=127; %This should be parsed from headers where possible. It is parsed from the header -- MGSaleh 2016.
     %In general, LarmorFreq is 127.8 on Philips,
     MRS_struct.p.Nwateravg = 8; %Needed for GE
-    MRS_struct.p.target='GABA'; %Other options are 'GSH' and 'Glx' (now also implemented) 'GABAGlx' in dev
+    
+    
+    MRS_struct.p.target='GABA'; %Other options are 'GSH' and 'Glx' (now also implemented) 'GABAGlx', 'GSH', 'Lac' (Lactate) in dev
+    
+    
     MRS_struct.p.ONOFForder='offfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
     MRS_struct.p.Water_Positive=1; %For Philips MOIST ws, set to 0.
@@ -28,7 +32,10 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     %AlignTo planned options: Cr; Cho; NAA; H20; CrOFF
     MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
     
-%Output Parameters
-    MRS_struct.p.mat = 0; %1 = YES, save MRS_struct as .mat file.
-    MRS_struct.p.sdat = 0; %1 = YES, save MRS_struct as .sdat file.
+%Flags
+    MRS_struct.p.MEGA_PRESS = 1;      % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
+    MRS_struct.p.HERMES_GSH_GABA = 0; % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
+    MRS_struct.p.HERMES_GSH_LAC = 0;  % 1 = YES,  0 = NO;  % Added by MGSaleh 2016    
+    MRS_struct.p.mat = 0;             % 1 = YES, save MRS_struct as .mat file 2016
+    MRS_struct.p.sdat = 0;            % 1 = YES, save MRS_struct as .sdat file 2016
 end

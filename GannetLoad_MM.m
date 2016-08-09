@@ -1,12 +1,6 @@
-function MRS_struct=GannetLoad(gabafile, waterfile, data_phase_correction, water_phase_correction)
+function MRS_struct=GannetLoad_MM(gabafile, waterfile)
 %Gannet 2.0 GannetLoad
 %Started by RAEE Nov 5, 2012
-%Eddy current correction added by MGSaleh (2016) using the formula described by
-%Jiru (2008), EJR,67:202-217. This is an option which can switched off by
-%a Gannet user. Default vslue is 1, which means apply correction to both
-%unsuppressed (water) and suppressed data. The correction has not been 
-%tested during batch processing.
-
 
 %Aim to make the GannetLoad more modular and easier to understand/edit, and
 %especially to integrate the workflow for different filetypes more.
@@ -41,20 +35,7 @@ if(nargin > 1)
 end
 if missing
         error('Not all the files are there, so I give up.');
-end
-
-% A choice to perform phase correction on the water or not. 
-% Default = 1. Yes, perform the correction -- MGSaleh 2016    
-if nargin < 4
-    water_phase_correction = 1;
-    
-end
-
-if  nargin < 3
-    data_phase_correction = 1;
-    
-end
-    
+    end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -187,8 +168,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF=[0 1];
                     MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-            end 
-            
+            end           
         case 'Philips'           
             if(exist('waterfile'))
                 MRS_struct.p.Reference_compound='H2O';
@@ -215,20 +195,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
-                    
-                    if MRS_struct.p.HERMES_GSH_GABA % HERMES_GSH_GABA -- Added by MGSaleh 2016
-                        
-                        % To be added later -- MGSaleh
-                    
-                    elseif MRS_struct.p.HERMES_GSH_LAC % HERMES_GSH_LAC -- Added by MGSaleh & MM 2016
-                       
-                       MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]); 
-                       MRS_struct.fids.ON_OFF2=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); 
-                    
-                    end
-                    
+                    MRS_struct.fids.ON_OFF2=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); % MM: for HERMES of GSH/Lac
             end
-            
         case 'Philips_data'
             if(exist('waterfile'))    
                 MRS_struct.p.Reference_compound='H2O';
@@ -260,10 +228,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   5. Apply appropriate pre-processing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+    
     %There are some decisions to be made on what processing is applied to
     %what data
+
     %First steps
     MRS_struct.p.zf=MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
     time=(1:1:size(FullData,1))/MRS_struct.p.sw;
@@ -272,7 +240,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 
         % Finish processing water data. 
         if(strcmpi(MRS_struct.p.Reference_compound,'H2O'))     
-        
+
             if(strcmpi(MRS_struct.p.vendor,'GE'))           %CHECK
                 ComWater = mean(WaterData,2);           %CHECK
             elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))       %CHECK
@@ -280,58 +248,13 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             elseif (strcmpi(MRS_struct.p.vendor,'Siemens_twix')) %CHECK
                 ComWater = WaterData;
             else
-                ComWater = WaterData.'; 
-                %CHECK
+                ComWater = WaterData.';           %CHECK
             end           %CHECK
             
-            
-            % Performing phase corrrection on the suppressed data
-            % based on the Klose (1990), MRM,14:26-30. The equation was
-            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if data_phase_correction                
-                
-               if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data')) 
-                    MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater.');
-                    MRS_struct.fids.data=MRS_struct.fids.data.';
-%                     FullData = MRS_struct.fids.data;
-                    
-               else
-                    MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater);
-                    MRS_struct.fids.data=MRS_struct.fids.data.';
-%                     FullData = MRS_struct.fids.data;
-                   
-                  
-               end
-            end
-            
-            % Performing phase corrrection on the water
-            % based on the Klose (1990), MRM,14:26-30. The equation was
-            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if water_phase_correction
-                
-                if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data'))  
-                    ComWater=phase_correction_fids(MRS_struct,ComWater.',ComWater.');
-                    ComWater=ComWater.';
-                else
-                    
-                    ComWater=phase_correction_fids(MRS_struct,ComWater,ComWater);
-                    
-                end
-                    
-
-            end
-            
-            
-            
             ComWater = ComWater.*exp(-(time')*MRS_struct.p.LB*pi);
-
             MRS_struct.spec.water(ii,:)=fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
         end %End of H20 reference loop
-            
-        
-            
-            
-            
+
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
             AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale
@@ -353,7 +276,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'GE'           %CHECK
                     AllFramesFTrealign=AllFramesFT;
                 case {'Philips','Philips_data'}           %CHECK
-                    if(strcmp(MRS_struct.p.target,'GSH')||strcmp(MRS_struct.p.target,'GABA')) % Added by MGSaleh 2016 
+                    if(strcmp(MRS_struct.p.target,'GSH'))
                         AllFramesFTrealign=AllFramesFT;
                     else
                         for(jj=1:size(AllFramesFT,2))
@@ -386,104 +309,37 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'SpecRegDual'
                    %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after... 
                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
-               end %end of switch for alignment targhelp arrayfunet   
+               end %end of switch for alignment target   
 
         
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
         %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
         
-        %eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); %maybe in the future -- MGSaleh 2016
+        MRS_struct.spec.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
+        MRS_struct.spec.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
         
-        %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-        if MRS_struct.p.MEGA_PRESS % MGSaleh 2016 for GABA and Glx
-            
-            if strcmp(MRS_struct.p.target, 'GABA') || strcmp(MRS_struct.p.target, 'Glx') 
-                
-                MRS_struct.spec.GABA.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
-                MRS_struct.spec.GABA.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                
-                MRS_struct.spec.GABA.diff(ii,:)=(MRS_struct.spec.GABA.on(ii,:)-MRS_struct.spec.GABA.off(ii,:))/2; %Not sure whether we want a two here.
-                
-                MRS_struct.spec.GABA.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-                
-                FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
-                
-                MRS_struct.spec.GABA.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-            
-            elseif strcmp(MRS_struct.p.target, 'GSH')
-                
-                MRS_struct.spec.GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
-                MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                
-                MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; %Not sure whether we want a two here.
-                
-                MRS_struct.spec.GSH.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-                
-                FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
-                
-                MRS_struct.spec.GSH.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-                
-                %For GSH data, the residual water signal in the DIFF spectrum is
-                %helpful for an additional phasing step... and messes up fitting
-                %otherwise. MGSaleh 2016 moved to this place for
-                %completeness
-                residual_phase=pi-atan2(imag(sum(MRS_struct.spec.GSH.diff(ii,:))),real(sum(MRS_struct.spec.GSH.diff(ii,:))));
-                MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
-                
-                if(MRS_struct.p.Water_Positive==0)
-                    
-                    MRS_struct.spec.GSH.diff(ii,:)=-MRS_struct.spec.GSH.diff(ii,:);
-                
-                end
-                
+        % MM: for HERMES of GSH/Lac
+        MRS_struct.spec.off2(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)')),2);
+        MRS_struct.spec.on2(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2);
+
+        MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.on(ii,:)-MRS_struct.spec.off(ii,:))/2; %Not sure whether we want a two here.
+        MRS_struct.spec.diff2(ii,:)=(MRS_struct.spec.on2(ii,:)-MRS_struct.spec.off2(ii,:))/2; % MM: for HERMES of GSH/Lac        
+        MRS_struct.spec.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+        FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
+        MRS_struct.spec.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+        
+        
+        %For GSH data, the residual water signal in the DIFF spectrum is
+        %helpful for an additional phasing step... and messes up fitting
+        %otherwise.
+        
+        if(strcmp(MRS_struct.p.target,'GSH'))
+            residual_phase=pi-atan2(imag(sum(MRS_struct.spec.diff(ii,:))),real(sum(MRS_struct.spec.diff(ii,:))));
+            MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
+            if(MRS_struct.p.Water_Positive==0)
+              MRS_struct.spec.diff(ii,:)=-MRS_struct.spec.diff(ii,:);  
             end
-        
-            
-                
-            elseif MRS_struct.p.HERMES_GSH_GABA   % MGSaleh 2016 for HERMES of GSH/GABA 
-                
-                % To be added later -- MGSaleh
-                
-                
-            elseif MRS_struct.p.HERMES_GSH_LAC    % MGSaleh & MM 2016: for HERMES of GSH/Lac
-                
-                if strcmp(MRS_struct.p.target, 'GSH') || strcmp(MRS_struct.p.target, 'Lac')
-                
-                MRS_struct.spec.Lac.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                MRS_struct.spec.Lac.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-      
-                MRS_struct.spec.GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)')),2);
-                MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2);
-
-                MRS_struct.spec.Lac.diff(ii,:)=-(MRS_struct.spec.Lac.on(ii,:)-MRS_struct.spec.Lac.off(ii,:))/2; % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                MRS_struct.spec.GSH.diff(ii,:)=-(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                
-                MRS_struct.spec.Lac.diff_noalign(ii,:)=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                MRS_struct.spec.GSH.diff_noalign(ii,:)=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-
-                end
-                
         end
-        
-                
-                
-                
-                
-            
-        
-        
-          %MGSaleh pushed this section to the top 2016        
-%         %For GSH data, the residual water signal in the DIFF spectrum is
-%         %helpful for an additional phasing step... and messes up fitting
-%         %otherwise.
-%         
-%         if(strcmp(MRS_struct.p.target,'GSH'))
-%             residual_phase=pi-atan2(imag(sum(MRS_struct.spec.diff(ii,:))),real(sum(MRS_struct.spec.diff(ii,:))));
-%             MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
-%             if(MRS_struct.p.Water_Positive==0)
-%               MRS_struct.spec.diff(ii,:)=-MRS_struct.spec.diff(ii,:);  
-%             end
-%         end
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   6. Build Gannet Output 
@@ -553,8 +409,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
              text(0,0.7, tmp, 'FontName', 'Helvetica','FontSize',13);
              end          
 %             tmp = sprintf('Cr FWHM   : %.2f Hz', MRS_struct.out.CrFWHMHz(ii) );
-             tmp = [ 'Alignment   : '  MRS_struct.p.AlignTo];
-             text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',13);
+             
  %            text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',13);
              %tmp = sprintf('FreqSTD (Hz): %.2f', MRS_struct.FreqStdevHz(ii));
              %text(0,0.6, tmp, 'FontName', 'Helvetica','FontSize',12);
@@ -676,7 +531,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                             sdat_diff_out=conj(ifft(fftshift(MRS_struct.spec.diff(ii,:),2),[],2));
                             sdat_diff_out=sdat_diff_out(1:MRS_struct.p.npoints);
                             %Also write out OFF
-                            sdat_off_out=conj(ifft(fftshift(MRS_struct.spec.GABA.off(ii,:),2),[],2));
+                            sdat_off_out=conj(ifft(fftshift(MRS_struct.spec.off(ii,:),2),[],2));
                             sdat_off_out=sdat_off_out(1:MRS_struct.p.npoints);
                             %How do we write it out?
                             fileid  = fopen(sdat_G_name,'w','ieee-le');    

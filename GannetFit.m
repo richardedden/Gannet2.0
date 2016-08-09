@@ -867,7 +867,7 @@ Cr_OFF=MRS_struct.spec.off(ii,:);
 
     % Made some changes to FitErr printout to accommodate GABAGlx printouts
     if strcmp(MRS_struct.p.Reference_compound,'H2O')
-        tmp = sprintf('FWHM of Water/Cr: %.2f/%.2f Hz ', MRS_struct.out.Water.FWHM(ii),MRS_struct.out.CrFWHMHz(ii)  );
+        tmp = sprintf('FWHM of Water/Cr: %.1f/%.1f Hz ', MRS_struct.out.Water.FWHM(ii),MRS_struct.out.CrFWHMHz(ii)  );
         text(0,var_pos-0.5, tmp, 'FontName', 'Helvetica');
         tmp = sprintf('H_2O/Cr Area : %.3g/%.3g ', MRS_struct.out.Water.Area(ii),MRS_struct.out.Creatine.Area(ii) );
         text(0,var_pos-0.4, tmp, 'FontName', 'Helvetica');

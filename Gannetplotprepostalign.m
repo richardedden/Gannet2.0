@@ -6,7 +6,40 @@ function Gannetplotprepostalign(MRS_struct, specno)
 %            by mean height of GABA
 
 numspec = 2;
-SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(specno,:)];
+
+%To determine the output depending on the type of acquistion used -- MGSaleh 2016
+if MRS_struct.p.MEGA_PRESS % MGSaleh 2016 for GABA and Glx
+    
+    if abs(eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']))
+        
+        eval(['MRS_struct.spec.diff', '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); % Added by MGSaleh 2016
+        eval(['MRS_struct.spec.diff_noalign', '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']); % Added by MGSaleh 2016
+        
+    end
+    
+elseif MRS_struct.p.HERMES_GSH_GABA   % MGSaleh 2016 for HERMES of GSH/GABA
+    
+    % To be added later -- MGSaleh
+    
+    
+elseif MRS_struct.p.HERMES_GSH_LAC    % MGSaleh & MM 2016: for HERMES of GSH/Lac
+    
+    
+    if abs(eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']))
+        
+        eval(['MRS_struct.spec.diff', '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); % Added by MGSaleh 2016
+        eval(['MRS_struct.spec.diff_noalign', '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']); % Added by MGSaleh 2016
+
+    end
+    
+    
+end
+
+    SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(specno,:)];
+
+
+
+% SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(specno,:)];
 
 
 % Estimate baseline from between Glx and GABA
