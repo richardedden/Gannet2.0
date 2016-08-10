@@ -33,9 +33,9 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
     
 %Flags
-    MRS_struct.p.MEGA_PRESS = 1;      % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
-    MRS_struct.p.HERMES_GSH_GABA = 0; % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
-    MRS_struct.p.HERMES_GSH_LAC = 0;  % 1 = YES,  0 = NO;  % Added by MGSaleh 2016    
-    MRS_struct.p.mat = 0;             % 1 = YES, save MRS_struct as .mat file 2016
-    MRS_struct.p.sdat = 0;            % 1 = YES, save MRS_struct as .sdat file 2016
+    MRS_struct.p.MEGA_PRESS_GABA_GLX_GSH = 1;      % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
+    MRS_struct.p.HERMES_GSH_GABA = 0;              % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
+    MRS_struct.p.HERMES_GSH_LAC = 0;               % 1 = YES,  0 = NO;  % Added by MGSaleh 2016    
+    MRS_struct.p.mat = 0;                          % 1 = YES, save MRS_struct as .mat file 2016
+    MRS_struct.p.sdat = 0;                         % 1 = YES, save MRS_struct as .sdat file 2016
 end

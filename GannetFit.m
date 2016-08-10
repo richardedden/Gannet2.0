@@ -34,7 +34,30 @@ FIT_LSQCURV = 0;
 FIT_NLINFIT = 1;
 fit_method = FIT_NLINFIT; %FIT_NLINFIT;
 waterfit_method = FIT_NLINFIT;
-GABAData=MRS_struct.spec.diff;
+
+if MRS_struct.p.MEGA_PRESS_GABA_GLX_GSH % MGSaleh 2016 for GABA, Glx and GSH
+    
+    if strcmp(MRS_struct.p.target, 'GABA') || strcmp(MRS_struct.p.target, 'Glx') || strcmp(MRS_struct.p.target, 'GABAGlx')
+        %GABAData=MRS_struct.spec.diff;
+        
+        GABAData=MRS_struct.spec.GABAGlx.diff; % Added by MGSaleh 2016
+        MRS_struct.spec.diff = MRS_struct.spec.GABAGlx.diff; % Added by MGSaleh 2016
+        MRS_struct.spec.off = MRS_struct.spec.GABAGlx.off; % Added by MGSaleh 2016
+        MRS_struct.spec.on = MRS_struct.spec.GABAGlx.on; % Added by MGSaleh 2016
+
+
+
+    
+    elseif strcmp(MRS_struct.p.target, 'GSH')
+        
+        GABAData=MRS_struct.spec.GSH.diff; % Added by MGSaleh 2016
+
+    end
+    
+end
+
+
+
 freq=MRS_struct.spec.freq;
 if strcmp(MRS_struct.p.Reference_compound,'H2O')
     WaterData=MRS_struct.spec.water;

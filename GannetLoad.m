@@ -293,12 +293,12 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data')) 
                     MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater.');
                     MRS_struct.fids.data=MRS_struct.fids.data.';
-%                     FullData = MRS_struct.fids.data;
+                    FullData = MRS_struct.fids.data;
                     
                else
                     MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater);
                     MRS_struct.fids.data=MRS_struct.fids.data.';
-%                     FullData = MRS_struct.fids.data;
+                    FullData = MRS_struct.fids.data;
                    
                   
                end
@@ -395,20 +395,20 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         %eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); %maybe in the future -- MGSaleh 2016
         
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-        if MRS_struct.p.MEGA_PRESS % MGSaleh 2016 for GABA and Glx
+        if MRS_struct.p.MEGA_PRESS_GABA_GLX_GSH % MGSaleh 2016 for GABA, Glx and GSH
             
-            if strcmp(MRS_struct.p.target, 'GABA') || strcmp(MRS_struct.p.target, 'Glx') 
+            if strcmp(MRS_struct.p.target, 'GABA') || strcmp(MRS_struct.p.target, 'Glx') || strcmp(MRS_struct.p.target, 'GABAGlx') 
                 
-                MRS_struct.spec.GABA.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
-                MRS_struct.spec.GABA.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                MRS_struct.spec.GABAGlx.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                MRS_struct.spec.GABAGlx.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                 
-                MRS_struct.spec.GABA.diff(ii,:)=(MRS_struct.spec.GABA.on(ii,:)-MRS_struct.spec.GABA.off(ii,:))/2; %Not sure whether we want a two here.
+                MRS_struct.spec.GABAGlx.diff(ii,:)=(MRS_struct.spec.GABAGlx.on(ii,:)-MRS_struct.spec.GABAGlx.off(ii,:))/2; %Not sure whether we want a two here.
                 
-                MRS_struct.spec.GABA.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                MRS_struct.spec.GABAGlx.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
                 
                 FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
                 
-                MRS_struct.spec.GABA.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                MRS_struct.spec.GABAGlx.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
             
             elseif strcmp(MRS_struct.p.target, 'GSH')
                 
@@ -456,10 +456,10 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2);
 
                 MRS_struct.spec.Lac.diff(ii,:)=-(MRS_struct.spec.Lac.on(ii,:)-MRS_struct.spec.Lac.off(ii,:))/2; % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                MRS_struct.spec.GSH.diff(ii,:)=-(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
                 
                 MRS_struct.spec.Lac.diff_noalign(ii,:)=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                MRS_struct.spec.GSH.diff_noalign(ii,:)=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                MRS_struct.spec.GSH.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
 
                 end
                 

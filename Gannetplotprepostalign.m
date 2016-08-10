@@ -8,12 +8,12 @@ function Gannetplotprepostalign(MRS_struct, specno)
 numspec = 2;
 
 %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-if MRS_struct.p.MEGA_PRESS % MGSaleh 2016 for GABA and Glx
-    
-    if abs(eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']))
+if MRS_struct.p.MEGA_PRESS_GABA_GLX_GSH % MGSaleh 2016 for GABA and Glx
+
+    if abs(MRS_struct.spec.GABAGlx.diff)
         
-        eval(['MRS_struct.spec.diff', '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); % Added by MGSaleh 2016
-        eval(['MRS_struct.spec.diff_noalign', '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']); % Added by MGSaleh 2016
+        MRS_struct.spec.diff = MRS_struct.spec.GABAGlx.diff; % Added by MGSaleh 2016
+        MRS_struct.spec.diff_noalign = MRS_struct.spec.GABAGlx.diff_noalign; % Added by MGSaleh 2016
         
     end
     
