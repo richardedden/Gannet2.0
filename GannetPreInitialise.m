@@ -16,8 +16,10 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.Nwateravg = 8; %Needed for GE
     
     
-    MRS_struct.p.target='GABA'; %Other options are 'GSH' and 'Glx' (now also implemented) 'GABAGlx', 'GSH', 'Lac' (Lactate) in dev
+    MRS_struct.p.target='GABAGlx'; % Options for both MEGA-PRESS or HERMES (target 1). Options are 'GABAGlx' or GSH only -- MGSaleh 2016
+    MRS_struct.p.target2='Lac';    % Options are 'Lac' or 'GSH (if not specified in target 1) -- MGSaleh 2016
     
+    %%(now also implemented) 'GABAGlx', 'GSH', 'Lac' (Lactate) in dev
     
     MRS_struct.p.ONOFForder='offfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
@@ -33,9 +35,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
     
 %Flags
-    MRS_struct.p.MEGA_PRESS_GABA_GLX_GSH = 1;      % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
-    MRS_struct.p.HERMES_GSH_GABA = 0;              % 1 = YES,  0 = NO;  % Added by MGSaleh 2016
-    MRS_struct.p.HERMES_GSH_LAC = 0;               % 1 = YES,  0 = NO;  % Added by MGSaleh 2016    
-    MRS_struct.p.mat = 0;                          % 1 = YES, save MRS_struct as .mat file 2016
-    MRS_struct.p.sdat = 0;                         % 1 = YES, save MRS_struct as .sdat file 2016
+    MRS_struct.p.HERMES=0;                % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016  
+    MRS_struct.p.mat = 0;                 % 1 = YES, save MRS_struct as .mat file 2016
+    MRS_struct.p.sdat = 0;                % 1 = YES, save MRS_struct as .sdat file 2016
 end

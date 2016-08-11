@@ -1,4 +1,4 @@
-function MRS_struct=GannetLoad(gabafile, waterfile, data_phase_correction, water_phase_correction)
+function MRS_struct=GannetLoad2(gabafile, waterfile, data_phase_correction, water_phase_correction)
 %Gannet 2.0 GannetLoad
 %Started by RAEE Nov 5, 2012
 %Eddy current correction added by MGSaleh (2016) using the formula described by
@@ -214,17 +214,16 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'onfirst'
                     MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
                     
-                    if MRS_struct.p.HERMES_GSH_GABA % HERMES_GSH_GABA -- Added by MGSaleh 2016
-                        
-                        % To be added later -- MGSaleh
-                    
-                    elseif MRS_struct.p.HERMES_GSH_LAC % HERMES_GSH_LAC -- Added by MGSaleh & MM 2016
+                    if MRS_struct.p.HERMES % HERMES_GSH_LAC -- Added by MGSaleh & MM 2016
                        
                        MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]); 
                        MRS_struct.fids.ON_OFF2=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); 
                     
+                    else
+                        
+                       MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
+   
                     end
                     
             end
@@ -395,95 +394,70 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         %eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); %maybe in the future -- MGSaleh 2016
         
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-        if MRS_struct.p.MEGA_PRESS_GABA_GLX_GSH % MGSaleh 2016 for GABA, Glx and GSH
-            
-            if strcmp(MRS_struct.p.target, 'GABA') || strcmp(MRS_struct.p.target, 'Glx') || strcmp(MRS_struct.p.target, 'GABAGlx') 
-                
-                MRS_struct.spec.GABAGlx.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
-                MRS_struct.spec.GABAGlx.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                
-                MRS_struct.spec.GABAGlx.diff(ii,:)=(MRS_struct.spec.GABAGlx.on(ii,:)-MRS_struct.spec.GABAGlx.off(ii,:))/2; %Not sure whether we want a two here.
-                
-                MRS_struct.spec.GABAGlx.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-                
-                FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
-                
-                MRS_struct.spec.GABAGlx.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-            
-            elseif strcmp(MRS_struct.p.target, 'GSH')
-                
-                MRS_struct.spec.GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
-                MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                
-                MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; %Not sure whether we want a two here.
-                
-                MRS_struct.spec.GSH.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-                
-                FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
-                
-                MRS_struct.spec.GSH.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
-                
-                %For GSH data, the residual water signal in the DIFF spectrum is
-                %helpful for an additional phasing step... and messes up fitting
-                %otherwise. MGSaleh 2016 moved to this place for
-                %completeness
-                residual_phase=pi-atan2(imag(sum(MRS_struct.spec.GSH.diff(ii,:))),real(sum(MRS_struct.spec.GSH.diff(ii,:))));
-                MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
-                
-                if(MRS_struct.p.Water_Positive==0)
+              if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac
                     
-                    MRS_struct.spec.GSH.diff(ii,:)=-MRS_struct.spec.GSH.diff(ii,:);
-                
-                end
-                
-            end
-        
-            
-                
-            elseif MRS_struct.p.HERMES_GSH_GABA   % MGSaleh 2016 for HERMES of GSH/GABA 
-                
-                % To be added later -- MGSaleh
-                
-                
-            elseif MRS_struct.p.HERMES_GSH_LAC    % MGSaleh & MM 2016: for HERMES of GSH/Lac
-                
-                if strcmp(MRS_struct.p.target, 'GSH') || strcmp(MRS_struct.p.target, 'Lac')
-                
-                MRS_struct.spec.Lac.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                MRS_struct.spec.Lac.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-      
-                MRS_struct.spec.GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)')),2);
-                MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2);
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',  '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)''&(MRS_struct.out.reject(:,ii)==0))),2)']); 
+                    
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)',  '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)'')),2)']); 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)',   '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)'')),2)']); 
+                    
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=-(MRS_struct.spec.Lac.on(ii,:)-MRS_struct.spec.Lac.off(ii,:))/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff(ii,:)', '=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+ 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign(ii,:)', '=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 201
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
 
-                MRS_struct.spec.Lac.diff(ii,:)=-(MRS_struct.spec.Lac.on(ii,:)-MRS_struct.spec.Lac.off(ii,:))/2; % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                
-                MRS_struct.spec.Lac.diff_noalign(ii,:)=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                MRS_struct.spec.GSH.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2; %Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-
+                    
+               else 
+                    
+                    if strcmp(MRS_struct.p.target, 'GSH')
+                        
+                        MRS_struct.spec.GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                        MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                        
+                        MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; %Not sure whether we want a two here.
+                        
+                        MRS_struct.spec.GSH.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        
+                        FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
+                        
+                        MRS_struct.spec.GSH.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        
+                        %For GSH data, the residual water signal in the DIFF spectrum is
+                        %helpful for an additional phasing step... and messes up fitting
+                        %otherwise. MGSaleh 2016 moved to this place for
+                        %completeness
+                        residual_phase=pi-atan2(imag(sum(MRS_struct.spec.GSH.diff(ii,:))),real(sum(MRS_struct.spec.GSH.diff(ii,:))));
+                        MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
+                        
+                        if(MRS_struct.p.Water_Positive==0)
+                            
+                            MRS_struct.spec.GSH.diff(ii,:)=-MRS_struct.spec.GSH.diff(ii,:);
+                            
+                        end
+                        
+                    else
+                        
+                        MRS_struct.spec.GABAGlx.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                        MRS_struct.spec.GABAGlx.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                        
+                        MRS_struct.spec.GABAGlx.diff(ii,:)=(MRS_struct.spec.GABAGlx.on(ii,:)-MRS_struct.spec.GABAGlx.off(ii,:))/2; %Not sure whether we want a two here.
+                        
+                        MRS_struct.spec.GABAGlx.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        
+                        FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
+                        
+                        MRS_struct.spec.GABAGlx.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                    
+                    end
+                    
+                    
                 end
-                
-        end
-        
-                
-                
-                
-                
-            
-        
-        
-          %MGSaleh pushed this section to the top 2016        
-%         %For GSH data, the residual water signal in the DIFF spectrum is
-%         %helpful for an additional phasing step... and messes up fitting
-%         %otherwise.
-%         
-%         if(strcmp(MRS_struct.p.target,'GSH'))
-%             residual_phase=pi-atan2(imag(sum(MRS_struct.spec.diff(ii,:))),real(sum(MRS_struct.spec.diff(ii,:))));
-%             MRS_struct.spec.diff(ii,:)=(MRS_struct.spec.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
-%             if(MRS_struct.p.Water_Positive==0)
-%               MRS_struct.spec.diff(ii,:)=-MRS_struct.spec.diff(ii,:);  
-%             end
-%         end
+
+
+
+     
         
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   6. Build Gannet Output 
@@ -499,7 +473,13 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
               
             %Top Left
             ha=subplot(2,2,1);
-            Gannetplotprepostalign(MRS_struct,ii)
+            
+            if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac
+                Gannetplotprepostalign_herm(MRS_struct,ii)
+            else
+                Gannetplotprepostalign(MRS_struct,ii)
+            end
+            
             x=title({'Edited Spectrum';'(pre- and post-align)'});
             set(gca,'YTick',[]);
             %Top Right
