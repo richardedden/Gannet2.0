@@ -394,16 +394,30 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         %eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); %maybe in the future -- MGSaleh 2016
         
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-              if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac
+              if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
                     
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); 
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',  '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)''&(MRS_struct.out.reject(:,ii)==0))),2)']); 
+                  % Swapping variables' values helps us with GannetLoad output -- MGSaleh 2016
+                    if strcmp(MRS_struct.p.target, 'Lac') && strcmp(MRS_struct.p.target2, 'GSH')
+                        
+                        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target)
+                        
+                    end
                     
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)',  '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)'')),2)']); 
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)',   '=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)'')),2)']); 
+                        
+                    xx2=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                    yy2=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                     
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=-(MRS_struct.spec.Lac.on(ii,:)-MRS_struct.spec.Lac.off(ii,:))/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff(ii,:)', '=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    xx=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)')),2); 
+                    yy=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2); 
+                    
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=xx2']);
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',  '=yy2']); 
+                    
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)',  '=xx']); 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)',   '=yy']); 
+                    
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=(xx2-yy2)/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff(ii,:)', '=-(xx-yy)/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
  
                     eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign(ii,:)', '=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 201
                     eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
@@ -414,6 +428,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     if strcmp(MRS_struct.p.target, 'GSH')
                         
                         MRS_struct.spec.GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                        
                         MRS_struct.spec.GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                         
                         MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.on(ii,:)-MRS_struct.spec.GSH.off(ii,:))/2; %Not sure whether we want a two here.
@@ -429,6 +444,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                         %otherwise. MGSaleh 2016 moved to this place for
                         %completeness
                         residual_phase=pi-atan2(imag(sum(MRS_struct.spec.GSH.diff(ii,:))),real(sum(MRS_struct.spec.GSH.diff(ii,:))));
+                        
                         MRS_struct.spec.GSH.diff(ii,:)=(MRS_struct.spec.GSH.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
                         
                         if(MRS_struct.p.Water_Positive==0)
@@ -440,6 +456,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     else
                         
                         MRS_struct.spec.GABAGlx.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                        
                         MRS_struct.spec.GABAGlx.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                         
                         MRS_struct.spec.GABAGlx.diff(ii,:)=(MRS_struct.spec.GABAGlx.on(ii,:)-MRS_struct.spec.GABAGlx.off(ii,:))/2; %Not sure whether we want a two here.
@@ -474,12 +491,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             %Top Left
             ha=subplot(2,2,1);
             
-            if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac
-                Gannetplotprepostalign_herm(MRS_struct,ii)
-            else
-                Gannetplotprepostalign(MRS_struct,ii)
-            end
-            
+            Gannetplotprepostalign_herm(MRS_struct,ii)
             x=title({'Edited Spectrum';'(pre- and post-align)'});
             set(gca,'YTick',[]);
             %Top Right

@@ -5,13 +5,32 @@ function Gannetplotprepostalign(MRS_struct, specno)
 %          Plot multiple spectra as a stack - baselines offset
 %            by mean height of GABA
 
-numspec = 2;
+if MRS_struct.p.HERMES
+        numspec = 4;
+        
+        %To determine the output depending on the type of acquistion used -- MGSaleh 2016
+        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
+    
+    
+    
+    
+else
+        numspec = 2;
+    
+        
+        %To determine the output depending on the type of acquistion used -- MGSaleh 2016
+        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
+    
+    
+end
 
-%To determine the output depending on the type of acquistion used -- MGSaleh 2016
-SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
-                 eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
-                 
-                 
+
+% SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(specno,:)];
+
 
 % Estimate baseline from between Glx and GABA
 z=abs(MRS_struct.spec.freq-3.6);
@@ -19,17 +38,38 @@ Glx_right=find(min(z)==z);
 z=abs(MRS_struct.spec.freq-3.3);
 GABA_left=find(min(z)==z);
 z=abs(MRS_struct.spec.freq-2.8);
-GABA_right=find(min(z)==z);
-specbaseline = mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2);
+GABA_right=find(min(z)==z);;
+specbaseline = (mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2));
+
+
 % averaged gaba height across all scans - to estimate stack spacing
 gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
 gabaheight = mean(gabaheight);
 plotstackoffset = [ 0 : (numspec-1) ]';
 plotstackoffset = plotstackoffset * gabaheight;
 plotstackoffset = plotstackoffset - specbaseline;
-SpectraToPlot = SpectraToPlot + ...
+
+% Added by MGSaleh 2016
+if MRS_struct.p.HERMES
+    
+    plot(MRS_struct.spec.freq, real(SpectraToPlot((1),:)),'b',MRS_struct.spec.freq, real(SpectraToPlot((2),:)),'r');
+    hold on
+    shft=repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
+    SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shft,[],1); max(shft,[],1)] ;
+    plot(MRS_struct.spec.freq, real(SpectraToPlot((3),:)),'b',MRS_struct.spec.freq, real(SpectraToPlot((4),:)),'r');
+    hold off
+    
+else
+    SpectraToPlot = SpectraToPlot + ...
     repmat(plotstackoffset, [ 1  length(SpectraToPlot(1,:))]);
-plot(MRS_struct.spec.freq, real(SpectraToPlot));
+    
+    plot(MRS_struct.spec.freq, real(SpectraToPlot));
+    
+    
+end
+
+
+
 legendtxt = {'post', 'pre'};
 hl=legend(legendtxt);
 set(hl,'EdgeColor',[1 1 1]);

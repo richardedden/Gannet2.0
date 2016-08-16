@@ -5,20 +5,29 @@ function Gannetplotprepostalign_herm(MRS_struct, specno)
 %          Plot multiple spectra as a stack - baselines offset
 %            by mean height of GABA
 
-numspec = 4;
-
-     
+if MRS_struct.p.HERMES
+        numspec = 4;
     
-SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff']); ...
-                 eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign']); ...
-                 eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
-                 eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
-
-
-
-
-
-
+    
+    
+        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
+    
+    
+    
+    
+else
+        numspec = 2;
+    
+        
+        %To determine the output depending on the type of acquistion used -- MGSaleh 2016
+        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
+    
+    
+end
 
 
 % SpectraToPlot = [MRS_struct.spec.diff(specno,:); MRS_struct.spec.diff_noalign(specno,:)];
@@ -42,13 +51,24 @@ plotstackoffset = plotstackoffset * gabaheight;
 plotstackoffset = plotstackoffset - specbaseline;
 
 % Added by MGSaleh 2016
-plot(MRS_struct.spec.freq, real(SpectraToPlot((1:2),:)));
-hold on 
-shft=repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
-size(shft)
-SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shft,[],1); max(shft,[],1)] ;
-plot(MRS_struct.spec.freq, real(SpectraToPlot((3:4),:)));
-hold off
+if MRS_struct.p.HERMES
+    
+    plot(MRS_struct.spec.freq, real(SpectraToPlot((1),:)),'b',MRS_struct.spec.freq, real(SpectraToPlot((2),:)),'r');
+    hold on
+    shft=repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
+    SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shft,[],1); max(shft,[],1)] ;
+    plot(MRS_struct.spec.freq, real(SpectraToPlot((3),:)),'b',MRS_struct.spec.freq, real(SpectraToPlot((4),:)),'r');
+    hold off
+    
+else
+    SpectraToPlot = SpectraToPlot + ...
+    repmat(plotstackoffset, [ 1  length(SpectraToPlot(1,:))]);
+    
+    plot(MRS_struct.spec.freq, real(SpectraToPlot));
+    
+    
+end
+
 
 
 legendtxt = {'post', 'pre'};
