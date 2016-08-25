@@ -1,4 +1,4 @@
-function MRS_struct=GannetLoad(gabafile, waterfile, data_phase_correction, water_phase_correction)
+function MRS_struct=GannetLoad2(gabafile, waterfile, data_phase_correction, water_phase_correction)
 %Gannet 2.0 GannetLoad
 %Started by RAEE Nov 5, 2012
 %Eddy current correction added by MGSaleh (2016) using the formula described by
@@ -215,11 +215,11 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
                     
-                    if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
+                    if MRS_struct.p.HERMES % HERMES_GSH_LAC -- Added by MGSaleh & MM 2016
                      
                         if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GABAGlx')
-                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MGSaleh 2016
-                            MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); % GABA
+                            % 1=ExpC, 2=ExpB, 3=ExpA, 4=ExpD
+                            MRS_struct.fids.ON_OFF=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GABA
                             MRS_struct.fids.ON_OFF2=repmat([1 0 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GSH
                         
                         else  % For Lac -- MGSaleh
@@ -361,7 +361,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'GE'           %CHECK
                     AllFramesFTrealign=AllFramesFT;
                 case {'Philips','Philips_data'}           %CHECK
-                    if(strcmp(MRS_struct.p.target,'GSH')||strcmp(MRS_struct.p.target,'GABAGlx')) % Added by MGSaleh 2016 
+                    if(strcmp(MRS_struct.p.target,'GSH')||strcmp(MRS_struct.p.target,'GABA')) % Added by MGSaleh 2016 
                         AllFramesFTrealign=AllFramesFT;
                     else
                         for(jj=1:size(AllFramesFT,2))
@@ -410,10 +410,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                         
                         [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
                         
-                    else strcmp(MRS_struct.p.target, 'GSH') && strcmp(MRS_struct.p.target2, 'GABAGlx')
-                        
-                        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
-
+                    else 
                         
                     end
                     
