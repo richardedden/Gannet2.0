@@ -40,7 +40,7 @@ else
         z=abs(MRS_struct.spec.freq-3.3);
         GABA_left=find(min(z)==z);
         z=abs(MRS_struct.spec.freq-2.8);
-        GABA_right=find(min(z)==z);
+        GABA_right=find(min(z)==z);;
         specbaseline = (mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2));
     
     
@@ -100,8 +100,8 @@ oldaxis = axis;
 
 % yaxismax
 % yaxismin
-yaxismax = (numspec + 1.0) *gabaheight; % top spec + 2* height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
-yaxismin =  - 2.0* gabaheight; % extend 2* gaba heights below zero %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
+yaxismax = (numspec + 1) *gabaheight; % top spec + 2* height of gaba %Changed slighly by MGSaleh to accomodate both GABAGlx and
+yaxismin =  - 1* gabaheight; % extend 2* gaba heights below zero
 if (yaxismax<yaxismin)
     dummy=yaxismin;
     yaxismin=yaxismax;

@@ -56,7 +56,6 @@ if  nargin < 3
 end
     
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,6 +63,25 @@ MRS_struct.versionload = '140709';
 MRS_struct.ii=0;
 MRS_struct.gabafile=gabafile;
 MRS_struct=GannetPreInitialise(MRS_struct);
+
+if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
+    
+    % Swapping variables' values helps us with GannetLoad output -- MGSaleh 2016
+    if strcmp(MRS_struct.p.target, 'Lac') && strcmp(MRS_struct.p.target2, 'GSH')
+        
+        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
+    end
+        
+    if strcmp(MRS_struct.p.target, 'GSH') && strcmp(MRS_struct.p.target2, 'GABAGlx')
+        
+        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
+       
+        
+    end
+end
+
+
+
 %Check whether water data or not
 if(nargin > 1)
     MRS_struct.waterfile = waterfile;
@@ -217,15 +235,15 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     
                     if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
                      
-                        if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GABAGlx')
-                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MGSaleh 2016
+                        if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GSH')
+                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MM 2016
                             MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); % GABA
                             MRS_struct.fids.ON_OFF2=repmat([1 0 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GSH
                         
                         else  % For Lac -- MGSaleh
  
-                            MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]); 
-                            MRS_struct.fids.ON_OFF2=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); 
+                            MRS_struct.fids.ON_OFF2=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]); 
+                            MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); 
                         end
                         
                     
@@ -399,23 +417,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         
         %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
         %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
-        
-        %eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)''&(MRS_struct.out.reject(:,ii)==0))),2)']); %maybe in the future -- MGSaleh 2016
-        
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
               if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
-                    
-                  % Swapping variables' values helps us with GannetLoad output -- MGSaleh 2016
-                    if strcmp(MRS_struct.p.target, 'Lac') && strcmp(MRS_struct.p.target2, 'GSH')
-                        
-                        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
-                        
-                    else strcmp(MRS_struct.p.target, 'GSH') && strcmp(MRS_struct.p.target2, 'GABAGlx')
-                        
-                        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
-
-                        
-                    end
                     
                         
                     xx2=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
@@ -424,17 +427,17 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     xx=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)')),2); 
                     yy=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2); 
                     
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=xx2;']);
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',  '=yy2;']); 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)', '=xx2;']);
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)',  '=yy2;']); 
                     
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)',  '=xx;']); 
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)',   '=yy;']); 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)',  '=xx;']); 
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',   '=yy;']); 
                     
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=(xx2-yy2)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff(ii,:)', '=-(xx-yy)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff(ii,:)', '=(xx2-yy2)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.diff(ii,:)', '=-(xx-yy)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
  
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign(ii,:)', '=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 201
-                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2;']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign(ii,:)', '=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 201
+                    eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2;']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
 
                     
                else 
@@ -455,7 +458,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                         
                         %For GSH data, the residual water signal in the DIFF spectrum is
                         %helpful for an additional phasing step... and messes up fitting
-                        %otherwise. MGSaleh 2016 moved to this place for
+                        %otherwise. MGSaleh 2016 moved it to this place for
                         %completeness
                         residual_phase=pi-atan2(imag(sum(MRS_struct.spec.GSH.diff(ii,:))),real(sum(MRS_struct.spec.GSH.diff(ii,:))));
                         
