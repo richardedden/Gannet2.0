@@ -1,4 +1,4 @@
-function MRS_struct=GannetLoad(gabafile, waterfile, data_phase_correction, water_phase_correction)
+function MRS_struct=GannetLoad(gabafile, waterfile) %, data_phase_correction, water_phase_correction)
 %Gannet 2.0 GannetLoad
 %Started by RAEE Nov 5, 2012
 %Eddy current correction added by MGSaleh (2016) using the formula described by
@@ -43,17 +43,17 @@ if missing
         error('Not all the files are there, so I give up.');
 end
 
-% A choice to perform phase correction on the water or not. 
-% Default = 1. Yes, perform the correction -- MGSaleh 2016    
-if nargin < 4
-    water_phase_correction = 1;
-    
-end
-
-if  nargin < 3
-    data_phase_correction = 1;
-    
-end
+% % A choice to perform phase correction on the water or not. 
+% % Default = 1. Yes, perform the correction -- MGSaleh 2016    
+% if nargin < 4
+%     water_phase_correction = 0;
+%     
+% end
+% 
+% if  nargin < 3
+%     data_phase_correction = 0;
+%     
+% end
     
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -228,19 +228,46 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             totalframes = MRS_struct.p.nrows;
             FullData = MRS_struct.fids.data;
             AlignTo = 2;           %CHECK
+            
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
+                    if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
+                     
+                        if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GSH')
+                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MM 2016
+                           
+                            MRS_struct.fids.ON_OFF=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GABA
+                            MRS_struct.fids.ON_OFF2=repmat([0 1 0 1],[1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        end
+                        
+                        if strcmp(MRS_struct.p.target, 'GSH') || strcmp(MRS_struct.p.target2, 'Lac')% For Lac -- MGSaleh
+ 
+                            MRS_struct.fids.ON_OFF2=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]); 
+                            MRS_struct.fids.ON_OFF=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); 
+                        end
+                        
+                    else
+                        
+                 
                     MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
+                    
+                    end
+                    
                 case 'offfirst'
                     
                     if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
                      
                         if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GSH')
                             % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MM 2016
+
+                            %MRS_struct.fids.ON_OFF=repmat([0 1 1 0 0 1 1 0 0 1],[1 size(MRS_struct.fids.data,2)/10]);  % GABA % For 7T data we have for now -- MGSaleh
+                            %MRS_struct.fids.ON_OFF2=repmat([1 0 1 0 1 0 1 0 1 0],[1 size(MRS_struct.fids.data,2)/10]); % GSH  % For 7T data we have for now -- MGSaleh
+                           
                             MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); % GABA
                             MRS_struct.fids.ON_OFF2=repmat([1 0 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        end
                         
-                        else  % For Lac -- MGSaleh
+                        if strcmp(MRS_struct.p.target, 'GSH') || strcmp(MRS_struct.p.target2, 'Lac')% For Lac -- MGSaleh
  
                             MRS_struct.fids.ON_OFF2=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]); 
                             MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); 
@@ -314,7 +341,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             % Performing phase corrrection on the suppressed data
             % based on the Klose (1990), MRM,14:26-30. The equation was
             % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if data_phase_correction                
+            if MRS_struct.p.data_phase_correction                
                 
                if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data')) 
                     MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater.');
@@ -333,7 +360,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             % Performing phase corrrection on the water
             % based on the Klose (1990), MRM,14:26-30. The equation was
             % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if water_phase_correction
+            if MRS_struct.p.water_phase_correction
                 
                 if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data'))  
                     ComWater=phase_correction_fids(MRS_struct,ComWater.',ComWater.');
@@ -359,6 +386,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             
             
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
+%             MRS_struct.FullData=FullaData;
             AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale
 %             MRS_struct.p.sw
@@ -440,6 +468,85 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2;']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
 
                     
+                    %Performing further correction to minimise subtraction
+                    %artifact on GSH edited spectrum -- RAEE and MGSaleh 2016
+                    if strcmp(MRS_struct.p.target, 'GABAGlx') && strcmp(MRS_struct.p.target2, 'GSH')
+                        
+%                         x=MRS_struct.spec.GABAGlx;
+%                         MRS_struct.spec.GABAGlx=MRS_struct.spec.GSH;
+%                         MRS_struct.spec.GSH=x;
+                        
+                        %Insert new code.
+                        eval(['A','= MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', ';']); 
+                        eval(['B','= MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)',';']); 
+                        eval(['C','= MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)',';']); 
+                        eval(['D','= MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)',';']); 
+                        
+                        z=abs(MRS_struct.spec.freq-3.53);
+                        lower=find(min(z)==z);
+                        z=abs(MRS_struct.spec.freq-2.8);
+                        upper=find(min(z)==z);
+                        
+                        figure(7)
+                        n=1;
+                        plot(real([A(n,(lower):(upper)); B(n,(lower):(upper)) ;C(n,(lower):(upper)); D(1,(lower):(upper))]'))
+                        title('before')
+                        
+                        [D2(ii,:) C2(ii,:)]=diff_align(D,C,lower:upper); % The diff_align function now in Gannet 3.0 -- MGSaleh 2016
+                        [D2(ii,:) A2(ii,:)]=diff_align(D,A,lower:upper);
+                        B2(ii,:)=B;
+                        
+                        figure(8)
+                        n=1;
+                        plot(real([A2(n,(lower):(upper)); B2(n,(lower):(upper)) ;C2(n,(lower):(upper)); D2(1,(lower):(upper))]'))
+                        title('after')
+                        
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2(ii,:)-C2(ii,:);'])
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=C2(ii,:);']) 
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', '=A2(ii,:);']) 
+                    
+                    end
+                    
+                    
+                    
+                    if MRS_struct.p.water_removal
+                        
+                        % Save diff spectrum before water filterin -- GO & MGSaleh 2016
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_unfilt_h2o(ii,:)',  '=MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.diff(ii,:);']);
+                        
+                        % Convert diff spectrum to time domain, apply water filter, convert back to frequency domain -- GO & MGSaleh 2016
+                        eval(['MRS_struct.fids.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.diff(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)',  '=fftshift(fft(MRS_struct.fids.', sprintf('%s',MRS_struct.p.target2), '.diff(ii,:)));']);
+                        
+%                         eval(['MRS_struct.fids.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.on(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
+%                         eval(['MRS_struct.fids.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.off(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
+%                         
+%                         eval(['xxx(ii,:)',  '=MRS_struct.fids.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)' '-' 'MRS_struct.fids.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:);']);
+%                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)',  '=fftshift(fft(xxx(ii,:)));']);
+
+                        
+                        % Need to add baseline correction. Something like min(2.7 to 3.5) shift to zero line. This is equivalent to linear baseline correction with slope zero -- MGSaleh 2016
+                        z=abs(MRS_struct.spec.freq-4.0);
+                        lowerbound=find(min(z)==z);
+                        z=abs(MRS_struct.spec.freq-2.8);        %2.75
+                        upperbound=find(min(z)==z);
+                        freqbounds=lowerbound:upperbound;
+                        
+                        yy=size(MRS_struct.spec.GSH.diff(ii,:));
+                        
+                        low_val=min(real(MRS_struct.spec.GSH.diff(ii,[freqbounds])));
+                        
+                        MRS_struct.spec.GSH.diff_nobas_corr(ii,:)=MRS_struct.spec.GSH.diff(ii,:);
+                        
+                        MRS_struct.spec.GSH.diff(ii,:) = complex(real(MRS_struct.spec.GSH.diff(ii,:)) - 1*low_val*(ones(yy)), imag(MRS_struct.spec.GSH.diff(ii,:)));
+                        
+                        
+                    
+                    end
+                    
+                    
+    
+    
                else 
                     
                     if strcmp(MRS_struct.p.target, 'GSH')

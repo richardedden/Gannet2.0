@@ -3,19 +3,21 @@ function PaperPlot(MRS_struct, varargin)
 %
 % This function will plot the difference spectrum, or any number of
 % difference spectra, saved in MRS_struct along with the corresponding
-% model fits of the GABA, Glx or GABA/Glx peak(s) (as specified by
-% MRS_struct.p.target). You can choose to plot a single spectrum, a select
-% number of spectra or all spectra. Multiple spectra will be plotted in
-% the same figure.
-%
-% For paper output, save in .eps format (matlab .pdf isn't good).
+% model fits of GABA/Glx, GSH and/or Lac peak(s) (as specified by
+% MRS_struct.p.target and .target2). You can choose to plot a single
+% spectrum, a select number of spectra or all spectra. Multiple spectra
+% will be plotted in the same figure. If data were acquired with HERMES,
+% then the relevant edited spectra will be plotted in separate subplots.
 %
 % Inputs:
 %   MRS_struct: Structure output from GannetFit (required).
 %   varargin:   Optional inputs (entered as parameter-value pairs).
-%                   nSpec: Number of spectra to plot, entered as a vector.
+%                   nSpec: Number of spectra to plot, entered as a scalar.
 %                          All spectra are plotted by default.
-%                   freqLim: Limits of ppm axis. Default is [0.5 4.5].
+%                   freqLim: Limits of ppm axis, entered as a vector.
+%                            Default is [0.5 4.5].
+%                   plotAvg: Plot averaged spectrum +/- 1 stdev, entered as
+%                            a logical. Default is false.
 %
 % Examples:
 %   PaperPlot(MRS_struct, 'nSpec', [1 3 4];
@@ -28,80 +30,165 @@ function PaperPlot(MRS_struct, varargin)
 %       model fits of the peak(s) specified in MRS_struct.p.target and
 %       limit the ppm axis from 2.5 to 3.5 ppm
 
-% MM (160720)
+% MM (161024)
 
-%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 1. Parse inputs
-%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin < 1
-    error('Too few inputs! MRS_struct is required!');
+    error('Not enough inputs! MRS_struct is required!');
 end
+
+% Check if data is MEGA- or HERMES-edited
+HERMES = MRS_struct.p.HERMES;
 
 % Set some defaults
 defaultTarget = MRS_struct.p.target;
-defaultnSpec = 1:size(MRS_struct.spec.diff,1);
+defaultTarget2 = MRS_struct.p.target2;
+defaultnSpec = eval(['1:size(MRS_struct.spec.' defaultTarget '.diff,1)']);
 defaultFreqLim = [0.5 4.5];
-expectedTargets = {'GABA', 'Glx', 'GABAGlx'};
+defaultSignalLim = [-0.05 0.03];
+defaultPlotAvg = false;
+expectedTargets = {'GABAGlx', 'GSH'};
+grey = [0.6 0.6 0.6];
+shading = 0.3;
 
-% Parse argmuments
+% Parse input arguments
 p = inputParser;
-p.addParamValue('target', defaultTarget, @(x) any(validatestring(x,expectedTargets)));
+p.addParamValue('target', defaultTarget, @(x) any(validatestring(x,expectedTargets))); %#ok<*NVREPL>
+if HERMES; p.addParamValue('target2', defaultTarget2, @(x) any(validatestring(x,expectedTargets))); end
 p.addParamValue('nSpec', defaultnSpec);
 p.addParamValue('freqLim', defaultFreqLim);
+p.addParamValue('signalLim', defaultSignalLim);
+p.addParamValue('plotAvg', defaultPlotAvg, @(x) islogical(x));
 p.parse(varargin{:});
 
+target = p.Results.target;
+if HERMES; target2 = p.Results.target2; end
+nSpec = p.Results.nSpec;
+freqLim = p.Results.freqLim;
+signalLim = p.Results.signalLim;
+plotAvg = p.Results.plotAvg;
 
-%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2. Plot spectra
-%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-specfreq = MRS_struct.spec.freq(1,:);
-figure('Color', 'w', 'Units', 'Normalized', 'OuterPosition', [0 0.05 0.65 1-0.05]);
+specFreq = MRS_struct.spec.freq(1,:);
+h = figure(200);
+set(h, 'Color', 'w', 'Units', 'Normalized', 'OuterPosition', [0 0.4 1 1-0.4]);
+clf;
 
-switch p.Results.target
-    case 'GABA'
-        lb = find(specfreq <= 3.55);
-        ub = find(specfreq >= 2.79);
-        range = intersect(lb,ub);
-        modelfreq = specfreq(range);
-        
-        for ii = 1:length(p.Results.nSpec)
-            hold on;
-            plot(specfreq, MRS_struct.spec.diff(p.Results.nSpec(ii),:), 'k', ...
-                modelfreq, GaussModel(MRS_struct.out.GABA.ModelFit(p.Results.nSpec(ii),:),modelfreq), 'r');
-            hold off;
-        end
-                
-    case 'Glx'
-        lb = find(specfreq <= 4.10);
-        ub = find(specfreq >= 3.45);
-        range = intersect(lb,ub);
-        modelfreq = specfreq(range);
-        
-        for ii = 1:length(p.Results.nSpec)
-            hold on;
-            plot(specfreq, MRS_struct.spec.diff(p.Results.nSpec(ii),:), 'k', ...
-                modelfreq, DoubleGaussModel(MRS_struct.out.Glx.ModelFit(p.Results.nSpec(ii),:),modelfreq), 'r');
-            hold off;
-        end
-                
-    case 'GABAGlx' 
-        lb = find(specfreq <= 4.10);
-        ub = find(specfreq >= 2.79);
-        range = intersect(lb,ub);
-        modelfreq = specfreq(range);
-        
-        for ii = 1:length(p.Results.nSpec)
-            hold on;
-            plot(specfreq, MRS_struct.spec.diff(p.Results.nSpec(ii),:), 'k', ...
-                modelfreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(p.Results.nSpec(ii),:),modelfreq), 'r');
-            hold off;
-        end        
+if HERMES
+    subplot(1,2,1);
 end
 
-set(gca, 'XLim', p.Results.freqLim, 'XDir', 'reverse', 'YTick', [], 'YColor', 'w', 'Box', 'off');
+switch target
+    case 'GABAGlx'
+        lb = find(specFreq <= 4.10); % This has to be same as the limits set in Gannetfit for GABAGlx  -- MM and MGSaleh 2016
+        ub = find(specFreq >= 2.79);
+        range = intersect(lb,ub);
+        modelFreq = specFreq(range);
+        
+        % If nSpec > 1, find mean + stdevs
+        if numel(nSpec) > 1 && plotAvg
+            m = mean(MRS_struct.spec.GABAGlx.diff,1);
+            s = std(MRS_struct.spec.GABAGlx.diff,0,1);
+            sUB = m + s;
+            sLB = m - s;
+        end
+        
+        if plotAvg
+            hold on;
+            patch([specFreq fliplr(specFreq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
+            plot(specFreq, m, 'k');
+            hold off;
+        else
+            for ii = 1:length(nSpec)
+                hold on;
+                plot(specFreq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
+                    modelFreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(nSpec(ii),:),modelFreq), 'r');
+                hold off;
+            end
+        end
+        
+    case 'GSH'
+%         lb = find(specfreq <= 4.10);
+%         ub = find(specfreq >= 2.79);
+%         range = intersect(lb,ub);
+%         modelfreq = specfreq(range);
+%         
+%         for ii = 1:length(p.Results.nSpec)
+%             hold on;
+%             plot(specfreq, MRS_struct.spec.diff(p.Results.nSpec(ii),:), 'k', ...
+%                 modelfreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(p.Results.nSpec(ii),:),modelfreq), 'r');
+%             hold off;
+%         end
+end
+
+set(gca, 'TickDir', 'out', 'XLim', freqLim, 'XDir', 'reverse', 'YLim', signalLim, 'YTick', [], 'YColor', 'w', 'Box', 'off');
 xlabel('ppm', 'FontWeight', 'bold');
+
+% For HERMES data
+if HERMES    
+    subplot(1,2,2);
+    switch target2
+        case 'GSH'
+%             lb = find(specfreq <= 4.10);
+%             ub = find(specfreq >= 2.79);
+%             range = intersect(lb,ub);
+%             modelfreq = specfreq(range);
+
+        % If nSpec > 1, find mean + stdevs
+        if numel(nSpec) > 1 && plotAvg
+            m = mean(MRS_struct.spec.GSH.diff,1);
+            s = std(MRS_struct.spec.GSH.diff,0,1);
+            sUB = m + s;
+            sLB = m - s;
+        end
+        
+        if plotAvg
+            hold on;
+            patch([specFreq fliplr(specFreq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
+            plot(specFreq, m, 'k');
+            hold off;
+        else
+            for ii = 1:length(nSpec)
+                hold on;
+                plot(specFreq, MRS_struct.spec.GSH.diff(nSpec(ii),:), 'k'); % MM: need to add model fit
+                hold off;
+            end
+        end
+            
+            freqLim = [0.5 4.0];
+            
+        case 'Lac'
+%             lb = find(specfreq <= 4.10);
+%             ub = find(specfreq >= 2.79);
+%             range = intersect(lb,ub);
+%             modelfreq = specfreq(range);
+%             
+%             for ii = 1:length(p.Results.nSpec)
+%                 hold on;
+%                 plot(specfreq, MRS_struct.spec.diff(p.Results.nSpec(ii),:), 'k', ...
+%                     modelfreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(p.Results.nSpec(ii),:),modelfreq), 'r');
+%                 hold off;
+%             end
+    end
+    
+    set(gca, 'TickDir', 'out', 'XLim', freqLim, 'XDir', 'reverse', 'YLim', signalLim.*[0.5 2.5], 'YTick', [], 'YColor', 'w', 'Box', 'off');
+    xlabel('ppm', 'FontWeight', 'bold');
+    
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3. Print spectra (optional)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 
 

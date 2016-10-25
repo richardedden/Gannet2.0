@@ -30,6 +30,15 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     %switch for different versions
     MRS_struct.p.Siemens_type = 1; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
     
+    % A choice to perform phase correction on the water or not. 
+    % Default = 1. Yes, perform the correction -- MGSaleh 2016    
+    MRS_struct.p.water_phase_correction = 1;
+    MRS_struct.p.data_phase_correction = 0;
+    
+    %Removing water using HSLVD -- GO and MGSaleh 2016
+    MRS_struct.p.water_removal = 1;
+    
+    
 %Analysis Parameters
     MRS_struct.p.LB = 3;
     MRS_struct.p.ZeroFillTo = 32768;
@@ -37,7 +46,8 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
     
 %Flags
-    MRS_struct.p.HERMES=1;                % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016  
-    MRS_struct.p.mat = 0;                 % 1 = YES, save MRS_struct as .mat file 2016
-    MRS_struct.p.sdat = 0;                % 1 = YES, save MRS_struct as .sdat file 2016
+    MRS_struct.p.HERMES = 1;                % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016 
+    MRS_struct.p.PRIAM  = 0;                 % 1 = YES (mean dual voxels),  0 = NO;  % Added by MGSaleh 2016 
+    MRS_struct.p.mat    = 0;                 % 1 = YES, save MRS_struct as .mat file 2016
+    MRS_struct.p.sdat   = 0;                % 1 = YES, save MRS_struct as .sdat file 2016
 end
