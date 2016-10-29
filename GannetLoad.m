@@ -59,7 +59,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MRS_struct.versionload = '140709';
+MRS_struct.versionload = '161029'  %'140709';
 MRS_struct.ii=0;
 MRS_struct.gabafile=gabafile;
 MRS_struct=GannetPreInitialise(MRS_struct);
@@ -386,7 +386,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             
             
             FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
-%             MRS_struct.FullData=FullaData;
+            MRS_struct.fids.FullData=FullData;
             AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
             % work out frequency scale
 %             MRS_struct.p.sw
@@ -430,7 +430,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                case 'Cr'
                     %AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct.p.ONOFForder,n);     
                case 'Cho'
-                    %AllFramesFTrealign=AlignUsingCho(AllFramesFTrealign);
+                    [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
                case 'H20'
                    [AllFramesFTrealign MRS_struct]=AlignUsingH2O(AllFramesFTrealign,MRS_struct);
                case 'NAA'
@@ -448,7 +448,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
               if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
                     
-                        
+                    MRS_struct.out.reject(:,:)=0; %RE Don't reject
+                    
                     xx2=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
                     yy2=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                     
@@ -492,18 +493,27 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                         plot(real([A(n,(lower):(upper)); B(n,(lower):(upper)) ;C(n,(lower):(upper)); D(1,(lower):(upper))]'))
                         title('before')
                         
-                        [D2(ii,:) C2(ii,:)]=diff_align(D,C,lower:upper); % The diff_align function now in Gannet 3.0 -- MGSaleh 2016
-                        [D2(ii,:) A2(ii,:)]=diff_align(D,A,lower:upper);
-                        B2(ii,:)=B;
+                        [D2 C2]=diff_align(D,C,lower:upper); % The diff_align function now in Gannet 3.0 -- MGSaleh 2016
+                        [D2 A2]=diff_align(D,A,lower:upper);
+                        B2=B;
                         
                         figure(8)
                         n=1;
                         plot(real([A2(n,(lower):(upper)); B2(n,(lower):(upper)) ;C2(n,(lower):(upper)); D2(1,(lower):(upper))]'))
                         title('after')
                         
-                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2(ii,:)-C2(ii,:);'])
-                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=C2(ii,:);']) 
-                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', '=A2(ii,:);']) 
+%                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2-C2;'])
+%                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=C2;']) 
+%                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']) 
+%                         
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']); 
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.on(ii,:)','=B2;']); 
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)','=C2;']); 
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.off(ii,:)','=D2;']);
+                        
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2-C2;'])
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=C2;']) 
+                        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']) 
                     
                     end
                     

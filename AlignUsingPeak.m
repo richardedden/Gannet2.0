@@ -17,9 +17,19 @@ function [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_s
             z=abs(MRS_struct.spec.freq-3.12);
             lb=find(min(z)==z);
             z=abs(MRS_struct.spec.freq-2.72);
-            ub=find(min(z)==z);    
+            ub=find(min(z)==z);
             Initx = [ 30 0.05 PEAK_ppm 0 0 0 ];
-
+            
+        case 'Cho'  
+            PEAK_ppm=3.2; 
+            %Determine limits                                                                                                                                       
+            z=abs(MRS_struct.spec.freq-3.32);                                                                                                                       
+            lb=find(min(z)==z);                                                                                                                                      
+            z=abs(MRS_struct.spec.freq-3.1);                                                                                                                         
+            ub=find(min(z)==z);                                                                                                                                      
+            Initx = [ 30 0.05 PEAK_ppm 0 0 0 ];                                                                                                                      
+            
+            
     end
     %Set initial parameters by fitting the sum
     

@@ -14,41 +14,55 @@ function [MRS_struct] = GannetFit(MRS_struct, varargin)
 % Concentration estimates from GABAGlx fitting -- MGSaleh 13 July 2016
 
 %% Input parameters and some definitions:
-
-% varargin = Optional arguments if user wants to overwrite fitting
-%            parameters set in GannetPreInitialise; can include several
-%            options, which are:
-%            'GABA' or 'Glx': target metabolite
-if nargin > 1
-switch varargin{1}
+%Determine whether multiple fitting targets or not and then use it to
+%create a loop -- MGSaleh 2016
+if (MRS_struct.p.HERMES)
+    target={MRS_struct.p.target, MRS_struct.p.target2};
+else
+    % varargin = Optional arguments if user wants to overwrite fitting
+    %            parameters set in GannetPreInitialise; can include several
+    %            options, which are:
+    %            'GABA' or 'Glx': target metabolite
+    
+    if nargin > 1
+        switch varargin{1}
             case 'GABA'
                 MRS_struct.p.target = 'GABA';
             case 'Glx'
                 MRS_struct.p.target = 'Glx';
             case 'GABAGlx'
                 MRS_struct.p.target = 'GABAGlx';
+            case 'GSH'
+                MRS_struct.p.target = 'GSH';
+        end
+    end
+    
+    target = {MRS_struct.p.target};
 end
-end
+
+
+
+
 
 FIT_LSQCURV = 0;
 FIT_NLINFIT = 1;
 fit_method = FIT_NLINFIT; %FIT_NLINFIT;
 waterfit_method = FIT_NLINFIT;
 
-if strcmp(MRS_struct.p.target, 'GSH')
-    
-    Datadiff = MRS_struct.spec.GSH.diff; % Added by MGSaleh 2016
-    Dataoff  = MRS_struct.spec.GSH.off; % Added by MGSaleh 2016
-    Dataon   = MRS_struct.spec.GSH.on; % Added by MGSaleh 2016
-    
-else
-    
-    Datadiff = MRS_struct.spec.GABAGlx.diff; % Added by MGSaleh 2016
-    Dataoff  = MRS_struct.spec.GABAGlx.off; % Added by MGSaleh 2016
-    Dataon   = MRS_struct.spec.GABAGlx.on; % Added by MGSaleh 2016
-    
-    
-end
+% if strcmp(MRS_struct.p.target, 'GABAGlx')
+%     
+%     Datadiff = MRS_struct.spec.GABAGlx.diff; % Added by MGSaleh 2016
+%     Dataoff  = MRS_struct.spec.GABAGlx.off; % Added by MGSaleh 2016
+%     Dataon   = MRS_struct.spec.GABAGlx.on; % Added by MGSaleh 2016
+%     
+% else
+%     
+%     Datadiff = MRS_struct.spec.GSH.diff; % Added by MGSaleh 2016
+%     Dataoff  = MRS_struct.spec.GSH.off; % Added by MGSaleh 2016
+%     Dataon   = MRS_struct.spec.GSH.on; % Added by MGSaleh 2016
+%     
+%     
+% end
 
 
 
@@ -58,22 +72,37 @@ freq=MRS_struct.spec.freq;
 if strcmp(MRS_struct.p.Reference_compound,'H2O')
     WaterData=MRS_struct.spec.water;
 end
-MRS_struct.versionfit = '160629';
+MRS_struct.versionfit = '161029';
 disp(['GABA Fit Version is ' MRS_struct.versionfit ]);
 fitwater=1;
+% eval(['MRS_struct.spec.', target{1}, '.diff(ii,:)'])
+% numscans=size(Datadiff);
+% numscans=numscans(1);
+eval(['Datadiff', '= MRS_struct.spec.', target{1}, '.diff;']); % Added by MGSaleh 2016
 numscans=size(Datadiff);
 numscans=numscans(1);
-
 %110624
 epsdirname = [ './MRSfit_' datestr(clock,'yymmdd') ];
 
 
 %% Metabolite fitting 
+for trg=1:length(target)
+        
+        %Defining variables -- MGSaleh 2016
+        eval(['Datadiff', '= MRS_struct.spec.', target{trg}, '.diff;']); % Added by MGSaleh 2016
+        eval(['Dataoff',  '= MRS_struct.spec.', target{trg}, '.off;']);  % Added by MGSaleh 2016 % e.g: MRS_struct.spec.GABAGlx.off; % Added by MGSaleh 2016
+        eval(['Dataon',   '= MRS_struct.spec.', target{trg}, '.on;']);   % Added by MGSaleh 2016 % e.g: MRS_struct.spec.GABAGlx.on; % Added by MGSaleh 2016
+        numscans=size(Datadiff);
+        numscans=numscans(1);
+       
+        disp('Working on:'); target{trg}
+        
+        for ii=1:numscans
+        MRS_struct.gabafile{ii};
+       
+    
 
-for ii=1:numscans
-    MRS_struct.gabafile{ii};
-
-    if strcmp(MRS_struct.p.target,'GABA') 
+    if strcmp(target{trg},'GABA')
     
     
     
@@ -146,7 +175,7 @@ for ii=1:numscans
 
         
         
-    elseif strcmp(MRS_struct.p.target,'GSH')
+    elseif strcmp (target{trg},'GSH') %strcmp(MRS_struct.p.target,'GSH')
         %GSH fit
         
         %Hard code it to fit from 2 ppm to 4 ppm
@@ -188,7 +217,7 @@ for ii=1:numscans
         MRS_struct.out.GABAFitError(ii)=  100*std(residg)/GABAheight;
         
         
-    elseif strcmp(MRS_struct.p.target,'Lac')    
+    elseif strcmp (target{trg},'Lac') % strcmp(MRS_struct.p.target,'Lac')    
         %This is a work in progress - currenly mainly code copied form GSH
         %Hard code it to fit from 0.8 ppm to 1.8 ppm
         z=abs(MRS_struct.spec.freq-1.8);
@@ -318,7 +347,7 @@ for ii=1:numscans
             MRS_struct.out.Glx.snr(ii) = Glxheight / std(residg);
         
         
-    elseif strcmp (MRS_struct.p.target,'GABAGlx')  % Need to quantify GABA and Glx separately  --MGSaleh
+    elseif strcmp (target{trg},'GABAGlx') %strcmp (MRS_struct.p.target,'GABAGlx')  % Need to quantify GABA and Glx separately  --MGSaleh
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %  TEsting a GABA and Glx Fit
@@ -371,8 +400,8 @@ for ii=1:numscans
         nlinopts = statset('nlinfit');
         nlinopts = statset(nlinopts, 'MaxIter', 1e5);
         
-                figure(98)
-                plot(freq(freqbounds),GABAGlxModel_area(GaussModelInit,freq(freqbounds)),freq(freqbounds),real(Datadiff(ii,freqbounds)))   
+%                 figure(98)
+%                 plot(freq(freqbounds),GABAGlxModel_area(GaussModelInit,freq(freqbounds)),freq(freqbounds),real(Datadiff(ii,freqbounds)))   
             [GaussModelParam(ii,:),resnorm,residg] = lsqcurvefit(@(xdummy,ydummy) GABAGlxModel_area(xdummy,ydummy), ...
                 GaussModelInit, freq(freqbounds),real(Datadiff(ii,freqbounds)), ...
                 lb,ub,options);
@@ -391,8 +420,8 @@ for ii=1:numscans
                     ci = nlparci(GaussModelParam(ii,:), residg,'covar',COVB); %copied over
                 end
                 
-                figure(99)
-                plot(freq(freqbounds),GABAGlxModel_area(GaussModelInit,freq(freqbounds)),freq(freqbounds),real(Datadiff(ii,freqbounds)),freq(freqbounds),residg)
+%                 figure(99)
+%                 plot(freq(freqbounds),GABAGlxModel_area(GaussModelInit,freq(freqbounds)),freq(freqbounds),real(Datadiff(ii,freqbounds)),freq(freqbounds),residg)
                 
             end
             
@@ -452,7 +481,7 @@ for ii=1:numscans
             freq(plotbounds),real(Datadiff(ii,plotbounds)), 'b', ...
             freq(freqbounds),residg,'k');
         set(gca,'XLim',[2.6 3.6]);
-    elseif strcmp(MRS_struct.p.target,'GSH')
+    elseif strcmp (target{trg},'GSH') %strcmp(MRS_struct.p.target,'GSH')
        freqrange=MRS_struct.spec.freq(freqbounds); 
        plot(MRS_struct.spec.freq, Datadiff(ii,:), 'b',freqrange, ...
             FiveGaussModel(FiveGaussModelParam(ii,:), freqrange),'r',freqrange, ...
@@ -471,7 +500,7 @@ for ii=1:numscans
                 freq(plotbounds),real(Datadiff(ii,plotbounds)),'b', ...
                 freq(freqbounds),residg,'k');
         set(gca,'XLim',[3.4 4.2]) 
-    elseif strcmp(MRS_struct.p.target,'GABAGlx')
+    elseif strcmp (target{trg},'GABAGlx') %strcmp(MRS_struct.p.target,'GABAGlx')
       plot(freq(freqbounds),GABAGlxModel_area(GaussModelParam(ii,:),freq(freqbounds)),'r',...
                 freq(plotbounds),real(Datadiff(ii,plotbounds)),'b', ...
                 freq(freqbounds),residg,'k');
@@ -1032,9 +1061,9 @@ Cr_OFF=Dataoff(ii,:);
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
     if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
-        pdfname=[ epsdirname '/' fullpath '.pdf' ];
+        pdfname=[ epsdirname '/' fullpath '-' target{trg} '.pdf' ];
     else
-        pdfname=[ epsdirname '/' pfil_nopath  '.pdf' ];
+        pdfname=[ epsdirname '/' pfil_nopath  '-' target{trg} '.pdf' ];
     end
     %epsdirname
     if(exist(epsdirname,'dir') ~= 7)
@@ -1112,7 +1141,7 @@ Cr_OFF=Dataoff(ii,:);
 %111214 integrating CJE's changes on water fitting (pre-init and revert to
 %linear bseline). Also investigating Navg(ii)
 
-    
+end 
 end          % end of MRSGABAfit
 
 

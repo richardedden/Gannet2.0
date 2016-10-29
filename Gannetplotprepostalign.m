@@ -10,10 +10,10 @@ if MRS_struct.p.HERMES
     
     
     
-        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
-        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']); ...
-        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff']); ...
-        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign']);];
+        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff(specno,:)']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign(specno,:)']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(specno,:)']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff_noalign(specno,:)']);];
     
         % Estimate baseline from between GABAGlx or Lac and GSH. The values might be changed depending on the future choice of metabolites -- MGSaleh
         
@@ -45,8 +45,8 @@ else
     
         
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff']); ...
-        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign']);];
+        SpectraToPlot = [eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff(specno,:)']); ...
+        eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target),'.diff_noalign(specno,:)']);];
     
         % Estimate baseline from between Glx and GABA
         z=abs(MRS_struct.spec.freq-3.6);
@@ -88,7 +88,7 @@ if MRS_struct.p.HERMES
     if strcmp(MRS_struct.p.target2, 'Lac')  % Defining different limits for diferent target -- MGSaleh 2016
         plotstackoffset = plotstackoffset * 0.5 * gabaheight;
     else
-        plotstackoffset = plotstackoffset * 1.0 * gabaheight;
+        plotstackoffset = plotstackoffset * 3.0 * gabaheight; %RE
     end
     plotstackoffset = plotstackoffset - specbaseline;
 
@@ -105,7 +105,7 @@ if MRS_struct.p.HERMES
     if strcmp(MRS_struct.p.target2, 'Lac')
         yaxismax = (numspec + 1.0) * 0.5 * gabaheight; % top spec + 0.5 * height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GSH/Lac -- 2016
     else
-        yaxismax = (numspec + 1.0) * 1.0 * gabaheight; % top spec + 1.0 * height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/GSH -- 2016
+        yaxismax = (numspec + 1.0) * 3.0 * gabaheight; % top spec + 1.0 * height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/GSH -- 2016
     end
     yaxismin =  - 2.0* gabaheight; % extend 2* gaba heights below zero %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
     

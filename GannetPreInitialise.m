@@ -36,14 +36,14 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.data_phase_correction = 0;
     
     %Removing water using HSLVD -- GO and MGSaleh 2016
-    MRS_struct.p.water_removal = 1;
+    MRS_struct.p.water_removal = 01;
     
     
 %Analysis Parameters
     MRS_struct.p.LB = 3;
     MRS_struct.p.ZeroFillTo = 32768;
     %AlignTo planned options: Cr; Cho; NAA; H20; CrOFF
-    MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
+    MRS_struct.p.AlignTo = 'Cho'; %SpecReg default and recommended
     
 %Flags
     MRS_struct.p.HERMES = 1;                % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016 
