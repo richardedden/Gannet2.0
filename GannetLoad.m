@@ -471,7 +471,7 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     
                     %Performing further correction to minimise subtraction
                     %artifact on GSH edited spectrum -- RAEE and MGSaleh 2016
-                    if strcmp(MRS_struct.p.target, 'GABAGlx') && strcmp(MRS_struct.p.target2, 'GSH')
+                    if strcmp(MRS_struct.p.target, 'GABAGlx') && strcmp(MRS_struct.p.target2, 'GSH') && strcmp(MRS_struct.p.AlignTo, 'SpecReg')
                         
 %                         x=MRS_struct.spec.GABAGlx;
 %                         MRS_struct.spec.GABAGlx=MRS_struct.spec.GSH;
