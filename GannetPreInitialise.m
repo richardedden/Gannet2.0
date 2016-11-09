@@ -28,7 +28,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.Water_Positive=1; %For Philips MOIST ws, set to 0.
     %Siemens header information differs between versions
     %switch for different versions
-    MRS_struct.p.Siemens_type = 1; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
+    MRS_struct.p.Siemens_type = 0; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
     
     % A choice to perform phase correction on the water or not. 
     % Default = 1. Yes, perform the correction -- MGSaleh 2016    
@@ -43,7 +43,8 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.LB = 3;
     MRS_struct.p.ZeroFillTo = 32768;
     %AlignTo planned options: Cr; Cho; NAA; H20; CrOFF
-    MRS_struct.p.AlignTo = 'Cho'; %SpecReg default and recommended
+    MRS_struct.p.AlignTo = 'SpecReg'; %SpecReg default and recommended
+    MRS_struct.p.Reg =  {'vox1', 'vox2'}; %Naming regions for analysis. e.g: anterior and posterior, right and left etc. Default values are vox1 and vox2 -- MGSaleh 2016
     
 %Flags
     MRS_struct.p.HERMES = 1;                % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016 

@@ -93,12 +93,12 @@ if MRS_struct.p.HERMES
     end
     plotstackoffset = plotstackoffset - specbaseline;
 
-    aa=1.2
-    plot(MRS_struct.spec.freq, aa*real(SpectraToPlot((1),:)),'b',MRS_struct.spec.freq, aa*real(SpectraToPlot((2),:)),'r');
+    
+    plot(MRS_struct.spec.freq, real(SpectraToPlot((1),:)),'b',MRS_struct.spec.freq, real(SpectraToPlot((2),:)),'r');
     hold on
     shft=repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
     SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shft,[],1); max(shft,[],1)] ;
-    plot(MRS_struct.spec.freq, aa*real(SpectraToPlot((3),:)),'b',MRS_struct.spec.freq, aa*real(SpectraToPlot((4),:)),'r');
+    plot(MRS_struct.spec.freq, real(SpectraToPlot((3),:)),'b',MRS_struct.spec.freq, real(SpectraToPlot((4),:)),'r');
     hold off
     
     % yaxismax
@@ -109,7 +109,7 @@ if MRS_struct.p.HERMES
         yaxismax = (numspec + 1.0) * 3.0 * gabaheight; % top spec + 1.0 * height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/GSH -- 2016
         
     end
-    yaxismin =  -2.0* gabaheight; % extend 2* gaba heights below zero %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
+    yaxismin =  - 2.0* gabaheight; % extend 2* gaba heights below zero %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
     
     if (yaxismax<yaxismin)
         dummy=yaxismin;
@@ -120,10 +120,8 @@ if MRS_struct.p.HERMES
     
 else
     % averaged gaba height across all scans - to estimate stack spacing
-    %gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
-    gabaheight = abs(max(SpectraToPlot([1 2],Glx_right:GABA_right),[],2)); % Changed for better view -- MGSaleh
-    %gabaheight = mean(gabaheight);
-    gabaheight = max(gabaheight); % Changed for better view -- MGSaleh
+    gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
+    gabaheight = mean(gabaheight);
     plotstackoffset = [ 0 : (numspec-1) ]';
     plotstackoffset = plotstackoffset * gabaheight;
     plotstackoffset = plotstackoffset - specbaseline;
@@ -135,11 +133,8 @@ else
     
     % yaxismax
     % yaxismin
-        
-    yaxismax = 1.5*abs(max(max(real(SpectraToPlot([1 2],Glx_right:GABA_right)),[],2))); % I removed the axis code below to zoom into the data -- MGSaleh 2016
-    %yaxismax = (numspec + 1.0) *gabaheight; % top spec + 2* height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
-    yaxismin = -10.0*abs(min(min(real(SpectraToPlot([1 2],Glx_right:GABA_right)),[],2))); % I removed the axis code below to zoom into the data -- MGSaleh 2016
-    %yaxismin = - 2.0* gabaheight; % extend 2* gaba heights below zero %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
+    yaxismax = (numspec + 1.0) *gabaheight; % top spec + 2* height of gaba %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
+    yaxismin =  - 2.0* gabaheight; % extend 2* gaba heights below zero %Changed slightly by MGSaleh to accomodate both GSH and GABAGlx/Lac -- 2016
     if (yaxismax<yaxismin)
         dummy=yaxismin;
         yaxismin=yaxismax;

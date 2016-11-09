@@ -1,4 +1,4 @@
-function [MRS_struct] = GannetFit(MRS_struct, varargin)
+function [MRS_struct] = GannetFit_old(MRS_struct, varargin)
 %
 % MRS_struct = structure with data loaded from MRSLoadPfiles
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -14,21 +14,9 @@ function [MRS_struct] = GannetFit(MRS_struct, varargin)
 % Concentration estimates from GABAGlx fitting -- MGSaleh 13 July 2016
 
 %% Input parameters and some definitions:
-%Determine whether multiple regions and fitting targets or not and then use it to
+%Determine whether multiple fitting targets or not and then use it to
 %create a loop -- MGSaleh 2016
-
-if MRS_struct.p.PRIAM    % Deciding how many regions are there -- MGSaleh 2016 
-    
-    
-    reg={MRS_struct.p.Reg};
-    
-else
-    reg={MRS_struct.p.Reg{1}};
-    
-end
-
-
-if (MRS_struct.p.HERMES) & nargin < 2
+if (MRS_struct.p.HERMES)
     target={MRS_struct.p.target, MRS_struct.p.target2};
 else
     % varargin = Optional arguments if user wants to overwrite fitting
@@ -84,13 +72,13 @@ freq=MRS_struct.spec.freq;
 if strcmp(MRS_struct.p.Reference_compound,'H2O')
     WaterData=MRS_struct.spec.water;
 end
-MRS_struct.versionfit = '161029'; %format - yy/mm/dd  -- MGSaleh 2016
+MRS_struct.versionfit = '160629';
 disp(['GABA Fit Version is ' MRS_struct.versionfit ]);
 fitwater=1;
 % eval(['MRS_struct.spec.', target{1}, '.diff(ii,:)'])
 % numscans=size(Datadiff);
 % numscans=numscans(1);
-eval(['Datadiff', '= MRS_struct.spec.', MRS_struct.p.Reg{1}, '.', target{1}, '.diff;']); % Added by MGSaleh 2016
+eval(['Datadiff', '= MRS_struct.spec.', target{1}, '.diff;']); % Added by MGSaleh 2016
 numscans=size(Datadiff);
 numscans=numscans(1);
 %110624
@@ -98,22 +86,18 @@ epsdirname = [ './MRSfit_' datestr(clock,'yymmdd') ];
 
 
 %% Metabolite fitting 
-for kk = 1:length(reg)
-    
 for trg=1:length(target)
         
         %Defining variables -- MGSaleh 2016
-        eval(['Datadiff', '= MRS_struct.spec.', reg{kk}, '.', target{trg}, '.diff;']); % Added by MGSaleh 2016
-        eval(['Dataoff',  '= MRS_struct.spec.', reg{kk}, '.', target{trg}, '.off;']);  % Added by MGSaleh 2016 % e.g: MRS_struct.spec.GABAGlx.off; % Added by MGSaleh 2016
-        eval(['Dataon',   '= MRS_struct.spec.', reg{kk}, '.', target{trg}, '.on;']);   % Added by MGSaleh 2016 % e.g: MRS_struct.spec.GABAGlx.on; % Added by MGSaleh 2016
+        eval(['Datadiff', '= MRS_struct.spec.', target{trg}, '.diff;']); % Added by MGSaleh 2016
+        eval(['Dataoff',  '= MRS_struct.spec.', target{trg}, '.off;']);  % Added by MGSaleh 2016 % e.g: MRS_struct.spec.GABAGlx.off; % Added by MGSaleh 2016
+        eval(['Dataon',   '= MRS_struct.spec.', target{trg}, '.on;']);   % Added by MGSaleh 2016 % e.g: MRS_struct.spec.GABAGlx.on; % Added by MGSaleh 2016
         numscans=size(Datadiff);
         numscans=numscans(1);
-       
-        sprintf('Working on: %s',target{trg})
-        
+target{trg}
         for ii=1:numscans
         MRS_struct.gabafile{ii};
-       
+        ii
     
 
     if strcmp(target{trg},'GABA')
@@ -193,22 +177,21 @@ for trg=1:length(target)
         %GSH fit
         
         %Hard code it to fit from 2 ppm to 4 ppm
-        z=abs(MRS_struct.spec.freq-3.3);
+        z=abs(MRS_struct.spec.freq-4);
         lowerbound=find(min(z)==z);
-        z=abs(MRS_struct.spec.freq-2.35);
+        z=abs(MRS_struct.spec.freq-2);
         upperbound=find(min(z)==z);
         freqbounds=lowerbound:upperbound;
         plotbounds=(lowerbound-150):(upperbound+150);
-        offset = real(mean(Datadiff(ii, freqbounds(1:10)),2) + mean(Datadiff(ii, freqbounds((end-9):end)),2))/2;
-        slope = real(mean(Datadiff(ii, freqbounds(1:10)),2) - mean(Datadiff(ii, freqbounds((end-9):end)),2))/real(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
+        offset = (mean(Datadiff(ii, freqbounds(1:10)),2) + mean(Datadiff(ii, freqbounds((end-9):end)),2))/2;
+        slope = (mean(Datadiff(ii, freqbounds(1:10)),2) - mean(Datadiff(ii, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
 
         peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
 
-        initx = [peak_amp*0.7 -300 2.95 peak_amp*0.8 -500 2.73 -peak_amp*2.5 -1000 2.61 -peak_amp*2.5 -1000 2.55 peak_amp*0.5 -600 2.42  0 0 0.02 ];
-        lb = [0 -5000   2.9 0 -5000  2.68 -0.3 -5000    2.57 -0.3 -5000   2.48 0 -5000    2.3 -0.1 -0.01 -0.01 ];
-        ub = [0.1 -50   3.0 0.1 -50   2.8   0 -50    2.68      0 -50   2.57 0.1 0     2.43 0.1 0.01 0.03 ]; 
-        figure(87)
-        plot(MRS_struct.spec.freq(freqbounds),FiveGaussModel(initx,MRS_struct.spec.freq(freqbounds)),MRS_struct.spec.freq(freqbounds),real(Datadiff(ii,freqbounds)));%MRS_struct.spec.freq(freqbounds),real(Datadiff(ii,freqbounds)
+        initx = [peak_amp*0.4 -200 2.97 peak_amp*0.8 -500 2.75 peak_amp -300 2.61 peak_amp*0.6 -600 2.46 peak_amp*0.5 -600 2.39  offset slope 0 ];
+        lb = [0 -5000 2.8 0 -5000 2.68 0 -5000 2.53 0 -5000 2.43 0 -5000 2.3 -1 -1 -1 ];
+        ub = [1 0 3.2 1 0 2.8 1 0 2.68 1 0 2.53 1 0 2.43 1 1 1 ]; 
+        
         options = optimset('lsqcurvefit');
         options = optimset(options,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
         nlinopts = statset('nlinfit');
@@ -218,22 +201,6 @@ for trg=1:length(target)
         initx, MRS_struct.spec.freq(freqbounds),real(Datadiff(ii,freqbounds)), ...
         lb,ub,options);
         residg = -residg;
-        
-%         if(fit_method == FIT_NLINFIT)
-%             initx = FiveGaussModelParam(ii,:);
-%             % 1111013 restart the optimisation, to ensure convergence
-%             for fit_iter = 1:10
-%                 [FiveGaussModelParam(ii,:),resnorm,residg] = lsqcurvefit(@(xdummy,ydummy) FiveGaussModel(xdummy,ydummy), ...
-%                     initx, MRS_struct.spec.freq(freqbounds),real(Datadiff(ii,freqbounds)), ...
-%                     lb,ub,options);
-% %                 MRS_struct.out.GABA.fitparams_iter(fit_iter,:,ii) = FiveGaussModelParams(ii,:); %specifically for GABA - MGSaleh
-%                 initx = FiveGaussModelParam(ii,:);
-% %                 ci = nlparci(GaussModeFiveGaussModelParamlParam(ii,:), residg,'covar',COVB); %copied over
-%             end
-%         end
-        
-        
-        MRS_struct.out.vox1.GSH.FiveGaussModel(ii,:)=FiveGaussModelParam(ii,:);
         GSHGaussModelParam(ii,:)=FiveGaussModelParam(ii,:);
         GSHGaussModelParam(ii,4:3:13)=0;
         NAAGaussModelParam(ii,:)=FiveGaussModelParam(ii,:);
@@ -242,13 +209,13 @@ for trg=1:length(target)
         BaselineModelParam=GSHGaussModelParam;
         BaselineModelParam(ii,1)=0;
 
-        MRS_struct.out.vox1.GSH.Area(ii)=real(sum(FiveGaussModel(GSHGaussModelParam(ii,:), MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
+        MRS_struct.out.GABAArea(ii)=real(sum(FiveGaussModel(GSHGaussModelParam(ii,:), MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
         %Not sure how to handle fit error. For now, do whole range
-        GSHheight = GSHGaussModelParam(ii,1);
-        MRS_struct.out.vox1.GSH.FitError(ii)=  100*std(residg)/GSHheight;
+        GABAheight = GSHGaussModelParam(ii,1);
+        MRS_struct.out.GABAFitError(ii)=  100*std(residg)/GABAheight;
         
         
-    elseif strcmp (target{trg},'Lac') % strcmp(MRS_struct.p.target,'Lac')    
+    elseif strcmp(MRS_struct.p.target,'Lac')    
         %This is a work in progress - currenly mainly code copied form GSH
         %Hard code it to fit from 0.8 ppm to 1.8 ppm
         z=abs(MRS_struct.spec.freq-1.8);
@@ -516,7 +483,7 @@ for trg=1:length(target)
        freqrange=MRS_struct.spec.freq(freqbounds); 
        plot(MRS_struct.spec.freq, Datadiff(ii,:), 'b',freqrange, ...
             FiveGaussModel(FiveGaussModelParam(ii,:), freqrange),'r',freqrange, ...
-            FiveGaussModel(GSHGaussModelParam(ii,:), freqrange),'g',...
+            FiveGaussModel(GSHGaussModelParam(ii,:), freqrange),'r',...
             MRS_struct.spec.freq(freqbounds),residg,'k');
         set(gca,'XLim',[1.8 4.2]);
     elseif strcmp(MRS_struct.p.target,'Lac')
@@ -545,7 +512,7 @@ for trg=1:length(target)
     title(legendtxt);
     set(gca,'XDir','reverse');
     
-    if strcmp (target{trg},'GABA') || strcmp (target{trg},'GABAGlx')
+    if strcmp(MRS_struct.p.target,'GABA')
         %%%%From here on is cosmetic - adding labels (and deciding where to).
         hgaba=text(3,gabamax/4,MRS_struct.p.target);
         set(hgaba,'horizontalAlignment', 'center');
@@ -558,24 +525,7 @@ for trg=1:length(target)
         set(hgabares,'horizontalAlignment', 'left');
         text(2.8,tailtop+gabamax/20,'data','Color',[0 0 1]);
         text(2.8,tailbottom-gabamax/20,'model','Color',[1 0 0]);
-    end
-    
-    if strcmp (target{trg},'GSH')
-        %%%%From here on is cosmetic - adding labels (and deciding where to).
-        hgaba=text(2.95,gabamax,MRS_struct.p.target);
-        set(hgaba,'horizontalAlignment', 'center');
-        %determine values of GABA tail (below 2.8 ppm.
-        z=abs(MRS_struct.spec.freq-2.00);%2.75
-        upperbound=find(min(z)==z);
-        tailtop=max(real(Datadiff(ii,upperbound:(upperbound+150))));
-        tailbottom=min(real(Datadiff(ii,upperbound:(upperbound+150))));
-        hgabares=text(2.25,min(residg),'residual');
-        set(hgabares,'horizontalAlignment', 'left');
-        text(2.25,tailtop+gabamax/20,'data','Color',[0 0 1]);
-        text(2.45,tailbottom-20*gabamax/20,'model','Color',[1 0 0]);
-    end
-    
-    if strcmp(MRS_struct.p.target,'Glx')
+    elseif strcmp(MRS_struct.p.target,'Glx')
         %%%%From here on is cosmetic - adding labels (and deciding where to).
         hgaba=text(3.8,gabamax/4,MRS_struct.p.target);
         set(hgaba,'horizontalAlignment', 'center');
@@ -626,10 +576,7 @@ for trg=1:length(target)
                 @(xdummy,ydummy)	LorentzGaussModel(xdummy,ydummy),...
                 LGModelInit, nlinopts);
             residw = -residw;
-            
             %Then use this for phasing
-            if ~MRS_struct.p.water_phase_correction % Do this only if the klose correction on water is off -- MGSaleh 2016 
-            
             Eerror=zeros([120 1]);
             for jj=1:120
                 Data=WaterData(ii,freqbounds)*exp(1i*pi/180*jj*3);
@@ -638,9 +585,6 @@ for trg=1:length(target)
             end
             [number index]=min(Eerror);
             WaterData=WaterData*exp(1i*pi/180*index*3);
-            
-            end 
-            
         end
     % x(1) = Amplitude of (scaled) Lorentzian
     % x(2) = 1 / hwhm of Lorentzian (hwhm = half width at half max)
@@ -798,7 +742,7 @@ Cr_OFF=Dataoff(ii,:);
         nlinopts=statset('nlinfit');
         nlinopts = statset(nlinopts, 'MaxIter', 1e5, 'Display','Off');
         [CrFitParams(ii,:), residCr] = nlinfit(freqrange, real(Cr_OFF(lb:ub)), ...
-           @(xdummy, ydummy) LorentzModel(xdummy, ydummy),Cr_initx, nlinopts);
+            @(xdummy, ydummy) LorentzModel(xdummy, ydummy),Cr_initx, nlinopts);
         Crheight = CrFitParams(ii,1);
         Crmin = min(real(Cr_OFF(lb:ub)));
         Crmax = max(real(Cr_OFF(lb:ub)));
@@ -821,7 +765,6 @@ Cr_OFF=Dataoff(ii,:);
         
         MRS_struct.out.Creatine.Area(ii)=sum(real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc)-TwoLorentzModel([0 MRS_struct.out.ChoCrMeanSpecFit(ii,2:(end-1)) 0],freqrangecc))) * (freq(1) - freq(2));
         MRS_struct.out.Choline.Area(ii)=sum(real(TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end))],freqrangecc)-TwoLorentzModel([MRS_struct.out.ChoCrMeanSpecFit(ii,1:(end-1)) 0],freqrangecc))) * (freq(1) - freq(2));
-        MRS_struct.out.CrFWHMHz(ii)= ChoCrMeanSpecFit(ii,2)
         
         if strcmp (MRS_struct.p.target,'GABA') || strcmp (MRS_struct.p.target,'GABAGlx') % Added by MGSaleh
             MRS_struct.out.GABA.GABAconcCr(ii)=MRS_struct.out.GABA.Area(ii)./MRS_struct.out.Creatine.Area(ii);   
@@ -1196,9 +1139,7 @@ Cr_OFF=Dataoff(ii,:);
 %111214 integrating CJE's changes on water fitting (pre-init and revert to
 %linear bseline). Also investigating Navg(ii)
 
-        end 
-end
-
+end 
 end          % end of MRSGABAfit
 
 
