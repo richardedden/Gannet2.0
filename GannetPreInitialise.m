@@ -25,14 +25,14 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     
     MRS_struct.p.ONOFForder='offfirst';
     %Options are MRS_struct.ONOFForder='onfirst' or 'offfirst';
-    MRS_struct.p.Water_Positive=1; %For Philips MOIST ws, set to 0.
+    MRS_struct.p.Water_Positive=01; %For Philips MOIST ws, set to 0.
     %Siemens header information differs between versions
     %switch for different versions
     MRS_struct.p.Siemens_type = 0; %1 = TIM TRIO WIP 2 = Near seq 3 =Skyra WIP; 4=Prisma (VD13C); 5=Prisma(Minnesota)
     
     % A choice to perform phase correction on the water or not. 
     % Default = 1. Yes, perform the correction -- MGSaleh 2016    
-    MRS_struct.p.water_phase_correction = 1;
+    MRS_struct.p.water_phase_correction = 01;
     MRS_struct.p.data_phase_correction = 0;
     
     %Removing water using HSLVD -- GO and MGSaleh 2016
@@ -52,3 +52,4 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.mat    = 0;                 % 1 = YES, save MRS_struct as .mat file 2016
     MRS_struct.p.sdat   = 0;                % 1 = YES, save MRS_struct as .sdat file 2016
 end
+

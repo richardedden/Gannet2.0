@@ -474,18 +474,55 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     xx=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==0)')),2); 
                     yy=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF2==1)')),2); 
                     
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.on(ii,:)', '=xx2;']);
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.off(ii,:)',  '=yy2;']); 
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) = xx2;
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:)= yy2;
                     
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)',  '=xx;']); 
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)',   '=yy;']); 
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.on(ii,:)', '=xx2;']);
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.off(ii,:)',  '=yy2;']); 
                     
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.diff(ii,:)', '=(xx2-yy2)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:)', '=-(xx-yy)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).off(ii,:) = xx;
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).on(ii,:)  = yy;
+                    
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)',  '=xx;']); 
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)',   '=yy;']); 
+                    
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)  = (xx2-yy2)/2;
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = -(xx-yy)/2;
+                    
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.diff(ii,:)', '=(xx2-yy2)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:)', '=-(xx-yy)/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
  
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.diff_noalign(ii,:)', '=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 201
-                    eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2;']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = -(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;   % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)=  (mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2; % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
+                    
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.diff_noalign(ii,:)', '=-(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;']); % Not sure whether we want a two here. % Added the minus sign to refelect the spectrum about x-axis -- MGSaleh 2016
+                    %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff_noalign(ii,:)', '=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF2==0)),2))/2;']); % Not sure whether we want a two here. The eval function added to determine the target -- MGSaleh 2016
 
+                    
+%                     if ~strcmp(MRS_struct.p.AlignTo, 'Cho')
+%                         
+%                         B = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:);
+%                         D = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:);
+%                         
+%                         
+%                         z=abs(MRS_struct.spec.freq-3.5);
+%                         lower=find(min(z)==z);
+%                         z=abs(MRS_struct.spec.freq-2.2);
+%                         upper=find(min(z)==z);
+%                         
+%                         [D2 B2]=diff_align(D,B,lower:upper); % The diff_align function now in Gannet 3.0 -- MGSaleh 2016
+%                         
+%                                                 B2=B;
+%                         
+%                         
+%                        
+%                         
+%                         MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (B2-D2)/2;
+%                         MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:)  = D2;
+%                         MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)   = B2;
+%                         
+%                         
+%                     end
                     
                     %Performing further correction to minimise subtraction
                     %artifact on GSH edited spectrum -- RAEE and MGSaleh 2016
@@ -496,10 +533,14 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
 %                         MRS_struct.spec.GSH=x;
                         
                         %Insert new code.
-                        eval(['A','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)', ';']); 
-                        eval(['B','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.on(ii,:)',';']); 
-                        eval(['C','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)',';']); 
-                        eval(['D','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.off(ii,:)',';']); 
+                        A = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).on(ii,:);
+                        B = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:);
+                        C = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).off(ii,:);
+                        D = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:);
+                        %eval(['A','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)', ';']); 
+                        %eval(['B','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.on(ii,:)',';']); 
+                        %eval(['C','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)',';']); 
+                        %eval(['D','= MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.off(ii,:)',';']); 
                         
                         z=abs(MRS_struct.spec.freq-3.53);
                         lower=find(min(z)==z);
@@ -508,30 +549,48 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                         
                         figure(7)
                         n=1;
-                        plot(real([A(n,(lower):(upper)); B(n,(lower):(upper)) ;C(n,(lower):(upper)); D(1,(lower):(upper))]'))
+                        plot(MRS_struct.spec.freq(lower:upper),real([A(n,(lower):(upper)); B(n,(lower):(upper)) ;C(n,(lower):(upper)); D(1,(lower):(upper))]'))
                         title('before')
                         
                         [D2 C2]=diff_align(D,C,lower:upper); % The diff_align function now in Gannet 3.0 -- MGSaleh 2016
                         [D2 A2]=diff_align(D,A,lower:upper);
+                        
+                        z=abs(MRS_struct.spec.freq-6);
+                        lower=find(min(z)==z);
+                        z=abs(MRS_struct.spec.freq-2.8);
+                        upper=find(min(z)==z);
+                                                   
                         B2=B;
+
                         
                         figure(8)
                         n=1;
-                        plot(real([A2(n,(lower):(upper)); B2(n,(lower):(upper)) ;C2(n,(lower):(upper)); D2(1,(lower):(upper))]'))
+                        plot(MRS_struct.spec.freq(lower:upper),real([A2(n,(lower):(upper)); B2(n,(lower):(upper)) ;C2(n,(lower):(upper)); D2(1,(lower):(upper))]'))
                         title('after')
                         
 %                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2-C2;'])
 %                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.off(ii,:)', '=C2;']) 
 %                         eval(['MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']) 
-%                         
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']); 
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.on(ii,:)','=B2;']); 
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)','=C2;']); 
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.off(ii,:)','=D2;']);
+%                       
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).on(ii,:)  = A2;
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).off(ii,:) = C2;
                         
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2-C2;'])
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)', '=C2;']) 
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']) 
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']); 
+%                         eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.on(ii,:)','=B2;']); 
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)','=C2;']); 
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.off(ii,:)','=D2;']);
+                        
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = (A2-C2)/2;
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).off(ii,:)  = C2; 
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).on(ii,:)   = A2;
+                        
+                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target),'.diff(ii,:)', '=(B2-D2)/2;'])
+
+                                                
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)', '=A2-C2;'])
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.off(ii,:)', '=C2;']) 
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.on(ii,:)', '=A2;']) 
+                    
                     
                     end
                     
@@ -540,11 +599,16 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     if MRS_struct.p.water_removal
                         
                         % Save diff spectrum before water filterin -- GO & MGSaleh 2016
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff_unfilt_h2o(ii,:)',  '=MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:);']);
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_unfilt_h2o(ii,:) = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:);
+                        
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff_unfilt_h2o(ii,:)',  '=MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:);']);
                         
                         % Convert diff spectrum to time domain, apply water filter, convert back to frequency domain -- GO & MGSaleh 2016
-                        eval(['MRS_struct.fids.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)',  '=fftshift(fft(MRS_struct.fids.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:)));']);
+                        MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')),MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048);
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
+                        
+                        %eval(['MRS_struct.fids.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)',  '=fftshift(fft(MRS_struct.fids.', reg{kk}, sprintf('.%s',MRS_struct.p.target2), '.diff(ii,:)));']);
                         
 %                         eval(['MRS_struct.fids.', reg{kk}, sprintf('%s',MRS_struct.p.target2),'.on(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.on(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
 %                         eval(['MRS_struct.fids.', reg{kk}, sprintf('%s',MRS_struct.p.target2),'.off(ii,:)',  '=waterremovalSVD(ifft(ifftshift(MRS_struct.spec.', sprintf('%s',MRS_struct.p.target2), '.off(ii,:).'')), MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, 2048).'';']);
@@ -560,17 +624,23 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                         upperbound=find(min(z)==z);
                         freqbounds=lowerbound:upperbound;
                         
-                        yy=size(eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:);']));
+                        yy = size(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:));
                         
-                        eval(['low_val','=min(real(MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,[freqbounds])));']);
+                        %yy=size(eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:);']));
                         
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff_nobas_corr(ii,:)', '=MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:);']) 
+                        low_val = min(real(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,[freqbounds])));
+
+                        %eval(['low_val','=min(real(MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,[freqbounds])));']);
                         
-                        eval(['xx3', '=MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:);'])
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_nobas_corr(ii,:) = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:); 
+                        
+                        %eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff_nobas_corr(ii,:)', '=MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:);']) 
+                        
+                        xx3 = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:);
 
                         xx4 = complex(real(xx3) - 1*low_val*(ones(yy)), imag(xx3));
                         
-                        eval(['MRS_struct.spec.', reg{kk}, sprintf('.%s',MRS_struct.p.target2),'.diff(ii,:)', '=xx4;'])
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = xx4;
                         
                     
                     end
@@ -582,45 +652,47 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                     
                     if strcmp(MRS_struct.p.target, 'GSH')
                         
-                        MRS_struct.spec.(reg{kk}).GSH.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
                         
-                        MRS_struct.spec.(reg{kk}).GSH.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                         
-                        MRS_struct.spec.(reg{kk}).GSH.diff(ii,:)=(MRS_struct.spec.(reg{kk}).GSH.on(ii,:)-MRS_struct.spec.(reg{kk}).GSH.off(ii,:))/2; %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)=(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)-MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2; %Not sure whether we want a two here.
                         
-                        MRS_struct.spec.(reg{kk}).GSH.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
                         
                         FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
                         
-                        MRS_struct.spec.(reg{kk}).GSH.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
                         
                         %For GSH data, the residual water signal in the DIFF spectrum is
                         %helpful for an additional phasing step... and messes up fitting
                         %otherwise. MGSaleh 2016 moved it to this place for
                         %completeness
-                        residual_phase=pi-atan2(imag(sum(MRS_struct.spec.(reg{kk}).GSH.diff(ii,:))),real(sum(MRS_struct.spec.(reg{kk}).GSH.diff(ii,:))));
+                        residual_phase=pi-atan2(imag(sum(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))),real(sum(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))));
                         
-                        MRS_struct.spec.(reg{kk}).GSH.diff(ii,:)=(MRS_struct.spec.(reg{kk}).GSH.diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)=(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))*exp(1i*residual_phase); %Not sure whether we want a two here.
                         
                         if(MRS_struct.p.Water_Positive==0)
                             
-                            MRS_struct.spec.(reg{kk}).GSH.diff(ii,:)=-MRS_struct.spec.(reg{kk}).GSH.diff(ii,:);
+                            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)=-MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
                             
                         end
                         
                     else
                         
-                        MRS_struct.spec.(reg{kk}).GABAGlx.off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
+                        MRS_struct.out.reject(:,:)=0;
                         
-                        MRS_struct.spec.(reg{kk}).GABAGlx.on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2)
                         
-                        MRS_struct.spec.(reg{kk}).GABAGlx.diff(ii,:)=(MRS_struct.spec.(reg{kk}).GABAGlx.on(ii,:)-MRS_struct.spec.(reg{kk}).GABAGlx.off(ii,:))/2; %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)=mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                         
-                        MRS_struct.spec.(reg{kk}).GABAGlx.diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)=(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)-MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2; %Not sure whether we want a two here.
+                        
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
                         
                         FirstHalfONOFF=MRS_struct.fids.ON_OFF(1:(end/2));
                         
-                        MRS_struct.spec.(reg{kk}).GABAGlx.diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
+                        MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_firsthalf(ii,:)=(mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2; %Not sure whether we want a two here.
                     
                     end
                     
@@ -628,10 +700,6 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
                   
                 end
 
-
-
-     
-        
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   6. Build Gannet Output 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
