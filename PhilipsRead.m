@@ -21,6 +21,12 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    sparidx=find(ismember(sparheader, 'repetition_time')==1);
    MRS_struct.p.TR = str2num(sparheader{sparidx+2});
    
+   sparidx=find(ismember(sparheader, 'echo_time')==1); % Added by MGSaleh 2016.
+   MRS_struct.p.TE = str2num(sparheader{sparidx+2});   % Added by MGSaleh 2016.
+
+   sparidx=find(ismember(sparheader, 'synthesizer_frequency')==1); % Added by MGSaleh 2016.
+   MRS_struct.p.LarmorFreq = str2num(sparheader{sparidx+2})/1e6;   % Added by MGSaleh 2016.
+   
    sparidx=find(ismember(sparheader, 'sample_frequency')==1);
    MRS_struct.p.sw = str2num(sparheader{sparidx+2});
    
@@ -66,13 +72,20 @@ function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
    %undo time series phase cycling to match GE
    corrph = ones(size(MRS_struct.fids.data));
    for jj=1:size(MRS_struct.fids.data,2)
-    corrph(:,jj) = corrph(:,jj) * (-1).^jj;
+       corrph(:,jj) = corrph(:,jj) * (-1).^jj;
    end
-   
    MRS_struct.fids.data = MRS_struct.fids.data .* corrph;
    %Re-introduce initial phase step...
    MRS_struct.fids.data = MRS_struct.fids.data .*repmat(conj(MRS_struct.fids.data(1,:))./abs(MRS_struct.fids.data(1,:)),[MRS_struct.p.npoints 1]);
    %Philips data appear to be phased already (ideal case)
+   
+   %If Moist and HERMES are implemented then the following lines of code is
+   %necessary - MM and MGSaleh 2016
+   if MRS_struct.p.Water_Positive==0 && MRS_struct.p.HERMES==1
+       for jj=1:size(MRS_struct.fids.data,2)
+           MRS_struct.fids.data(:,jj) = MRS_struct.fids.data(:,jj) * (-1).^jj;
+       end
+   end
    
    %MRS_struct.fids.data = -conj(MRS_struct.fids.data); %RE 110728 - empirical factor to scale 'like GE'
    %If on-first - use the above...
