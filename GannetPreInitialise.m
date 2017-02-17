@@ -47,9 +47,9 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.Reg =  {'vox1', 'vox2'}; %Naming regions for analysis. e.g: anterior and posterior, right and left etc. Default values are vox1 and vox2 -- MGSaleh 2016
     
 %Flags
-    MRS_struct.p.HERMES = 1;                % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016 
+    MRS_struct.p.HERMES = 1;                 % 1 = YES,  0 = NO (means MEGA-PRESS);  % Added by MGSaleh 2016 
     MRS_struct.p.PRIAM  = 0;                 % 1 = YES (mean dual voxels),  0 = NO;  % Added by MGSaleh 2016 
     MRS_struct.p.mat    = 0;                 % 1 = YES, save MRS_struct as .mat file 2016
-    MRS_struct.p.sdat   = 0;                % 1 = YES, save MRS_struct as .sdat file 2016
+    MRS_struct.p.sdat   = 0;                 % 1 = YES, save MRS_struct as .sdat file 2016
 end
 
