@@ -446,8 +446,8 @@ for trg=1:length(target)
           % %x1-x6 for Glx, while x7-x9 for GABA --MGSaleh  
           % GaussModelInit = [  x(1)      x(2)  x(3)    x(4)    x(5)  x(6)    x(7)   x(8)  x(9)    x(10)      x(11)    x(12)  x(13)] --MGSaleh
             GaussModelInit = [maxinGABA  -400  3.725 maxinGABA -400  3.775 maxinGABA -90   3.02 -LinearInit constInit   0      0  ];
-            lb = [0 -800 3.725-0.02 0 -800 3.775-0.02 0 -200 3.02-0.05 -40*maxinGABA -20000*maxinGABA -2000*maxinGABA -2000*maxinGABA];
-            ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 40000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA 1000*maxinGABA];
+            lb = [0 -800 3.725-0.02 0 -800 3.775-0.02 0 -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA -2000*maxinGABA];
+            ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA 1000*maxinGABA];
 
         
         options = optimset('lsqcurvefit');
