@@ -344,13 +344,13 @@ MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
 MRS_struct.mask.T1image(ii,:) = {nii_file};
 
 
-figure(198)
-imagesc(three_plane_img);
-colormap('gray');
-caxis([0 1])
-axis equal;
-axis tight;
-axis off;
+% figure(198)
+% imagesc(three_plane_img);
+% colormap('gray');
+% caxis([0 1])
+% axis equal;
+% axis tight;
+% axis off;
 
 end
 

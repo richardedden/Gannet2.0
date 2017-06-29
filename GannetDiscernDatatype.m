@@ -12,7 +12,7 @@ if(strcmpi(last2char,'.7'))
 elseif(strcmpi(last4char,'SDAT'))
     MRS_struct.p.vendor = 'Philips';
     if(strcmp(last4char,'SDAT'))
-       MRS_struct.p.spar_string='SPAR';
+        MRS_struct.p.spar_string='SPAR';
     else
         MRS_struct.p.spar_string='spar';
     end
@@ -22,7 +22,7 @@ elseif(strcmpi(last2char,'DA'))
     MRS_struct.p.vendor = 'Siemens';
 elseif(strcmpi(last4char,'.DAT'))
     MRS_struct.p.vendor = 'Siemens_twix';
-else    
+else
     error('Unrecognised filetype: should end .7 .SDAT or .RDA')
 end
 end

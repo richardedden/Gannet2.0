@@ -37,11 +37,15 @@ function PhilipsDeIdentify(fnames)
 %                   + Copies of SDAT files created; filenames appended with
 %                     '_noID' (req. for Gannet)
 %                   + CheckForOutput added
+%       2017-01-19: + Fix for case-sensitivity of extensions
 
 
 if nargin < 1 % De-identify all SPAR files in current directory
     
     flist = dir('*.spar');
+    if isempty(flist)
+        flist = dir('*.SPAR');
+    end
     for ii = 1:length(flist)
         fnames(ii) = cellstr(flist(ii).name);
     end
@@ -58,16 +62,14 @@ else % De-identify SPAR files user has listed in fnames
     for ii = 1:length(fnames)
         ext = fnames{ii}(end-4:end);
         assert(strcmpi(ext, '.spar'), ...
-            ['The filename ' fnames{ii} ' (' num2str(ii) ')' ' in ' inputname(1) ...
-            ' does not include a .SPAR/.spar extension.']);
+            ['The filename ' fnames{ii} ' does not include a .SPAR/.spar extension.']);
     end
     
     % Check if files can be found
     for ii = 1:length(fnames)
         assert(any(exist(fnames{ii}, 'file')), ...
-            ['The file ' fnames{ii} ' (' num2str(ii) ')' ' cannot be found.' ...
-            ' Check spelling of filenames in ' inputname(1) ...
-            ' (SDAT/SPAR files must include an extension in their filename).' ...
+            ['The file ' fnames{ii} ' cannot be found.' ...
+            ' Check spelling of filenames (SDAT/SPAR files must include an extension in their filename).' ...
             ' Also check that you are in the right directory.']);
     end
     
@@ -87,11 +89,11 @@ for ii = 1:length(fnames)
     
     tline = fgetl(spar_fid);
     while ischar(tline)
-        if any(strfind(tline, 'examination_name'));
+        if any(strfind(tline, 'examination_name'))
             tline = 'examination_name : ';
-        elseif any(strfind(tline, 'patient_name'));
+        elseif any(strfind(tline, 'patient_name'))
             tline = 'patient_name : ';
-        elseif any(strfind(tline, 'patient_birth_date'));
+        elseif any(strfind(tline, 'patient_birth_date'))
             tline = 'patient_birth_date : ';
         end
         fprintf(spar_fid_noID, '%s\n', tline);

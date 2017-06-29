@@ -216,13 +216,13 @@ three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
 
 
-figure(198)
-imagesc(three_plane_img);
-colormap('gray');
-caxis([0 1])
-axis equal;
-axis tight;
-axis off;
+% figure(198)
+% imagesc(three_plane_img);
+% colormap('gray');
+% caxis([0 1])
+% axis equal;
+% axis tight;
+% axis off;
 
-%end
+end
 

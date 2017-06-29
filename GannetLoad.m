@@ -1,230 +1,177 @@
-function MRS_struct=GannetLoad(gabafile, waterfile) %, data_phase_correction, water_phase_correction)
-%Gannet 2.0 GannetLoad
+function MRS_struct=GannetLoad(gabafile, waterfile)
+%Gannet 3.0 GannetLoad
 %Started by RAEE Nov 5, 2012
-%Eddy current correction added by MGSaleh (2016) using the formula described by
-%Jiru (2008), EJR,67:202-217. This is an option which can switched off by
-%a Gannet user. Default vslue is 1, which means apply correction to both
-%unsuppressed (water) and suppressed data. The correction has not been 
-%tested during batch processing.
-
-
-%Aim to make the GannetLoad more modular and easier to understand/edit, and
-%especially to integrate the workflow for different filetypes more.
+%Updates by MGS, MM 2016-2017
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Work flow Summary
-%   1.Pre-initialise
+% Work flow summary
+%   1. Pre-initialise
 %   2. Determine data parameters from headers
-%   3. Some Housekeeping
-%   4. Load Data from files
+%   3. Some housekeeping
+%   4. Load data from files
 %   5. Apply appropriate pre-processing
 %   6. Output processed spectra
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   0. Check the file list for typos
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 missing=0;
 for filecheck=1:length(gabafile)
-    if(~exist(gabafile{filecheck}))
+    if ~exist(gabafile{filecheck},'file')
         disp(['The file ' gabafile{filecheck} ' (' num2str(filecheck) ')' ' is missing. Typo?'])
         missing=1;
     end
 end
-if(nargin > 1)
-    for filecheck=1:length(waterfile)        
-        if(~exist(waterfile{filecheck}))
+if nargin > 1
+    for filecheck=1:length(waterfile)
+        if ~exist(waterfile{filecheck},'file')
             disp(['The file ' waterfile(filecheck) ' is missing. Typo?'])
             missing=1;
         end
     end
 end
 if missing
-        error('Not all the files are there, so I give up.');
+    error('Not all the files are there, so I give up.');
 end
 
-% % A choice to perform phase correction on the water or not. 
-% % Default = 1. Yes, perform the correction -- MGSaleh 2016    
-% if nargin < 4
-%     water_phase_correction = 0;
-%     
-% end
-% 
-% if  nargin < 3
-%     data_phase_correction = 0;
-%     
-% end
-    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MRS_struct.versionload = '161029'  %'140709'; %format - yy/mm/dd  -- MGSaleh 2016
-MRS_struct.ii=0;
-MRS_struct.gabafile=gabafile;
-MRS_struct=GannetPreInitialise(MRS_struct);
 
+MRS_struct.versionload = '170628'; % set to date when final updates have been made
+MRS_struct.ii = 0;
+MRS_struct.gabafile = gabafile;
+MRS_struct = GannetPreInitialise(MRS_struct);
 
-if MRS_struct.p.PRIAM    % Deciding how regions are there -- MGSaleh 2016 
-    
-    
-    reg={MRS_struct.p.Reg};
-    
+if MRS_struct.p.PRIAM % Deciding how regions are there -- MGSaleh 2016
+    reg = {MRS_struct.p.Reg};
 else
-    reg={MRS_struct.p.Reg{1}};
-    
+    reg = {MRS_struct.p.Reg{1}};
 end
 
-
-if MRS_struct.p.HERMES    % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
-    
+if MRS_struct.p.HERMES % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
     % Swapping variables' values helps us with GannetLoad output -- MGSaleh 2016
     if strcmp(MRS_struct.p.target, 'Lac') && strcmp(MRS_struct.p.target2, 'GSH')
-        
-        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
+        [MRS_struct.p.target, MRS_struct.p.target2] = deal(MRS_struct.p.target2, MRS_struct.p.target);
     end
-        
     if strcmp(MRS_struct.p.target, 'GSH') && strcmp(MRS_struct.p.target2, 'GABAGlx')
-        
-        [MRS_struct.p.target MRS_struct.p.target2]=deal(MRS_struct.p.target2,MRS_struct.p.target);
-       
-        
+        [MRS_struct.p.target, MRS_struct.p.target2] = deal(MRS_struct.p.target2, MRS_struct.p.target);
     end
 end
 
-
-
-%Check whether water data or not
-if(nargin > 1)
+% Check whether or not there are water data
+if nargin > 1
     MRS_struct.waterfile = waterfile;
-    MRS_struct.p.Reference_compound='H2O';
+    MRS_struct.p.Reference_compound = 'H2O';
 else
-    MRS_struct.p.Reference_compound='Cr';
+    MRS_struct.p.Reference_compound = 'Cr';
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   2. Determine data parameters from header
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    if iscell(gabafile) == 1 % it's a cell array, so work out the number of elements
-        numpfiles=numel(gabafile);
-        pfiles=gabafile;
-    else
-        numpfiles=1;  % it's just one pfile
-        pfiles{1}=gabafile;
-    end
+if iscell(gabafile) == 1 % it's a cell array, so work out the number of elements
+    numpfiles = numel(gabafile);
+    pfiles = gabafile;
+else
+    numpfiles = 1;  % it's just one pfile
+    pfiles{1} = gabafile;
+end
+
+MRS_struct = GannetDiscernDatatype(pfiles{1}, MRS_struct);
+
+if strcmpi(MRS_struct.p.vendor,'Siemens')
+    numpfiles = numpfiles/2;
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   3. Some housekeeping
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% create dir for output
+if exist('./MRSload_output','dir') ~= 7
+    mkdir MRSload_output;
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   4. Load data from files
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     
-MRS_struct=GannetDiscernDatatype(pfiles{1},MRS_struct);
-
-    if(strcmpi(MRS_struct.p.vendor,'Siemens'))
-        numpfiles = numpfiles/2;
-    end
-
-%%%%%%%%%%%%%%%%%%%%%%%%    
-%   3. Some Housekeeping
-%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % create dir for output
-    if(exist('./MRSload_output','dir') ~= 7)
-        mkdir MRSload_output
-    end
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-%   4. Load Data from files
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
-    MRS_struct.ii=ii;
+    MRS_struct.ii = ii;
     
     switch MRS_struct.p.vendor
         case 'GE'
-            Water_Positive=1;           %CHECK
-            AlignTo = 2;           %CHECK
             MRS_struct = GERead(MRS_struct, gabafile{ii});
-            da_xres = MRS_struct.p.npoints;
-            da_yres = MRS_struct.p.nrows;
             WaterData = MRS_struct.fids.data_water;
-            MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);%I think GE does sum over NEX
+            MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);
             FullData = MRS_struct.fids.data;
-            ComWater = mean(WaterData,2);
-            %Set up vector of which rows of .data are ONs and OFFs.
+            % Set up vector of which rows of data are ONs and OFFs
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
+                    MRS_struct.fids.ON_OFF = repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
+                    MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
-            totalframes = MRS_struct.p.nrows;
         case 'Siemens_twix'
-            Water_Positive=1;           %CHECK
-            if(exist('waterfile'))
+            if exist('waterfile','var')
                 MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii}, waterfile{ii});
                 WaterData = MRS_struct.fids.data_water;
-                ComWater = mean(WaterData,2);
             else
                 MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii});
+            end            
+            if MRS_struct.p.Water_Positive == 0 % MM (160914)
+                MRS_struct.fids.data = -MRS_struct.fids.data;
             end
-            da_xres = MRS_struct.p.npoints;
-            da_yres = MRS_struct.p.nrows;
             FullData = MRS_struct.fids.data;
-            %Set up vector of which rows of .data are ONs and OFFs.
+            %Set up vector of which rows of data are ONs and OFFs.
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
+                    MRS_struct.fids.ON_OFF = repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
+                    MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
-            totalframes = MRS_struct.p.nrows;
         case 'Siemens'
-            if(exist('waterfile'))    
-                MRS_struct.p.Reference_compound='H2O';
+            if exist('waterfile','var')
+                MRS_struct.p.Reference_compound = 'H2O';
                 switch MRS_struct.p.ONOFForder
                     case 'offfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
                     case 'onfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
-                end    
+                end
                 MRS_struct.p.Nwateravg = 1;
                 MRS_struct.out.phase{ii} = 0;
                 MRS_struct.out.phase_firstorder(ii) = 0;
             else
-                 MRS_struct.p.Reference_compound='Cr';
+                MRS_struct.p.Reference_compound = 'Cr';
                 switch MRS_struct.p.ONOFForder
                     case 'offfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
                     case 'onfirst'
                         MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1});
-                end    
-             end
-            da_xres = MRS_struct.p.npoints;
-            da_yres = 1;
-            totalframes = 1;
+                end
+            end
             FullData = MRS_struct.fids.data;
-            if(strcmp(MRS_struct.p.Reference_compound,'H2O'))
+            if strcmp(MRS_struct.p.Reference_compound,'H2O')
                 WaterData = MRS_struct.fids.data_water;
             end
-            MRS_struct.p.LarmorFreq;
-            % work out frequency scale 121106 (remving CSize)
-            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
-            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
-            MRS_struct.out.FreqPhaseAlign=0;
-            %Data are always read in OFF then ON            
-            totalframes = 2;
+            % Data are always read in OFF then ON
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=[1 0];
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';%re
+                    MRS_struct.fids.ON_OFF = [1 0];
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=[0 1];
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-            end 
-            
-        case 'Philips'           
-            if(exist('waterfile'))
-                MRS_struct.p.Reference_compound='H2O';
-            else
-                 MRS_struct.p.Reference_compound='Cr';
-            end
+                    MRS_struct.fids.ON_OFF = [0 1];
+            end            
+        case 'Philips'
             %Need to set Water_Positive based on water signal
             if strcmpi(MRS_struct.p.Reference_compound,'H2O')
                 MRS_struct = PhilipsRead(MRS_struct, gabafile{ii}, waterfile{ii});
@@ -232,231 +179,183 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             else
                 MRS_struct = PhilipsRead(MRS_struct, gabafile{ii});
             end
-            if MRS_struct.p.Water_Positive==0
-                MRS_struct.fids.data=-MRS_struct.fids.data;
-            end          
-            da_xres = MRS_struct.p.npoints;
-            da_yres = MRS_struct.p.nrows;
-            totalframes = MRS_struct.p.nrows;
-            FullData = MRS_struct.fids.data;
-            AlignTo = 2;           %CHECK
-            
+            if MRS_struct.p.Water_Positive == 0
+                MRS_struct.fids.data = -MRS_struct.fids.data;
+            end
+            FullData = MRS_struct.fids.data;            
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
                     if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
-                     
-                        if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GSH')
-                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MM 2016
-                           
-                            MRS_struct.fids.ON_OFF=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GABA
-                            MRS_struct.fids.ON_OFF2=repmat([0 1 0 1],[1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                            % 1=?, 2=?, 3=?, 4=? (MM: 170628)
+                            MRS_struct.fids.ON_OFF = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                            MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
+                            MRS_struct.fids.ON_OFF = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]);
+                            MRS_struct.fids.ON_OFF2 = repmat([0 1], [1 size(MRS_struct.fids.data,2)/2]);
                         end
-                        
-                        if strcmp(MRS_struct.p.target, 'GSH') || strcmp(MRS_struct.p.target2, 'Lac')% For Lac -- MGSaleh
- 
-                            MRS_struct.fids.ON_OFF2=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]); 
-                            MRS_struct.fids.ON_OFF=repmat([0 1 1 0],[1 size(MRS_struct.fids.data,2)/4]); 
-                        end
-                        
                     else
-                        
-                 
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
-                    
+                        MRS_struct.fids.ON_OFF = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]);
                     end
-                    
                 case 'offfirst'
-                    
                     if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
-                     
-                        if strcmp(MRS_struct.p.target, 'GABAGlx') || strcmp(MRS_struct.p.target2, 'GSH')
-                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB -- MM 2016
-
-                            %MRS_struct.fids.ON_OFF=repmat([0 1 1 0 0 1 1 0 0 1],[1 size(MRS_struct.fids.data,2)/10]);  % GABA % For 7T data we have for now -- MGSaleh
-                            %MRS_struct.fids.ON_OFF2=repmat([1 0 1 0 1 0 1 0 1 0],[1 size(MRS_struct.fids.data,2)/10]); % GSH  % For 7T data we have for now -- MGSaleh
-                           
-                            MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); % GABA
-                            MRS_struct.fids.ON_OFF2=repmat([1 0 1 0],[1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                            % 1=ExpA, 2=ExpD, 3=ExpC, 4=ExpB (MM: 170628)
+                            MRS_struct.fids.ON_OFF = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                            MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
+                            MRS_struct.fids.ON_OFF = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]);
+                            MRS_struct.fids.ON_OFF2 = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]);
                         end
-                        
-                        if strcmp(MRS_struct.p.target, 'GSH') || strcmp(MRS_struct.p.target2, 'Lac')% For Lac -- MGSaleh
- 
-                            MRS_struct.fids.ON_OFF2=repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]); 
-                            MRS_struct.fids.ON_OFF=repmat([1 0 0 1],[1 size(MRS_struct.fids.data,2)/4]); 
-                        end
-                        
-                    
                     else
-                        
-                       MRS_struct.fids.ON_OFF=repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
-   
+                        MRS_struct.fids.ON_OFF = repmat([0 1], [1 size(MRS_struct.fids.data,2)/2]);
                     end
-                    
             end
-            
         case 'Philips_data'
-            if(exist('waterfile'))    
-                MRS_struct.p.Reference_compound='H2O';
-                MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii},waterfile{ii});
+            if exist('waterfile','var')
+                MRS_struct.p.Reference_compound = 'H2O';
+                MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii}, waterfile{ii});
             else
-                 MRS_struct.p.Reference_compound='Cr';
-                 MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii});
+                MRS_struct.p.Reference_compound = 'Cr';
+                MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii});
             end
-            Water_Positive=1;           %CHECK
             if strcmpi(MRS_struct.p.Reference_compound,'H2O')
                 WaterData = MRS_struct.fids.data_water;
             end
-            da_xres = MRS_struct.p.npoints;
-            da_yres = MRS_struct.p.nrows*MRS_struct.p.Navg(ii);
-            totalframes = MRS_struct.p.Navg(ii);
             FullData = MRS_struct.fids.data;
-            AlignTo = 1;           %CHECK
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    MRS_struct.fids.ON_OFF = repmat([1 0],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
+                    MRS_struct.fids.ON_OFF = MRS_struct.fids.ON_OFF(:).';
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    MRS_struct.fids.ON_OFF = repmat([0 1],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
+                    MRS_struct.fids.ON_OFF = MRS_struct.fids.ON_OFF(:).';
             end
-    end    %End of vendor switch loop for data load
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   5. Apply appropriate pre-processing
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-    %There are some decisions to be made on what processing is applied to
-    %what data
-    %First steps
-    MRS_struct.p.zf=MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
-    time=(1:1:size(FullData,1))/MRS_struct.p.sw;
-    time_zeropad=(1:1:MRS_struct.p.ZeroFillTo)/(MRS_struct.p.sw);
-    DataSize = size(FullData,2);
-
-        % Finish processing water data. 
-        if(strcmpi(MRS_struct.p.Reference_compound,'H2O'))     
+            
+    end % End of vendor switch loop for data load
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %   5. Apply appropriate pre-processing
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % MM (160919): Zero-fill to obtain nominal spectral resolution of 0.061 Hz/point
+    MRS_struct.p.ZeroFillTo = 32768/2000*MRS_struct.p.sw;
+    MRS_struct.p.zf = MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
+    time = (1:1:size(FullData,1))/MRS_struct.p.sw;
+    
+    % Finish processing water data
+    if strcmpi(MRS_struct.p.Reference_compound,'H2O')
         
-            if(strcmpi(MRS_struct.p.vendor,'GE'))           %CHECK
-                ComWater = mean(WaterData,2);           %CHECK
-            elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))       %CHECK
-                ComWater = WaterData;           %CHECK
-            elseif (strcmpi(MRS_struct.p.vendor,'Siemens_twix')) %CHECK
-                ComWater = WaterData;
+        if strcmpi(MRS_struct.p.vendor,'GE')
+            ComWater = mean(WaterData,2);
+        elseif strcmpi(MRS_struct.p.vendor,'Siemens')
+            ComWater = WaterData;
+        elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
+            ComWater = WaterData;
+        else
+            ComWater = WaterData.'; %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %%
+        end
+        
+        % Performing phase corrrection on the water-suppressed data
+        % based on Klose (1990), MRM,14:26-30. The equation was
+        % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
+        if MRS_struct.p.data_phase_correction
+            if strcmpi(MRS_struct.p.vendor,'Philips') || strcmpi(MRS_struct.p.vendor,'Philips_data')
+                MRS_struct.fids.data = phase_correction_fids(MRS_struct.fids.data.', ComWater.');
+                MRS_struct.fids.data = MRS_struct.fids.data.';
+                FullData = MRS_struct.fids.data;
             else
-                ComWater = WaterData.'; 
-                %CHECK
-            end           %CHECK
-            
-            
-            % Performing phase corrrection on the suppressed data
-            % based on the Klose (1990), MRM,14:26-30. The equation was
-            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if MRS_struct.p.data_phase_correction                
-                
-               if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data')) 
-                    MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater.');
-                    MRS_struct.fids.data=MRS_struct.fids.data.';
-                    FullData = MRS_struct.fids.data;
-                    
-               else
-                    MRS_struct.fids.data=phase_correction_fids(MRS_struct,MRS_struct.fids.data.',ComWater);
-                    MRS_struct.fids.data=MRS_struct.fids.data.';
-                    FullData = MRS_struct.fids.data;
-                   
-                  
-               end
+                MRS_struct.fids.data = phase_correction_fids(MRS_struct.fids.data.', ComWater);
+                MRS_struct.fids.data = MRS_struct.fids.data.';
+                FullData = MRS_struct.fids.data;
             end
-            
-            % Performing phase corrrection on the water
-            % based on the Klose (1990), MRM,14:26-30. The equation was
-            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-            if MRS_struct.p.water_phase_correction
-                
-                if(strcmpi(MRS_struct.p.vendor,'Philips'))  || (strcmpi(MRS_struct.p.vendor,'Philips_data'))  
-                    ComWater=phase_correction_fids(MRS_struct,ComWater.',ComWater.');
-                    ComWater=ComWater.';
-                else
-                    
-                    ComWater=phase_correction_fids(MRS_struct,ComWater,ComWater);
-                    
+        end
+        
+        % Performing phase corrrection on the unsuppressed water data
+        if MRS_struct.p.water_phase_correction
+            if strcmpi(MRS_struct.p.vendor,'Philips') || strcmpi(MRS_struct.p.vendor,'Philips_data')
+                ComWater = phase_correction_fids(ComWater.', ComWater.');
+                ComWater = ComWater.';
+            else
+                ComWater = phase_correction_fids(ComWater, ComWater);
+            end
+        end
+        
+        % Line-broadening, zero-filling and FFT
+        ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
+        MRS_struct.spec.water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
+        
+    end %End of H20 reference loop
+    
+    % Line-broadening, zero-filling and FFT
+    FullData = FullData .* repmat((exp(-time'*MRS_struct.p.LB*pi)), [1 size(FullData,2)]);
+    MRS_struct.fids.FullData = FullData;
+    AllFramesFT = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
+    % work out frequency scale
+    freqrange = MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
+    MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
+    % MM (170119)
+    MRS_struct.p.df = abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2));
+    MRS_struct.p.Spec_Res = MRS_struct.p.sw/MRS_struct.p.npoints;
+    MRS_struct.p.Spec_Res_Nominal = MRS_struct.p.sw/MRS_struct.p.ZeroFillTo;
+    MRS_struct.p.Tacq = 1/MRS_struct.p.Spec_Res;
+    
+    % Frame-by-frame determination of frequency of residual water
+    % MM (170201)
+    water_range = MRS_struct.spec.freq-4.68 >= -0.2 & MRS_struct.spec.freq-4.68 <= 0.2;
+    [~,FrameMaxPos] = max(abs(real(AllFramesFT(water_range,:))),[],1);
+    % Not always true that water starts at 4.68, if drift is rapid...
+    water_off = abs(MRS_struct.spec.freq-4.68);
+    water_index = find(min(water_off)==water_off);
+    % Determine frame shifts
+    FrameShift = FrameMaxPos - water_index;
+    
+    %Apply for Philips data, not for GE data (Why?)
+    switch MRS_struct.p.vendor
+        case 'GE'
+            AllFramesFTrealign=AllFramesFT;
+        case {'Philips','Philips_data'}
+            if(strcmp(MRS_struct.p.target,'GSH')||strcmp(MRS_struct.p.target,'GABAGlx')) % Added by MGSaleh 2016
+                AllFramesFTrealign = AllFramesFT;
+            else
+                for jj = 1:size(AllFramesFT,2)
+                    AllFramesFTrealign(:,jj) = circshift(AllFramesFT(:,jj), -FrameShift(jj)); % is this used????
                 end
-                    
-
             end
-            
-            
-            
-            ComWater = ComWater.*exp(-(time')*MRS_struct.p.LB*pi);
-
-            MRS_struct.spec.water(ii,:)=fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
-        end %End of H20 reference loop
-            
-        
-            
-            
-            
-            FullData = FullData.* repmat( (exp(-(time')*MRS_struct.p.LB*pi)), [1 totalframes]);
-            MRS_struct.fids.FullData=FullData;
-            AllFramesFT=fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
-            % work out frequency scale
-%             MRS_struct.p.sw
-%             MRS_struct.p.LarmorFreq
-            freqrange=MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
-            MRS_struct.spec.freq=(MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
-
-            %  Frame-by-frame Determination of max Frequency in spectrum (assumed water) maximum
-            % find peak location for frequency realignment
-            [FrameMax, FrameMaxPos] = max(AllFramesFT, [], 1);
-            %Not always true that water starts at 4.68, if drift is rapid...
-            water_off=abs(MRS_struct.spec.freq-4.68);
-            water_index=find(min(water_off)==water_off);
-            % Determine Frame shifts
-            FrameShift = FrameMaxPos - water_index;
-            %Apply for Philips data, not for GE data (Why?)
-            switch MRS_struct.p.vendor
-                case 'GE'           %CHECK
-                    AllFramesFTrealign=AllFramesFT;
-                case {'Philips','Philips_data'}           %CHECK
-                    if(strcmp(MRS_struct.p.target,'GSH')||strcmp(MRS_struct.p.target,'GABAGlx')) % Added by MGSaleh 2016 
-                        AllFramesFTrealign=AllFramesFT;
-                    else
-                        for(jj=1:size(AllFramesFT,2))
-                            AllFramesFTrealign(:,jj)=circshift(AllFramesFT(:,jj), -FrameShift(jj));             %CHECK - is this used????
-                        end
-                    end
-                    %This quite possibly doesn't carry through, as it seems
-                    %that the later stuff all starts with AllFramesFT, no
-                    %AllFramesFTrealign.
-                case 'Siemens_twix'
-                      AllFramesFTrealign=AllFramesFT;
-            end %end of switch for Water max alignment p[re-initialisation
-
-            MRS_struct.fids.waterfreq(ii,:) = MRS_struct.spec.freq(FrameMaxPos);%to be used for the output figure
-
-            %Frame-by-Frame alignment
-            switch MRS_struct.p.AlignTo
-               case 'Cr'
-                    [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
-               case 'Cr'
-                    %AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct.p.ONOFForder,n);     
-               case 'Cho'
-                    [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
-               case 'H20'
-                   [AllFramesFTrealign MRS_struct]=AlignUsingH2O(AllFramesFTrealign,MRS_struct);
-               case 'NAA'
-                   [AllFramesFTrealign MRS_struct]=AlignUsingPeak(AllFramesFTrealign,MRS_struct);
-               case 'SpecReg'
-                    [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0);
-               case 'SpecRegDual'
-                   %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after... 
-                   [AllFramesFTrealign MRS_struct] = Spectral_Registration(MRS_struct,0,1);
-               end %end of switch for alignment targhelp arrayfunet   
-
-        
-        %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra.
-        %In Gannet 2.0 Odds and Evens are explicitly replaced by ON and OFF        
+            %This quite possibly doesn't carry through, as it seems
+            %that the later stuff all starts with AllFramesFT, no
+            %AllFramesFTrealign.
+        case 'Siemens_twix'
+            AllFramesFTrealign = AllFramesFT;
+    end
+    
+    %MRS_struct.fids.waterfreq(ii,:) = MRS_struct.spec.freq(FrameMaxPos); % to be used for the output figure
+    freqWaterRange = MRS_struct.spec.freq(water_range);
+    MRS_struct.fids.waterfreq(ii,:) = freqWaterRange(FrameMaxPos); % to be used for the output figure
+    MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.68); % MM (170125)
+    
+    %Frame-by-Frame alignment
+    switch MRS_struct.p.AlignTo
+        case 'Cr'
+            [AllFramesFTrealign, MRS_struct] = AlignUsingPeak(AllFramesFTrealign,MRS_struct);
+            %AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct.p.ONOFForder,n);
+        case 'Cho'
+            [AllFramesFTrealign, MRS_struct] = AlignUsingPeak(AllFramesFTrealign,MRS_struct);
+        case 'H20'
+            [AllFramesFTrealign, MRS_struct] = AlignUsingH2O(AllFramesFTrealign,MRS_struct);
+        case 'NAA'
+            [AllFramesFTrealign, MRS_struct] = AlignUsingPeak(AllFramesFTrealign,MRS_struct);
+        case 'SpecReg'
+            [AllFramesFTrealign, MRS_struct] = Spectral_Registration(MRS_struct,0);
+        case 'SpecRegDual'
+            %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after...
+            [AllFramesFTrealign, MRS_struct] = Spectral_Registration(MRS_struct,0,1);
+        case 'SpecRegHERMES'
+            [AllFramesFTrealign, MRS_struct] = Spectral_Registration_HERMES(MRS_struct);
+    end %end of switch for alignment
+    
+        %Separate ON/OFF data and generate SUM/DIFF (averaged) spectra
         %To determine the output depending on the type of acquistion used -- MGSaleh 2016
               for kk = 1:length(reg)
                   
@@ -721,8 +620,8 @@ for ii=1:numpfiles    %Loop over all files in the batch (from gabafile)
             %Top Right
             hb=subplot(2,2,2);
             rejectframesplot = (1./MRS_struct.out.reject(:,ii).') .*  MRS_struct.fids.waterfreq(ii,:);
-            plot([1:DataSize], MRS_struct.fids.waterfreq(ii,:)', '-', [1:DataSize], rejectframesplot, 'ro');
-            set(gca,'XLim',[0 DataSize]);
+            plot(1:size(FullData,2), MRS_struct.fids.waterfreq(ii,:)', '-', 1:size(FullData,2), rejectframesplot, 'ro');
+            set(gca,'XLim',[0 size(FullData,2)]);
             xlabel('time'); ylabel('\omega_0');
             title('Water Frequency, ppm');
              %Bottom Left

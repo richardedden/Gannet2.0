@@ -1,103 +1,82 @@
-function [ MRS_struct ] = PhilipsRead(MRS_struct, fname, fname_water )
+function MRS_struct = PhilipsRead(MRS_struct, fname, fname_water)
 % RE/CJE Parse SPAR file for header info
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%PhilipsRead is designed to handle 'off-first' data.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PhilipsRead is designed to handle 'off-first' data
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% 110825
+% work out data header name
+sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
+sparname = fopen(sparname,'r');
+sparheader = textscan(sparname, '%s');
+sparheader = sparheader{1};
+sparidx=find(ismember(sparheader, 'samples')==1);
+MRS_struct.p.npoints = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'rows')==1);
+MRS_struct.p.nrows = str2double(sparheader{sparidx+2});
 
-   % work out data header name
-   sparname = [fname(1:(end-4)) MRS_struct.p.spar_string]
-   sparheader = textread(sparname, '%s');
-   sparidx=find(ismember(sparheader, 'samples')==1);
-   MRS_struct.p.npoints = str2num(sparheader{sparidx+2});
-   sparidx=find(ismember(sparheader, 'rows')==1);
-   MRS_struct.p.nrows = str2num(sparheader{sparidx+2});
-   
-   sparidx=find(ismember(sparheader, 'averages')==1);
-   MRS_struct.p.Navg(MRS_struct.ii) = MRS_struct.p.nrows * str2num(sparheader{sparidx+2}); %raee 120228 fixing sdat NAvg
-   %MRS_struct.p.Navg(MRS_struct.ii) = MRS_struct.p.nrows; %Trial SDAT might be average not sum.
-   sparidx=find(ismember(sparheader, 'repetition_time')==1);
-   MRS_struct.p.TR = str2num(sparheader{sparidx+2});
-   
-   sparidx=find(ismember(sparheader, 'echo_time')==1); % Added by MGSaleh 2016.
-   MRS_struct.p.TE = str2num(sparheader{sparidx+2});   % Added by MGSaleh 2016.
+sparidx=find(ismember(sparheader, 'averages')==1);
+MRS_struct.p.Navg(MRS_struct.ii) = MRS_struct.p.nrows * str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'repetition_time')==1);
+MRS_struct.p.TR = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'echo_time')==1); % Added by MGSaleh 2016.
+MRS_struct.p.TE = str2double(sparheader{sparidx+2}); % Added by MGSaleh 2016.
+sparidx=find(ismember(sparheader, 'synthesizer_frequency')==1); % Added by MGSaleh 2016.
+MRS_struct.p.LarmorFreq = str2double(sparheader{sparidx+2})/1e6; % Added by MGSaleh 2016.
+sparidx=find(ismember(sparheader, 'sample_frequency')==1);
+MRS_struct.p.sw = str2double(sparheader{sparidx+2});
 
-   sparidx=find(ismember(sparheader, 'synthesizer_frequency')==1); % Added by MGSaleh 2016.
-   MRS_struct.p.LarmorFreq = str2num(sparheader{sparidx+2})/1e6;   % Added by MGSaleh 2016.
-   
-   sparidx=find(ismember(sparheader, 'sample_frequency')==1);
-   MRS_struct.p.sw = str2num(sparheader{sparidx+2});
-   
-   %Pull in geometry information for GannetCoRegister
-   %NP edit 150714; Below section is broken and now commented out as a temporary fix.
-   %sparheadinfo is not set and may have to be sparheader instead. Also,
-   %not looped yet (added edit0
+%Pull in geometry information for GannetCoRegister
+sparidx=find(ismember(sparheader, 'ap_size')==1);
+MRS_struct.p.voxdim(MRS_struct.ii,2) = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'lr_size')==1);
+MRS_struct.p.voxdim(MRS_struct.ii,1) = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'cc_size')==1);
+MRS_struct.p.voxdim(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
-   %for ii = 
-    sparidx=find(ismember(sparheader, 'ap_size')==1);
-    MRS_struct.p.voxsize(MRS_struct.ii,2) = str2num(sparheader{sparidx+2});
-    sparidx=find(ismember(sparheader, 'lr_size')==1);
-    MRS_struct.p.voxsize(MRS_struct.ii,1) = str2num(sparheader{sparidx+2});
-    sparidx=find(ismember(sparheader, 'cc_size')==1);
-    MRS_struct.p.voxsize(MRS_struct.ii,3) = str2num(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'ap_off_center')==1);
+MRS_struct.p.voxoff(MRS_struct.ii,2) = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'lr_off_center')==1);
+MRS_struct.p.voxoff(MRS_struct.ii,1) = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'cc_off_center')==1);
+MRS_struct.p.voxoff(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
-    sparidx=find(ismember(sparheader, 'ap_off_center')==1);
-    MRS_struct.p.voxoff(MRS_struct.ii,2) = str2num(sparheader{sparidx+2});
-    sparidx=find(ismember(sparheader, 'lr_off_center')==1);
-    MRS_struct.p.voxoff(MRS_struct.ii,1) = str2num(sparheader{sparidx+2});
-    sparidx=find(ismember(sparheader, 'cc_off_center')==1);
-    MRS_struct.p.voxoff(MRS_struct.ii,3) = str2num(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'ap_angulation')==1);
+MRS_struct.p.voxang(MRS_struct.ii,2) = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'lr_angulation')==1);
+MRS_struct.p.voxang(MRS_struct.ii,1) = str2double(sparheader{sparidx+2});
+sparidx=find(ismember(sparheader, 'cc_angulation')==1);
+MRS_struct.p.voxang(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
-    sparidx=find(ismember(sparheader, 'ap_angulation')==1);
-    MRS_struct.p.voxang(MRS_struct.ii,2) = str2num(sparheader{sparidx+2});
-    sparidx=find(ismember(sparheader, 'lr_angulation')==1);
-    MRS_struct.p.voxang(MRS_struct.ii,1) = str2num(sparheader{sparidx+2});
-    sparidx=find(ismember(sparheader, 'cc_angulation')==1);
-    MRS_struct.p.voxang(MRS_struct.ii,3) = str2num(sparheader{sparidx+2});
+MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);
 
-   
-   
-   MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);
-      
-   if nargin>2
-       % work out data header name
-       sparnameW = [fname_water(1:(end-4)) 'spar'];
-       sparheaderW = textread(sparnameW, '%s');
-       sparidxW=find(ismember(sparheaderW, 'averages')==1);
-       %MRS_struct.p.Nwateravg = str2num(sparheaderW{sparidxW+2});
-       MRS_struct.p.Nwateravg = 1; %SDAT IS average not sum.
-   end
-   %undo time series phase cycling to match GE
-   corrph = ones(size(MRS_struct.fids.data));
-   for jj=1:size(MRS_struct.fids.data,2)
-       corrph(:,jj) = corrph(:,jj) * (-1).^jj;
-   end
-   MRS_struct.fids.data = MRS_struct.fids.data .* corrph;
-   %Re-introduce initial phase step...
-   MRS_struct.fids.data = MRS_struct.fids.data .*repmat(conj(MRS_struct.fids.data(1,:))./abs(MRS_struct.fids.data(1,:)),[MRS_struct.p.npoints 1]);
-   %Philips data appear to be phased already (ideal case)
-   
-   %If Moist and HERMES are implemented then the following lines of code is
-   %necessary - MM and MGSaleh 2016
-   if MRS_struct.p.Water_Positive==0 && MRS_struct.p.HERMES==1
-       for jj=1:size(MRS_struct.fids.data,2)
-           MRS_struct.fids.data(:,jj) = MRS_struct.fids.data(:,jj) * (-1).^jj;
-       end
-   end
-   
-   %MRS_struct.fids.data = -conj(MRS_struct.fids.data); %RE 110728 - empirical factor to scale 'like GE'
-   %If on-first - use the above...
-   %If off-frst use:  FOR NOW, THIS DIDNT HELP...
-   MRS_struct.fids.data = conj(MRS_struct.fids.data); %RE 110728 - empirical factor to scale 'like GE'
-   if nargin>2
-       % load water data
-       MRS_struct.fids.data_water = SDATread(fname_water, MRS_struct.p.npoints);
-       MRS_struct.fids.data_water(1,5);
-       MRS_struct.fids.data_water = MRS_struct.fids.data_water.*conj(MRS_struct.fids.data_water(1))./abs(MRS_struct.fids.data_water(1));
-       MRS_struct.out.phase_water = conj(MRS_struct.fids.data_water(1))./abs(MRS_struct.fids.data_water(1));
-       %MRS_struct.fids.data = MRS_struct.fids.data.* MRS_struct.out.phase_water;
-   end
+if nargin>2
+    MRS_struct.p.Nwateravg = 1; %SDAT is average not sum
+end
+
+%undo time series phase cycling to match GE
+corrph = repmat([-1 1], [1 size(MRS_struct.fids.data,2)/2]);
+corrph = repmat(corrph, [size(MRS_struct.fids.data,1) 1]);
+MRS_struct.fids.data = MRS_struct.fids.data .* corrph;
+
+%Re-introduce initial phase step
+if MRS_struct.p.HERMES % MM (170604)
+    phi = repelem(conj(MRS_struct.fids.data(1,2:2:end))./abs(MRS_struct.fids.data(1,2:2:end)),2);
+    MRS_struct.fids.data = MRS_struct.fids.data .* repmat(phi,[MRS_struct.p.npoints 1]);
+else
+    MRS_struct.fids.data = MRS_struct.fids.data .* repmat(conj(MRS_struct.fids.data(1,:))./abs(MRS_struct.fids.data(1,:)),[MRS_struct.p.npoints 1]);
+end
+%Philips data appear to be phased already (ideal case)
+
+%If on-first - use the above...
+%If off-frst use:  FOR NOW, THIS DIDNT HELP...
+MRS_struct.fids.data = conj(MRS_struct.fids.data); %RE 110728 - empirical factor to scale 'like GE'
+if nargin>2
+    % load water data
+    MRS_struct.fids.data_water = SDATread(fname_water, MRS_struct.p.npoints);
+    MRS_struct.fids.data_water = MRS_struct.fids.data_water.*conj(MRS_struct.fids.data_water(1))./abs(MRS_struct.fids.data_water(1));
+    %MRS_struct.out.phase_water = conj(MRS_struct.fids.data_water(1))./abs(MRS_struct.fids.data_water(1));
+    %MRS_struct.fids.data = MRS_struct.fids.data.* MRS_struct.out.phase_water;
+end
 end
 
