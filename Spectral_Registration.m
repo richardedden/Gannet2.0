@@ -216,5 +216,7 @@ while(SpecRegLoop>(-1))
     SpecRegLoop=SpecRegLoop-1;
 end
 
+fprintf('\n');
+
 end
 

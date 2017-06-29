@@ -5,8 +5,11 @@ warning off;
 conv = [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq (180/pi) 1 1]; % MM (170131)
 initx=initx./conv;
 
+lsqopts = optimset('lsqcurvefit');
+lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts, 'MaxIter', 1e5, 'Display','Off');
+nlinopts = statset(nlinopts,'MaxIter',1e5,'Display','off');
+
 nframes = size(FrameData,2);
 FitParams = zeros(nframes,6);
 
@@ -20,7 +23,7 @@ for jj = 1:nframes
     
     %   size(real(FrameData(:,jj)))
     %   size(TwoLorentzModel(initx,freq'))
-    initxLSQ = lsqcurvefit(@LorentzModel, initx, freq', real(FrameData(:,jj)));
+    initxLSQ = lsqcurvefit(@LorentzModel, initx, freq', real(FrameData(:,jj)), [], [], lsqopts);
     [FitParams(jj,:), residCr] = nlinfit(freq', real(FrameData(:,jj)), @LorentzModel, initxLSQ, nlinopts);
     
     %fit_plot = LorentzModel(fit_param, freq);    

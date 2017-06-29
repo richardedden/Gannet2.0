@@ -17,7 +17,7 @@ function MRS_struct=GannetPreInitialise(MRS_struct)
     MRS_struct.p.Siemens_type = 1; % 1 = TIM TRIO WIP; 2 = Near seq; 3 = Skyra WIP; 4 = Prisma (VD13C); 5 = Prisma (Minnesota); 6 = Jamie's VE11B (Jena)
         
 % Analysis Parameters
-    MRS_struct.p.LB = 3;
+    MRS_struct.p.LB = 3; % line-broadening (in Hz)
     %MRS_struct.p.ZeroFillTo = []; % zero-fill to obtain nominal spectral resolution of 0.061 Hz/point
     MRS_struct.p.water_phase_correction = 1; % perform phase correction; 1 = YES -- MGSaleh 2016
     MRS_struct.p.data_phase_correction = 0; % perform phase correction; 1 = YES -- MGSaleh 2016

@@ -43,7 +43,7 @@ T2w_WM = 0.0792;
 T1w_GM = 1.331;
 T2w_GM = 0.110;
 T1w_CSF = 3.817;
-T2w_CSF = 0.503; 
+T2w_CSF = 0.503;
 % determine concentration of water in GM WM and CSF
 % Gasparovic et al, MRM 2006; 55:1219 uses relative densities, ref to Ernst
 % fGM = 0.78

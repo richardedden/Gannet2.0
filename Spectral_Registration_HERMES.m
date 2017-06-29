@@ -20,8 +20,7 @@ end
 ii = MRS_struct.ii;
 MRS_struct.fids.data_align = zeros(size(MRS_struct.fids.data));
 MRS_struct.out.SpecReg.ParsFit = zeros(size(MRS_struct.fids.data,2),2);
-MRS_struct.out.SpecReg.MSE = zeros(1,size(MRS_struct.fids.data,2));
-MRS_struct.out.SpecReg.zMSE = zeros(1,size(MRS_struct.fids.data,2));
+zMSE = zeros(1,size(MRS_struct.fids.data,2));
 CorrParsML = zeros(size(MRS_struct.fids.data,2),2);
 count = 0;
 parsGuess = [0 0];
@@ -87,12 +86,10 @@ while SpecRegLoop > -1
         [parsFit(corrloop,:), ~, ~, ~, MSE(corrloop)] = nlinfit(input, target, @FreqPhaseShiftNest, parsGuess, nlinopts);
         parsGuess = parsFit(corrloop,:);
     end
-    zMSE = zscore(MSE); % standardized MSEs
     
     count = count + 1;
     
     % Probability distribution of frequency offsets (estimated by maximum likelihood)
-    fprintf('\nFitting probability density function');
     MRS_struct.out.MLalign.f.x(count,:,ii) = parsFit(:,1);
     start = [std(MRS_struct.out.MLalign.f.x(count,:,ii))/2, median(MRS_struct.out.MLalign.f.x(count,:,ii))];
     [MRS_struct.out.MLalign.f.p(count,:,ii), MRS_struct.out.MLalign.f.p_ci(:,:,count,ii)] = ...
@@ -148,8 +145,7 @@ while SpecRegLoop > -1
     MRS_struct.out.SpecReg.ParsFit(corrloop_d,:,ii) = parsFit;
     CorrParsML(corrloop_d,1) = parsFit(:,1) - MRS_struct.out.MLalign.f.p(count,2,ii)';
     CorrParsML(corrloop_d,2) = parsFit(:,2) - MRS_struct.out.MLalign.ph.p(count,2,ii)';
-    MRS_struct.out.SpecReg.MSE(ii,corrloop_d) = MSE;
-    MRS_struct.out.SpecReg.zMSE(ii,corrloop_d) = zMSE;
+    zMSE(corrloop_d) = zscore(MSE); % standardized MSEs
     
     % Apply frequency and phase corrections
     for corrloop = 1:size(flatdata,3)
@@ -209,7 +205,7 @@ while SpecRegLoop > -1
 %         set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off');
 %         
 %         drawnow;
-%         %pause;        
+%         %pause(1);        
       
         % Line-broadening, zero-filling and FFT
         FullData = DataToAlign .* repmat((exp(-time*MRS_struct.p.LB*pi)), [1 size(MRS_struct.fids.data,2)]);
@@ -231,7 +227,7 @@ while SpecRegLoop > -1
         end        
         
         % Reject transients that are greater than +/-3 st. devs. of MSEs
-        rejectFrames = MRS_struct.out.SpecReg.zMSE(ii,:) > 3 | MRS_struct.out.SpecReg.zMSE(ii,:) < -3;
+        rejectFrames = zMSE > 3 | zMSE < -3;
         if MRS_struct.p.HERMES
             rejectFrames = reshape(rejectFrames, [4 size(MRS_struct.fids.data,2)/4])';
         else

@@ -50,7 +50,7 @@ MRS_struct.p.voxang(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
 MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);
 
-if nargin>2
+if nargin > 2
     MRS_struct.p.Nwateravg = 1; %SDAT is average not sum
 end
 
