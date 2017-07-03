@@ -1,9 +1,13 @@
-function Gannetplotprepostalign(MRS_struct, reg, specno)
+function GannetPlotPrePostAlign(MRS_struct, reg, specno)
 % Plots pre and post alignment spectra in MRSLoadPfiles
 % 110214:  Scale spectra by the peak _height_ of water
 %          Plot multiple spectra as a stack - baselines offset
 %            by mean height of GABA
-% Updates by MGSaleh 2016
+% Updates by MGSaleh 2016, MM 2017
+
+% MM: 170701
+specColorPre = [0.9 0 0];
+specColorPost = [0 0 1];
 
 for kk = 1:length(reg)
     
@@ -65,12 +69,14 @@ for kk = 1:length(reg)
         end
         plotstackoffset = plotstackoffset - specbaseline;
         
-        aa=1.2;
-        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot((2),:)), 'b', MRS_struct.spec.freq, aa*real(SpectraToPlot((1),:)), 'r');
+        aa = 1.2;
         hold on;
-        shift=repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(2,:)), 'Color', specColorPre);
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(1,:)), 'Color', specColorPost);
+        shift = repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
         SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shift,[],1); max(shift,[],1)] ;
-        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot((4),:)),'b', MRS_struct.spec.freq, aa*real(SpectraToPlot((3),:)) ,'r');
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(4,:)), 'Color', specColorPre);
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(3,:)), 'Color', specColorPost);
         hold off;
         
         if strcmp(MRS_struct.p.target2, 'Lac')
@@ -81,12 +87,11 @@ for kk = 1:length(reg)
         end
         yaxismin = -2*gabaheight;        
         if yaxismax < yaxismin
-            dummy=yaxismin;
-            yaxismin=yaxismax;
-            yaxismax=dummy;
+            [yaxismax, yaxismin] = deal(yaxismin, yaxismax); % MM (170701)
         end        
         
     else
+        
         % averaged gaba height across all scans - to estimate stack spacing
         gabaheight = abs(max(SpectraToPlot([1 2],Glx_right:GABA_right),[],2));
         gabaheight = max(gabaheight);
@@ -94,23 +99,26 @@ for kk = 1:length(reg)
         plotstackoffset = plotstackoffset * gabaheight;
         plotstackoffset = plotstackoffset - specbaseline;
         
-        SpectraToPlot = SpectraToPlot + repmat(plotstackoffset, [1  length(SpectraToPlot(1,:))]);        
-        plot(MRS_struct.spec.freq, real(SpectraToPlot(2,:)), 'b', MRS_struct.spec.freq, real(SpectraToPlot(1,:)), 'r');        
+        SpectraToPlot = SpectraToPlot + repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
+        hold on;
+        plot(MRS_struct.spec.freq, real(SpectraToPlot(2,:)), 'Color', specColorPre);
+        plot(MRS_struct.spec.freq, real(SpectraToPlot(1,:)), 'Color', specColorPost);
+        hold off;
         
         yaxismax = 1.5*abs(max(max(real(SpectraToPlot([1 2],Glx_right:GABA_right)),[],2)));
         yaxismin = -10.0*abs(min(min(real(SpectraToPlot([1 2],Glx_right:GABA_right)),[],2)));
-        if (yaxismax<yaxismin)
-            dummy=yaxismin;
-            yaxismin=yaxismax;
-            yaxismax=dummy;
+        if yaxismax < yaxismin
+            [yaxismax, yaxismin] = deal(yaxismin, yaxismax); % MM (170701)
         end
         
     end
     
-    legendtxt = {'pre', 'post'};
+    box on;
+    legendtxt = {'pre','post'};
     hl = legend(legendtxt);
     set(hl,'EdgeColor',[1 1 1]);
     set(gca,'XDir','reverse');
     axis([0 5 yaxismin yaxismax]);
     
 end
+

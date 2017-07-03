@@ -47,9 +47,9 @@ MRS_struct.gabafile = gabafile;
 MRS_struct = GannetPreInitialise(MRS_struct);
 
 if MRS_struct.p.PRIAM % Deciding how regions are there -- MGSaleh 2016
-    reg = {MRS_struct.p.Reg};
+    vox = {MRS_struct.p.Vox};
 else
-    reg = {MRS_struct.p.Reg{1}};
+    vox = {MRS_struct.p.Vox{1}};
 end
 
 if MRS_struct.p.HERMES % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GSH
@@ -95,8 +95,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % create dir for output
-if exist('./MRSload_output','dir') ~= 7
-    mkdir MRSload_output;
+if ~exist('./GannetLoad_output','dir')
+    mkdir GannetLoad_output;
 end
 
 
@@ -144,9 +144,9 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 MRS_struct.p.Reference_compound = 'H2O';
                 switch MRS_struct.p.ONOFForder
                     case 'offfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
+                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
                     case 'onfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
+                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
                 end
                 MRS_struct.p.Nwateravg = 1;
                 MRS_struct.out.phase{ii} = 0;
@@ -155,9 +155,9 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 MRS_struct.p.Reference_compound = 'Cr';
                 switch MRS_struct.p.ONOFForder
                     case 'offfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
+                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
                     case 'onfirst'
-                        MRS_struct = SiemensRead_RE(MRS_struct, gabafile{ii*2},gabafile{ii*2-1});
+                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2},gabafile{ii*2-1});
                 end
             end
             FullData = MRS_struct.fids.data;
@@ -246,46 +246,48 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     
     % Finish processing water data
     if strcmpi(MRS_struct.p.Reference_compound,'H2O')
-        
-        if strcmpi(MRS_struct.p.vendor,'GE')
-            ComWater = mean(WaterData,2);
-        elseif strcmpi(MRS_struct.p.vendor,'Siemens')
-            ComWater = WaterData;
-        elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
-            ComWater = WaterData;
-        else
-            ComWater = WaterData.';
-        end
-        
-        % Performing phase corrrection on the water-suppressed data
-        % based on Klose (1990), MRM,14:26-30. The equation was
-        % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
-        if MRS_struct.p.data_phase_correction
-            if strcmpi(MRS_struct.p.vendor,'Philips') || strcmpi(MRS_struct.p.vendor,'Philips_data')
-                MRS_struct.fids.data = phase_correction_fids(MRS_struct.fids.data.', ComWater.');
-                MRS_struct.fids.data = MRS_struct.fids.data.';
-                FullData = MRS_struct.fids.data;
+        for kk = 1:length(vox)
+            
+            if strcmpi(MRS_struct.p.vendor,'GE')
+                ComWater = mean(WaterData,2);
+            elseif strcmpi(MRS_struct.p.vendor,'Siemens')
+                ComWater = WaterData;
+            elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
+                ComWater = WaterData;
             else
-                MRS_struct.fids.data = phase_correction_fids(MRS_struct.fids.data.', ComWater.');
-                MRS_struct.fids.data = MRS_struct.fids.data.';
-                FullData = MRS_struct.fids.data;
+                ComWater = WaterData.';
             end
-        end
-        
-        % Performing phase corrrection on the unsuppressed water data
-        if MRS_struct.p.water_phase_correction
-            if strcmpi(MRS_struct.p.vendor,'Philips') || strcmpi(MRS_struct.p.vendor,'Philips_data')
-                ComWater = phase_correction_fids(ComWater.', ComWater.');
-                ComWater = ComWater.';
-            else
-                ComWater = phase_correction_fids(ComWater, ComWater.');
+            
+            % Performing phase corrrection on the water-suppressed data
+            % based on Klose (1990), MRM,14:26-30. The equation was
+            % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
+            if MRS_struct.p.data_phase_correction
+                if any(strcmpi(MRS_struct.p.vendor,{'Philips','Philips_data'}))
+                    MRS_struct.fids.data = phase_correction_fids(MRS_struct.fids.data.', ComWater.');
+                    MRS_struct.fids.data = MRS_struct.fids.data.';
+                    FullData = MRS_struct.fids.data;
+                else
+                    MRS_struct.fids.data = phase_correction_fids(MRS_struct.fids.data.', ComWater);
+                    MRS_struct.fids.data = MRS_struct.fids.data.';
+                    FullData = MRS_struct.fids.data;
+                end
             end
+            
+            % Performing phase corrrection on the unsuppressed water data
+            if MRS_struct.p.water_phase_correction
+                if any(strcmpi(MRS_struct.p.vendor,{'Philips','Philips_data'}))
+                    ComWater = phase_correction_fids(ComWater.', ComWater.');
+                    ComWater = ComWater.';
+                else
+                    ComWater = phase_correction_fids(ComWater, ComWater);
+                end
+            end
+            
+            % Line-broadening, zero-filling and FFT
+            ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
+            MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
+            
         end
-        
-        % Line-broadening, zero-filling and FFT
-        ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
-        MRS_struct.spec.water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
-        
     end %End of H20 reference loop
     
     % Line-broadening, zero-filling and FFT
@@ -297,9 +299,9 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
     % MM (170119)
     MRS_struct.p.df = abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2));
-    MRS_struct.p.Spec_Res = MRS_struct.p.sw/MRS_struct.p.npoints;
-    MRS_struct.p.Spec_Res_Nominal = MRS_struct.p.sw/MRS_struct.p.ZeroFillTo;
-    MRS_struct.p.Tacq = 1/MRS_struct.p.Spec_Res;
+    MRS_struct.p.SpecRes = MRS_struct.p.sw/MRS_struct.p.npoints;
+    MRS_struct.p.SpecResNominal = MRS_struct.p.sw/MRS_struct.p.ZeroFillTo;
+    MRS_struct.p.Tacq = 1/MRS_struct.p.SpecRes;
     
     % Frame-by-frame determination of frequency of residual water (MM: 170201)
     water_range = MRS_struct.spec.freq-4.68 >= -0.2 & MRS_struct.spec.freq-4.68 <= 0.2;
@@ -359,112 +361,117 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     
     %Separate ON/OFF data and generate DIFF spectra
     %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-    for kk = 1:length(reg)
+    for kk = 1:length(vox)
         if MRS_struct.p.HERMES % MGSaleh & MM 2016
             
             % Target 1: GABA or GSH
             OFF = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)' & MRS_struct.out.reject(:,ii)==0), 2);
             ON  = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)' & MRS_struct.out.reject(:,ii)==0), 2);
             
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = OFF;
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)  = ON;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = OFF;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)  = ON;
             
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (ON-OFF)/2;
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,MRS_struct.fids.ON_OFF==1),2) - mean(AllFramesFT(:,MRS_struct.fids.ON_OFF==0),2))/2;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (ON-OFF)/2;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,MRS_struct.fids.ON_OFF==1),2) - mean(AllFramesFT(:,MRS_struct.fids.ON_OFF==0),2))/2;
             
             % Target 2: GSH or Lac
             OFF2 = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF2==0)' & MRS_struct.out.reject(:,ii)==0), 2);
             ON2  = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF2==1)' & MRS_struct.out.reject(:,ii)==0), 2);
             
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).off(ii,:) = OFF2;
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).on(ii,:)  = ON2;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).off(ii,:) = OFF2;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).on(ii,:)  = ON2;
             
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = (ON2-OFF2)/2;
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = (mean(AllFramesFT(:,MRS_struct.fids.ON_OFF2==1),2) - mean(AllFramesFT(:,MRS_struct.fids.ON_OFF2==0),2))/2;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = (ON2-OFF2)/2;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = (mean(AllFramesFT(:,MRS_struct.fids.ON_OFF2==1),2) - mean(AllFramesFT(:,MRS_struct.fids.ON_OFF2==0),2))/2;
             
             % Remove residual water from diff and diff_noalign spectra using HSVD -- GO & MGSaleh 2016
             if MRS_struct.p.water_removal
                 % Save diff spectra before water filtering
-                %MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_unfilt_h2o(ii,:)  = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
-                %MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_unfilt_h2o(ii,:) = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:);
+                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_unfilt_h2o(ii,:)  = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
+                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_unfilt_h2o(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:);
                 
-                %MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign_unfilt_h2o(ii,:)  = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:);
-                %MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign_unfilt_h2o(ii,:) = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:);
+                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign_unfilt_h2o(ii,:)  = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:);
+                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign_unfilt_h2o(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:);
                 
                 % Convert spectra to time domain, apply water filter, convert back to frequency domain
                 % diff spectra
-                MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
+                MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
                     MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
                 
-                MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')), ...
+                MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')), ...
                     MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
                 
                 % diff_noalign spectra
-                MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
+                MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
                     MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
                 
-                MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:).')), ...
+                MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:).')), ...
                     MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)));
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)));
                 
                 % Need to perform baseline correction
                 freqbounds = MRS_struct.spec.freq <= 10 & MRS_struct.spec.freq >= 9;
                 
-                baseMean_diff = mean(real(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,freqbounds)));
-                baseMean_diffnoalign = mean(real(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,freqbounds)));
+                baseMean_diff = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,freqbounds)));
+                baseMean_diffnoalign = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,freqbounds)));
                 
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) - baseMean_diff;
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) - baseMean_diffnoalign;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) - baseMean_diff;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) - baseMean_diffnoalign;
             end
             
         else
             
             if strcmp(MRS_struct.p.target, 'GSH')
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) = mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)-MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2;
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) = mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)-MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2)-mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;
                 
                 %For GSH data, the residual water signal in the DIFF spectrum is
                 %helpful for an additional phasing step... and messes up fitting
                 %otherwise. MGSaleh 2016 moved it to this place for
                 %completeness
-                residual_phase = pi-atan2(imag(sum(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))),real(sum(MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))));
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))*exp(1i*residual_phase);
+                residual_phase = pi-atan2(imag(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))),real(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))));
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))*exp(1i*residual_phase);
                 
                 if MRS_struct.p.Water_Positive == 0
-                    MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = -MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
+                    MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = -MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
                 end
             else
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)' & MRS_struct.out.reject(:,ii)==0), 2);
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)  = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)' & MRS_struct.out.reject(:,ii)==0), 2);
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)' & MRS_struct.out.reject(:,ii)==0), 2);
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)  = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)' & MRS_struct.out.reject(:,ii)==0), 2);
                 
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) - MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2;
-                MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2) - mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) - MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2) - mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;
             end
             
         end
     end
     
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %   6. Build Gannet Output
+    %   6. Build GannetLoad Output
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if ishandle(101)
         clf(101) % MM (170629)
     end
     h=figure(101);
-    set(h, 'Units', 'Normalized', 'Position', [(1-0.3906)/2, (1-0.4910)/2, 0.3906, 0.4910]); % MM (170629)
+    % MM (170629) Open figure in center of screen
+    scr_sz = get(0, 'ScreenSize');
+    fig_w = 1000;
+    fig_h = 707;
+    set(h, 'Position', [(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
     set(h,'Color',[1 1 1]);
     figTitle = 'GannetLoad Output';
     set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
     
     %Top Left
     ha=subplot(2,2,1);
-    Gannetplotprepostalign(MRS_struct, reg, ii);
+    GannetPlotPrePostAlign(MRS_struct, vox, ii);
     title({'Edited Spectrum';'(pre- and post-align)'});
     set(gca,'YTick',[]);
     
@@ -513,8 +520,8 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
         tmp = [': ' MRS_struct.gabafile{ii}];
     end
     tmp = regexprep(tmp,'_','-');
-    text(0, 0.9, 'Filename', 'FontName', 'Helvetica', 'FontSize' ,13);
-    text(0.275, 0.9, tmp, 'FontName', 'Helvetica', 'FontSize' ,13);
+    text(0, 0.9, 'Filename', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, 0.9, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': ' num2str(MRS_struct.p.Navg(ii)) ' averages'];
     text(0, 0.8, 'Navg', 'FontName', 'Helvetica', 'FontSize', 13);
@@ -527,20 +534,20 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     end
     
     tmp = [': '  MRS_struct.p.AlignTo];
-    text(0, 0.6, 'Alignment', 'FontName', 'Helvetica', 'FontSize' ,13);
-    text(0.275, 0.6, tmp, 'FontName', 'Helvetica', 'FontSize' ,13);
+    text(0, 0.6, 'Alignment', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, 0.6, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
-    tmp = [': ' num2str(MRS_struct.p.LB,2)];
-    text(0, 0.5, 'LB (Hz)', 'FontName', 'Helvetica', 'FontSize' ,13);
-    text(0.275, 0.5, tmp, 'FontName', 'Helvetica', 'FontSize' ,13);
+    tmp = [': ' num2str(MRS_struct.p.LB,2) ' Hz'];
+    text(0, 0.5, 'LB', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, 0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': '  num2str(sum(MRS_struct.out.reject(:,ii),1)) ];
-    text(0, 0.4, 'Rejects', 'FontName', 'Helvetica', 'FontSize' ,13);
-    text(0.275, 0.4, tmp, 'FontName', 'Helvetica', 'FontSize' ,13);
+    text(0, 0.4, 'Rejects', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, 0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': ' MRS_struct.versionload];
-    text(0,0.3, 'LoadVer', 'FontName', 'Helvetica', 'FontSize' ,13);
-    text(0.275, 0.3, tmp, 'FontName', 'Helvetica', 'FontSize' ,13);
+    text(0,0.3, 'LoadVer', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, 0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     script_path=which('GannetLoad');
     Gannet_circle_white=[script_path(1:(end-13)) '/GANNET_circle_white.jpg'];
@@ -610,14 +617,16 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
         set(hb,'FontName','Helvetica');
         set(hc,'FontName','Helvetica');
     end
+    
+    % Save PDF output
     set(gcf,'PaperUnits','inches');
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
     % MM (170201)
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
-        pdfname = ['MRSload_output/' fullpath '_load.pdf'];
+        pdfname = ['GannetLoad_output/' fullpath '_load.pdf'];
     else
-        pdfname = ['MRSload_output/' pfil_nopath  '_load.pdf'];
+        pdfname = ['GannetLoad_output/' pfil_nopath  '_load.pdf'];
     end
     saveas(h, pdfname);
     

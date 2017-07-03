@@ -1,9 +1,8 @@
-function [FitParams, rejectframe, residCr]  = FitCr(freq, FrameData, initx, MRS_struct)
-warning off;
+function [FitParams, rejectframe, residCr]  = FitCr(freq, FrameData, initx, LarmorFreq)
 %All parameters in initx are in standard units.
 % Conversion factors to FWHM in Hz, delta f0 in Hz, phase in degrees
-conv = [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq (180/pi) 1 1]; % MM (170131)
-initx=initx./conv;
+conv = [1 2*LarmorFreq LarmorFreq 180/pi 1 1]; % MM (170131)
+initx = initx./conv;
 
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
@@ -14,23 +13,13 @@ nframes = size(FrameData,2);
 FitParams = zeros(nframes,6);
 
 for jj = 1:nframes
-    % [fit_param, resnorm, resid, exitflag ]  = ...
-    %     lsqcurvefit(@(xdummy,ydummy) LorentzModel(xdummy, ydummy), initx, ...
-    % 		  freq', real(FrameData(:,jj)));
-    %120112 cje
-    %add lsqcurvefit initialisation here too, keep nlin initialisers
-    %separate from LSQ
-    
-    %   size(real(FrameData(:,jj)))
-    %   size(TwoLorentzModel(initx,freq'))
     initxLSQ = lsqcurvefit(@LorentzModel, initx, freq', real(FrameData(:,jj)), [], [], lsqopts);
     [FitParams(jj,:), residCr] = nlinfit(freq', real(FrameData(:,jj)), @LorentzModel, initxLSQ, nlinopts);
     
-    %fit_plot = LorentzModel(fit_param, freq);    
-    %  figure(3); plot(freq', real(FrameData(:,jj)), 'g', freq', fit_plot,'b');
+    %fit_plot = LorentzModel(fit_param, freq);
+    %figure(3); plot(freq', real(FrameData(:,jj)), 'g', freq', fit_plot,'b');
     %pause(0.8)
-    %  set(gca,'XDir','reverse');
-    %  input('next')
+    %set(gca,'XDir','reverse');
 end
 
 for kk=1:size(FitParams,1)
@@ -56,7 +45,7 @@ FitParams(:,1) = abs(FitParams(:,1));
 FitParams(:,2) = abs(FitParams(:,2));
 
 % Conversion factors to FWHM in Hz, delta f0 in Hz, phase in degrees
-conv = repmat([1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq (180/pi) 1 1], [nframes 1]); % MM (170125)
+conv = repmat([1 2*LarmorFreq LarmorFreq 180/pi 1 1], [nframes 1]); % MM (170125)
 FitParams = FitParams .* conv;
 
 % Reject any point where the fit params - area, fwhm, phase

@@ -11,7 +11,7 @@ MRS_struct.out.tissue.version= '20140730';
 
 for ii = 1:MRS_struct.ii
     
-[T1dir T1name T1ext] = fileparts(MRS_struct.mask.T1image{ii});
+[T1dir, T1name, T1ext] = fileparts(MRS_struct.mask.T1image{ii});
 
 %1 - take nifti from GannetCoRegister and segment it in spm
 
@@ -20,8 +20,8 @@ anatimage = MRS_struct.mask.T1image{ii};
 %check to see if segmentation done - if its not done, do it
 
 tmp = [T1dir '/c1' T1name T1ext];
-if exist(tmp) ~= 2
-    callspmsegmentation(anatimage)
+if exist(tmp,'var') ~= 2
+    CallSPMsegmentation(anatimage);
     garbage = [T1dir '/c4' T1name T1ext];
     delete(garbage)
     garbage = [T1dir '/c5' T1name T1ext];
@@ -109,7 +109,7 @@ figTitle = 'GannetSegement Output';
 set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
 % GABA plot
 
-h=subplot(2, 2, 1);    % a subplot of the voxel on the brain
+subplot(2, 2, 1);    % a subplot of the voxel on the brain
 
 % input=MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3));
 % size(input)
@@ -121,7 +121,7 @@ axis tight;
 axis off;
  
 
-h=subplot(2, 2, 3);    % replot of GABA fit spec
+subplot(2, 2, 3);    % replot of GABA fit spec
     z=abs(MRS_struct.spec.freq-3.55);
     lowerbound=find(min(z)==z);
     z=abs(MRS_struct.spec.freq-2.79);
@@ -130,12 +130,12 @@ h=subplot(2, 2, 3);    % replot of GABA fit spec
     freq=MRS_struct.spec.freq(1,freqbounds);
     plot( ...
         real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(ii,:)), ...
-        'k',freq,GaussModel_area(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
+        'k',freq,GaussModel(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
         
 zz=abs(MRS_struct.spec.freq-3.6);
 Glx_right=find(min(zz)==zz);
-zz=abs(MRS_struct.spec.freq-3.3);
-GABA_left=find(min(zz)==zz);
+%zz=abs(MRS_struct.spec.freq-3.3);
+%GABA_left=find(min(zz)==zz);
 zz=abs(MRS_struct.spec.freq-2.8);
 GABA_right=find(min(zz)==zz);
 %specbaseline = mean(real(SpectraToPlot(1,GABA_right:GABA_left)),2);
@@ -178,7 +178,7 @@ text(0,0.51, tmp, 'HorizontalAlignment', 'left', ...
 
 C = MRS_struct.gabafile{ii}; 
 if size(C,2) >30
-    [x y z] = fileparts(C);
+    [x, y, z] = fileparts(C);
 else
     y = MRS_struct.gabafile(ii);
 end
@@ -190,7 +190,7 @@ text(0,0.39, tmp, 'HorizontalAlignment', 'left', ...
         
 D = MRS_struct.mask.T1image{ii} ;
 if size(D,2) >30
-    [x y z] = fileparts(D);
+    [x, y, z] = fileparts(D);
 else
     y = MRS_struct.gabafile(ii);
 end
@@ -213,7 +213,7 @@ subplot(2,2,4)
     script_path=which('GannetFit');
     Gannet_circle_white=[script_path(1:(end-12)) '/GANNET_circle_white.jpg'];
     A_2=imread(Gannet_circle_white);
-    hax=axes('Position',[0.80, 0.05, 0.15, 0.15]);
+    axes('Position',[0.80, 0.05, 0.15, 0.15]);
     image(A_2);axis off; axis square;
 
 
@@ -283,25 +283,6 @@ set(gcf, 'PaperUnits', 'inches');
   
 
 end
-
-end
-
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%% GAUSS MODEL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function F = GaussModel_area(x,freq)
-
-% x(1) = gaussian amplitude
-% x(2) = 1/(2*sigma^2)
-% x(3) = centre freq of peak
-% x(4) = amplitude of linear baseline
-% x(5) = constant amplitude offset
-
-%F = x(1)*sqrt(-x(2)/pi)*exp(x(2)*(freq-x(3)).*(freq-x(3)))+x(4)*(freq-x(3))+x(5);
-F = x(1)*exp(x(2)*(freq-x(3)).*(freq-x(3)))+x(4)*(freq-x(3))+x(5);
 
 end
 

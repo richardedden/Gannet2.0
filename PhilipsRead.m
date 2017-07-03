@@ -18,9 +18,9 @@ MRS_struct.p.nrows = str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'averages')==1);
 MRS_struct.p.Navg(MRS_struct.ii) = MRS_struct.p.nrows * str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'repetition_time')==1);
-MRS_struct.p.TR = str2double(sparheader{sparidx+2});
+MRS_struct.p.TR(MRS_struct.ii) = str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'echo_time')==1); % Added by MGSaleh 2016.
-MRS_struct.p.TE = str2double(sparheader{sparidx+2}); % Added by MGSaleh 2016.
+MRS_struct.p.TE(MRS_struct.ii) = str2double(sparheader{sparidx+2}); % Added by MGSaleh 2016.
 sparidx=find(ismember(sparheader, 'synthesizer_frequency')==1); % Added by MGSaleh 2016.
 MRS_struct.p.LarmorFreq = str2double(sparheader{sparidx+2})/1e6; % Added by MGSaleh 2016.
 sparidx=find(ismember(sparheader, 'sample_frequency')==1);
@@ -50,10 +50,6 @@ MRS_struct.p.voxang(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
 MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);
 
-if nargin > 2
-    MRS_struct.p.Nwateravg = 1; %SDAT is average not sum
-end
-
 %undo time series phase cycling to match GE
 corrph = repmat([-1 1], [1 size(MRS_struct.fids.data,2)/2]);
 corrph = repmat(corrph, [size(MRS_struct.fids.data,1) 1]);
@@ -68,15 +64,12 @@ else
 end
 %Philips data appear to be phased already (ideal case)
 
-%If on-first - use the above...
-%If off-frst use:  FOR NOW, THIS DIDNT HELP...
-MRS_struct.fids.data = conj(MRS_struct.fids.data); %RE 110728 - empirical factor to scale 'like GE'
+MRS_struct.fids.data = conj(MRS_struct.fids.data);
 if nargin>2
     % load water data
+    MRS_struct.p.Nwateravg = 1; %SDAT is average not sum
     MRS_struct.fids.data_water = SDATread(fname_water, MRS_struct.p.npoints);
     MRS_struct.fids.data_water = MRS_struct.fids.data_water.*conj(MRS_struct.fids.data_water(1))./abs(MRS_struct.fids.data_water(1));
-    %MRS_struct.out.phase_water = conj(MRS_struct.fids.data_water(1))./abs(MRS_struct.fids.data_water(1));
-    %MRS_struct.fids.data = MRS_struct.fids.data.* MRS_struct.out.phase_water;
 end
 end
 

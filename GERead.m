@@ -79,10 +79,10 @@ fseek(fid, 1468, 'bof');
 p_hdr_value = fread(fid, 12, 'integer*4'); % byte offsets to start of sub-header structures
 fseek(fid, p_hdr_value(10), 'bof'); % set position to start of rdb_hdr_image
 t_hdr_value = fread(fid, p_hdr_value(1)-p_hdr_value(10), 'integer*4');
-if isequal(MRS_struct.p.GE.rdbm_rev_num, 16)    
+if MRS_struct.p.GE.rdbm_rev_num == 16   
     MRS_struct.p.TE(ii) = t_hdr_value(193)/1e3;
     MRS_struct.p.TR(ii) = t_hdr_value(191)/1e3;
-elseif isequal(MRS_struct.p.GE.rdbm_rev_num, 24)
+elseif MRS_struct.p.GE.rdbm_rev_num == 24
     MRS_struct.p.TE(ii) = t_hdr_value(267)/1e3;
     MRS_struct.p.TR(ii) = t_hdr_value(265)/1e3;
 end
@@ -90,13 +90,13 @@ end
 % MM (170127): Find voxel dimensions and edit pulse parameters
 fseek(fid, p_hdr_value(8), 'bof'); % set position to start of rdb_hdr_exam
 o_hdr_value = fread(fid, p_hdr_value(9)-p_hdr_value(8), 'real*4');
-if isequal(MRS_struct.p.GE.rdbm_rev_num, 16)
+if MRS_struct.p.GE.rdbm_rev_num == 16
     MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
     MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(833);
     MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(834:835)';
     MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq) + 4.68;
     MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(836)/1e3;
-elseif isequal(MRS_struct.p.GE.rdbm_rev_num, 24)
+elseif MRS_struct.p.GE.rdbm_rev_num == 24
     MRS_struct.p.voxdim(ii,:) = o_hdr_value(1228:1230)';
     MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(1239);
     MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(1240:1241)';
@@ -121,8 +121,6 @@ mslice_size = slice_size*slices_in_pass;
 my_slice = 1;
 my_echo = 1;
 my_frame = 1;
-
-FullData=zeros(nreceivers, MRS_struct.p.npoints, (MRS_struct.p.nrows-my_frame+1)*nechoes); %RTN nechoes multiplication;
 
 %Start to read data into Eightchannel structure.
 totalframes=(MRS_struct.p.nrows-my_frame+1)*nechoes; % RTN nechoes mulitply;

@@ -12,13 +12,13 @@ baseline0 = x(5);
 baseline1 = x(6);
 
 Absorption = 1/(2*pi) * area * ones(size(freq)) .* hwhm ./ ((freq-f0).^2 + hwhm.^2)+ ...
-    1/(2*pi) * area *x(7) * ones(size(freq)) .* hwhm ./ ((freq-f0-0.18).^2 + hwhm.^2);
+    1/(2*pi) * area * x(7) * ones(size(freq)) .* hwhm ./ ((freq-f0-0.18).^2 + hwhm.^2);
 
 
 Dispersion = 1/(2*pi) * area * (freq-f0) ./ ((freq-f0).^2 + hwhm.^2) + ...
     1/(2*pi) * area * x(7) * (freq-f0-0.18) ./ ((freq-f0-0.18).^2 + hwhm.^2);
 
-Lorentz = Absorption*cos(phase) + Dispersion * sin(phase) ...
+Lorentz = Absorption*cos(phase) + Dispersion*sin(phase) ...
 	  + baseline0 + baseline1*(freq-f0);
 
 % from Lorentz component of LorentzGauss model

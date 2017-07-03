@@ -19,7 +19,6 @@
         FitParams(jj,:) = fit_param;
         FitParams2(jj,:) = fit_param;
         fit_plot = LorentzModel(fit_param, freq);
-        %fit_plot = LorentzModel_nolinear(fit_param, freq);
         
           %figure(3); subplot(1,2,1);plot(freq', real(FrameData(:,jj)), 'g', freq', fit_plot,'b');
           %pause(2)

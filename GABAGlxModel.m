@@ -1,4 +1,5 @@
 function F = GABAGlxModel(x,freq)
+% Function for GABA+Glx model
 
 % Three Gaussians
 %  x(1) = gaussian amplitude 1
@@ -15,7 +16,7 @@ function F = GABAGlxModel(x,freq)
 %  x(12) = sine term
 %  x(13) = cosine term
 
-% MM (150211): Allowing peaks to vary individually seems to work better than keeping
+% MM: Allowing peaks to vary individually seems to work better than keeping
 % the distance fixed (i.e., including J in the function)
 
 F = x(1)*exp(x(2)*(freq-x(3)).*(freq-x(3))) + ...

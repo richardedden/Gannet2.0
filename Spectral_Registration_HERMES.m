@@ -19,7 +19,8 @@ end
 % Pre-allocate memory
 ii = MRS_struct.ii;
 MRS_struct.fids.data_align = zeros(size(MRS_struct.fids.data));
-MRS_struct.out.SpecReg.ParsFit = zeros(size(MRS_struct.fids.data,2),2);
+MRS_struct.out.SpecReg.freq(ii,:) = zeros(1, size(MRS_struct.fids.data,2));
+MRS_struct.out.SpecReg.phase(ii,:) = zeros(1, size(MRS_struct.fids.data,2));
 zMSE = zeros(1,size(MRS_struct.fids.data,2));
 CorrParsML = zeros(size(MRS_struct.fids.data,2),2);
 count = 0;
@@ -55,8 +56,8 @@ while SpecRegLoop > -1
     noise = mean(noise);
     signal = mean(abs(DataToAlign(:,SubspecToAlign == SpecRegLoop)),2);
     SNR = signal./noise;
-    N = find(SNR > 3);
-    tMax = N(end);
+    n = find(SNR > 3);
+    tMax = n(end);
     
     % 'Flatten' complex data for use in nlinfit
     clear flatdata;
@@ -142,7 +143,8 @@ while SpecRegLoop > -1
     end
     
     corrloop_d = find(SubspecToAlign == SpecRegLoop);
-    MRS_struct.out.SpecReg.ParsFit(corrloop_d,:,ii) = parsFit;
+    MRS_struct.out.SpecReg.freq(ii,corrloop_d) = parsFit(:,1);
+    MRS_struct.out.SpecReg.phase(ii,corrloop_d) = parsFit(:,2);
     CorrParsML(corrloop_d,1) = parsFit(:,1) - MRS_struct.out.MLalign.f.p(count,2,ii)';
     CorrParsML(corrloop_d,2) = parsFit(:,2) - MRS_struct.out.MLalign.ph.p(count,2,ii)';
     zMSE(corrloop_d) = zscore(MSE); % standardized MSEs
@@ -249,22 +251,4 @@ end
 fprintf('\n');
 
 end
-
-
-% function output = FreqPhaseShiftNest(pars,input)
-% % Heavily copied from jn_freqPhaseShiftNest of Jamie Near, McGill.
-% 
-% f = pars(1); % frequency shift [Hz]
-% p = pars(2); % phase shift [deg]
-% 
-% dwelltime = input.dwelltime;
-% t = 0:dwelltime:(length(input.data)/2-1)*dwelltime;
-% input.data = reshape(input.data, [length(input.data)/2, 2]);
-% fid = input.data(:,1) + 1i*input.data(:,2);
-% 
-% y = fid.*exp(1i*pi*(t'*f*2+p/180));
-% output = [real(y), imag(y)];
-% output = output(:);
-% 
-% end
 

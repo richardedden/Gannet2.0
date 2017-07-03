@@ -41,21 +41,30 @@ if nargin < 1
 end
 
 % Check if data is MEGA- or HERMES-edited
-HERMES = MRS_struct.p.HERMES;
+if isfield(MRS_struct.p,'HERMES')
+    HERMES = MRS_struct.p.HERMES;
+else
+    HERMES = 0;
+end
 
 % Set some defaults
 defaultTarget = MRS_struct.p.target;
-defaultTarget2 = MRS_struct.p.target2;
-defaultnSpec = eval(['1:size(MRS_struct.spec.' defaultTarget '.diff,1)']);
+if HERMES; defaultTarget2 = MRS_struct.p.target2; end
+if HERMES
+    defaultnSpec = eval(['1:size(MRS_struct.spec.' defaultTarget '.diff,1)']);
+else
+    defaultnSpec = 1:size(MRS_struct.spec.diff,1);
+end
 defaultFreqLim = [0.5 4.5];
 defaultSignalLim = [-0.05 0.03];
 defaultPlotAvg = false;
-expectedTargets = {'GABAGlx', 'GSH'};
+expectedTargets = {'GABA', 'Glx', 'GABAGlx', 'GSH'};
 grey = [0.6 0.6 0.6];
 shading = 0.3;
 
 % Parse input arguments
 p = inputParser;
+p.CaseSensitive = false;
 p.addParamValue('target', defaultTarget, @(x) any(validatestring(x,expectedTargets))); %#ok<*NVREPL>
 if HERMES; p.addParamValue('target2', defaultTarget2, @(x) any(validatestring(x,expectedTargets))); end
 p.addParamValue('nSpec', defaultnSpec);
@@ -86,8 +95,36 @@ if HERMES
 end
 
 switch target
+    case 'GABA'
+        lb = find(specFreq <= 3.55);
+        ub = find(specFreq >= 2.79);
+        range = intersect(lb,ub);
+        modelFreq = specFreq(range);
+        
+        % If nSpec > 1, find mean + stdevs
+        if numel(nSpec) > 1 && plotAvg
+            m = mean(MRS_struct.spec.diff,1);
+            s = std(MRS_struct.spec.diff,0,1);
+            sUB = m + s;
+            sLB = m - s;
+        end
+        
+        if plotAvg
+            hold on;
+            patch([specFreq fliplr(specFreq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
+            plot(specFreq, m, 'k');
+            hold off;
+        else
+            hold on;
+            for ii = nSpec
+                plot(specFreq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
+                    modelFreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(nSpec(ii),:),modelFreq), 'r');
+            end
+            hold off;
+        end
+        
     case 'GABAGlx'
-        lb = find(specFreq <= 4.10); % This has to be same as the limits set in Gannetfit for GABAGlx  -- MM and MGSaleh 2016
+        lb = find(specFreq <= 4.10);
         ub = find(specFreq >= 2.79);
         range = intersect(lb,ub);
         modelFreq = specFreq(range);
@@ -106,7 +143,7 @@ switch target
             plot(specFreq, m, 'k');
             hold off;
         else
-            for ii = 1:length(nSpec)
+            for ii = nSpec
                 hold on;
                 plot(specFreq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
                     modelFreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(nSpec(ii),:),modelFreq), 'r');

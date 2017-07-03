@@ -1,10 +1,7 @@
-function [] = callspmsegmentation(anatimage)
-
-
-
+function CallSPMsegmentation(anatimage)
 
 %get file handling for spm sorted out
-[spmhome spmdir spmect] = fileparts(which('spm'));
+spmhome = fileparts(which('spm'));
 
 matlabbatch{1}.spm.spatial.preproc.data = {[anatimage ',1']};
 matlabbatch{1}.spm.spatial.preproc.output.GM = [0 0 1];
