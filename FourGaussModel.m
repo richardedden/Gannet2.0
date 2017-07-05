@@ -5,14 +5,10 @@ function F = FourGaussModel(x,freq)
 % x(3) = centre freq of peak
 % Gaussian 2 has same width as 1, 0.75 height and shift+0.19ppm
 % x(5-7) = Lactate
-% 
-
 % x(8) = offset
 % x(9) = slope
 % x(10) = quadratic
 
-
-%F = x(1)*sqrt(-x(2)/pi)*exp(x(2)*(freq-x(3)).*(freq-x(3)))+x(4)*(freq-x(3))+x(5);
 F = x(1)*exp(x(2)*(freq-x(3)).*(freq-x(3))) + ...
     0.66*x(1)*exp(x(2)*(freq-(x(3)+0.19)).*(freq-(x(3)+0.19))) + ...
     x(4)*exp(x(5)*(freq-x(6)).*(freq-x(6))) +...

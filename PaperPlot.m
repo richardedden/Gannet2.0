@@ -85,7 +85,7 @@ plotAvg = p.Results.plotAvg;
 % 2. Plot spectra
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-specFreq = MRS_struct.spec.freq(1,:);
+freq = MRS_struct.spec.freq;
 h = figure(200);
 set(h, 'Color', 'w', 'Units', 'Normalized', 'OuterPosition', [0 0.4 1 1-0.4]);
 clf;
@@ -96,10 +96,7 @@ end
 
 switch target
     case 'GABA'
-        lb = find(specFreq <= 3.55);
-        ub = find(specFreq >= 2.79);
-        range = intersect(lb,ub);
-        modelFreq = specFreq(range);
+        modelFreq = freq(freq <= 3.55 & freq >= 2.79);
         
         % If nSpec > 1, find mean + stdevs
         if numel(nSpec) > 1 && plotAvg
@@ -111,23 +108,20 @@ switch target
         
         if plotAvg
             hold on;
-            patch([specFreq fliplr(specFreq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
-            plot(specFreq, m, 'k');
+            patch([freq fliplr(freq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
+            plot(freq, m, 'k');
             hold off;
         else
             hold on;
             for ii = nSpec
-                plot(specFreq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
+                plot(freq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
                     modelFreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(nSpec(ii),:),modelFreq), 'r');
             end
             hold off;
         end
         
     case 'GABAGlx'
-        lb = find(specFreq <= 4.10);
-        ub = find(specFreq >= 2.79);
-        range = intersect(lb,ub);
-        modelFreq = specFreq(range);
+        modelFreq = freq(freq <= 4.1 & freq >= 2.79);
         
         % If nSpec > 1, find mean + stdevs
         if numel(nSpec) > 1 && plotAvg
@@ -139,13 +133,13 @@ switch target
         
         if plotAvg
             hold on;
-            patch([specFreq fliplr(specFreq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
-            plot(specFreq, m, 'k');
+            patch([freq fliplr(freq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
+            plot(freq, m, 'k');
             hold off;
         else
             for ii = nSpec
                 hold on;
-                plot(specFreq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
+                plot(freq, MRS_struct.spec.GABAGlx.diff(nSpec(ii),:), 'k', ...
                     modelFreq, GABAGlxModel(MRS_struct.out.GABA.ModelFit(nSpec(ii),:),modelFreq), 'r');
                 hold off;
             end
@@ -188,13 +182,13 @@ if HERMES
         
         if plotAvg
             hold on;
-            patch([specFreq fliplr(specFreq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
-            plot(specFreq, m, 'k');
+            patch([freq fliplr(freq)], [sUB fliplr(sLB)], 1, 'FaceColor', grey+(1-grey)*(1-shading), 'EdgeColor', 'none');
+            plot(freq, m, 'k');
             hold off;
         else
             for ii = 1:length(nSpec)
                 hold on;
-                plot(specFreq, MRS_struct.spec.GSH.diff(nSpec(ii),:), 'k'); % MM: need to add model fit
+                plot(freq, MRS_struct.spec.GSH.diff(nSpec(ii),:), 'k'); % MM: need to add model fit
                 hold off;
             end
         end

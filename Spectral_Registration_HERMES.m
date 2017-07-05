@@ -38,8 +38,8 @@ ub = [Inf Inf];
 
 % Optimization options
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts, 'MaxIter', 1e4);
-mleopts  = statset('MaxIter', 1e4, 'MaxFunEvals', 1e4);
+nlinopts = statset(nlinopts,'MaxIter',1e5);
+mleopts  = statset('MaxIter',1e5,'MaxFunEvals',1e5);
 
 % Set dimensions of figures of histograms
 if strcmpi(showPlots,'y')

@@ -54,25 +54,17 @@ T2w_CSF = 0.503;
 % concw_WM = 0.65 * 55.51 mol/kg = 36.08
 % concw_CSF = 0.97 * 55.51 mol/kg = 53.84
 
-
-
-T1_GABA = 0.80 ; % "empirically determined"...! Gives same values as RE's spreadsheet
-% ... and consistent with Cr-CH2 T1 of 0.8 (Traber, 2004)
-%Not yet putting in measured GABA T1, but it is in the pipeline - 1.35ish
-
-%T2_GABA = 0.13; % from occipital Cr-CH2, Traber 2004
-T2_GABA = 0.088; % from JMRI paper 2011 Eden et al.
+T1_GABA = 1.31; % from Puts et al. (2013, JMRI)
+T2_GABA = 0.088; % from Edden et al. (2012, JMRI)
 
 concw_GM = 43.30*1000;
 concw_WM = 36.08*1000;
 concw_CSF = 53.84*1000;
 
-
 for ii = 1: MRS_struct.ii
 
-
-EditingEff = 0.5; % GannetFit, Gannet1
-MM = 0.45;        % GannetFit, Gannet1
+EditingEff = 0.5;
+MM = 0.45;
 fracGM = MRS_struct.out.tissue.GMfra(ii);
 fracWM = MRS_struct.out.tissue.WMfra(ii);
 fracCSF = MRS_struct.out.tissue.CSFfra(ii);
@@ -87,7 +79,7 @@ MRS_struct.Quantify.QuantGABA_iu(ii) = (MRS_struct.out.GABAArea(ii)  ./  MRS_str
     fracWM *concw_WM * (1-exp(-TR/T1w_WM)) * (exp(-TE/T2w_WM))/( (1-exp(-TR/T1_GABA)) * (exp(-TE/T2_GABA)))  ...
     +      ...
     fracCSF *concw_CSF * (1-exp(-TR/T1w_CSF)) * (exp(-TE/T2w_CSF))/( (1-exp(-TR/T1_GABA)) * (exp(-TE/T2_GABA)))  ...
-    ) ;
+    );
 
 MRS_struct.Quantify.QuantCorrGABA_iu(ii) = MRS_struct.Quantify.QuantGABA_iu(ii) / (fracGM +alpha*fracWM);
 
@@ -202,7 +194,7 @@ tmp = ['GABAconc(iu) alpha corrected:  ' num2str(MRS_struct.Quantify.QuantCorrGA
     text(0, 0.67, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
-tmp = ['    (uses tissue specific relaxation and visibility constants)' ];
+tmp = '    (uses tissue specific relaxation and visibility constants)';
     text(0, 0.6, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
@@ -210,7 +202,7 @@ tmp = ['GABAconc(iu) a-corrected, ave voxel norm:  ' num2str(MRS_struct.Quantify
     text(0, 0.5, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
-tmp = ['    (uses tissue specific relaxation and visibility constants)' ];
+tmp = '    (uses tissue specific relaxation and visibility constants)' ;
     text(0, 0.43, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
@@ -224,7 +216,7 @@ MRS_struct.Quantify.QuantNormTissCorrGABA_iu(ii) =  MRS_struct.Quantify.QuantGAB
 
 C = MRS_struct.gabafile{ii}; 
 if size(C,2) >30
-    [x y z] = fileparts(C);
+    [x, y, z] = fileparts(C);
 else
     y = MRS_struct.gabafile(ii);
 end
@@ -236,7 +228,7 @@ text(0,0.25, tmp, 'HorizontalAlignment', 'left', ...
         
 D = MRS_struct.mask.T1image{ii} ;
 if size(D,2) >30
-    [x y z] = fileparts(D);
+    [x, y, z] = fileparts(D);
 else
     y = MRS_struct.gabafile(ii);
 end

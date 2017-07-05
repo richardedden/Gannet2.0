@@ -13,8 +13,8 @@ nframes = size(FrameData,2);
 FitParams = zeros(nframes,6);
 
 for jj = 1:nframes
-    initxLSQ = lsqcurvefit(@LorentzModel, initx, freq', real(FrameData(:,jj)), [], [], lsqopts);
-    [FitParams(jj,:), residCr] = nlinfit(freq', real(FrameData(:,jj)), @LorentzModel, initxLSQ, nlinopts);
+    initx = lsqcurvefit(@LorentzModel, initx, freq', real(FrameData(:,jj)), [], [], lsqopts);
+    [FitParams(jj,:), residCr] = nlinfit(freq', real(FrameData(:,jj)), @LorentzModel, initx, nlinopts);
     
     %fit_plot = LorentzModel(fit_param, freq);
     %figure(3); plot(freq', real(FrameData(:,jj)), 'g', freq', fit_plot,'b');

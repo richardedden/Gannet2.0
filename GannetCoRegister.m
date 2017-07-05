@@ -1,5 +1,4 @@
-
-function MRS_struct = GannetCoRegister(MRS_struct,nii_name,rot_folder)
+function MRS_struct = GannetCoRegister(MRS_struct, nii_name, rot_folder)
 
 %Coregistration of MRS voxel volumes to imaging datasets, based on headers. 
 

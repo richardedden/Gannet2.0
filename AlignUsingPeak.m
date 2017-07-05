@@ -9,7 +9,7 @@ switch MRS_struct.p.AlignTo
         lb=find(min(z)==z);
         z=abs(MRS_struct.spec.freq-1.76);
         ub=find(min(z)==z);
-        Initx = [ 50 0.1 PEAK_ppm 0 0 0 ];
+        Initx = [50 0.1 PEAK_ppm 0 0 0];
         
     case 'Cr'
         PEAK_ppm=3.02;
@@ -18,7 +18,7 @@ switch MRS_struct.p.AlignTo
         lb=find(min(z)==z);
         z=abs(MRS_struct.spec.freq-2.72);
         ub=find(min(z)==z);
-        Initx = [ 30 0.05 PEAK_ppm 0 0 0 ];
+        Initx = [30 0.05 PEAK_ppm 0 0 0];
         
     case 'Cho'
         PEAK_ppm=3.2;
@@ -27,7 +27,7 @@ switch MRS_struct.p.AlignTo
         lb=find(min(z)==z);
         z=abs(MRS_struct.spec.freq-3.1);
         ub=find(min(z)==z);
-        Initx = [ 30 0.05 PEAK_ppm 0 0 0 ];
+        Initx = [30 0.05 PEAK_ppm 0 0 0];
 end
 %Set initial parameters by fitting the sum
 
@@ -90,7 +90,6 @@ CrMeanSpecFit = FitCr(freqrange, CrMeanSpec, Init);
 
 %Some Output
 MRS_struct.out.CrFWHMHz(MRS_struct.ii)=CrMeanSpecFit(2);
-
 
 %plot the models.
 %     Models=zeros(size(Data2bFit));

@@ -41,12 +41,12 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.versionload = '170628'; % set to date when final updates have been made
+MRS_struct.versionload = '170705'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.gabafile = gabafile;
 MRS_struct = GannetPreInitialise(MRS_struct);
 
-if MRS_struct.p.PRIAM % Deciding how regions are there -- MGSaleh 2016
+if MRS_struct.p.PRIAM % deciding how many voxels there are -- MGSaleh 2016
     vox = {MRS_struct.p.Vox};
 else
     vox = {MRS_struct.p.Vox{1}};
@@ -94,7 +94,7 @@ end
 %   3. Some housekeeping
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% create dir for output
+% Create dir for output
 if ~exist('./GannetLoad_output','dir')
     mkdir GannetLoad_output;
 end
@@ -104,11 +104,12 @@ end
 %   4. Load data from files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
+for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     
     MRS_struct.ii = ii;
     
     switch MRS_struct.p.vendor
+        
         case 'GE'
             MRS_struct = GERead(MRS_struct, gabafile{ii});
             WaterData = MRS_struct.fids.data_water;
@@ -121,6 +122,7 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
+            
         case 'Siemens_twix'
             if exist('waterfile','var')
                 MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii}, waterfile{ii});
@@ -128,7 +130,8 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
             else
                 MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii});
             end
-            if MRS_struct.p.Water_Positive == 0 % MM (160914)
+            % MM (160914): Need to set Water_Positive based on water signal
+            if MRS_struct.p.Water_Positive == 0
                 MRS_struct.fids.data = -MRS_struct.fids.data;
             end
             FullData = MRS_struct.fids.data;
@@ -139,6 +142,7 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
+            
         case 'Siemens'
             if exist('waterfile','var')
                 MRS_struct.p.Reference_compound = 'H2O';
@@ -149,8 +153,6 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                         MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
                 end
                 MRS_struct.p.Nwateravg = 1;
-                MRS_struct.out.phase{ii} = 0;
-                MRS_struct.out.phase_firstorder(ii) = 0;
             else
                 MRS_struct.p.Reference_compound = 'Cr';
                 switch MRS_struct.p.ONOFForder
@@ -171,14 +173,15 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF = [0 1];
             end
+            
         case 'Philips'
-            %Need to set Water_Positive based on water signal
             if strcmpi(MRS_struct.p.Reference_compound,'H2O')
                 MRS_struct = PhilipsRead(MRS_struct, gabafile{ii}, waterfile{ii});
                 WaterData = MRS_struct.fids.data_water;
             else
                 MRS_struct = PhilipsRead(MRS_struct, gabafile{ii});
             end
+            % Need to set Water_Positive based on water signal
             if MRS_struct.p.Water_Positive == 0
                 MRS_struct.fids.data = -MRS_struct.fids.data;
             end
@@ -187,7 +190,7 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'onfirst'
                     if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
                         if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
-                            % 1=?, 2=?, 3=?, 4=? (MM: 170628)
+                            % 1=?, 2=?, 3=?, 4=? (MM: 170703)
                             MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                             MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                         elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
@@ -200,7 +203,7 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                 case 'offfirst'
                     if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
                         if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
-                            % 1=ExpC, 2=ExpB, 3=ExpA, 4=ExpD (MM: 170629)
+                            % 1=ExpC, 2=ExpB, 3=ExpA, 4=ExpD (MM: 170703)
                             MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                             MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                         elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
@@ -211,6 +214,7 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
                         MRS_struct.fids.ON_OFF = repmat([0 1], [1 size(MRS_struct.fids.data,2)/2]);
                     end
             end
+            
         case 'Philips_data'
             if exist('waterfile','var')
                 MRS_struct.p.Reference_compound = 'H2O';
@@ -247,7 +251,6 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     % Finish processing water data
     if strcmpi(MRS_struct.p.Reference_compound,'H2O')
         for kk = 1:length(vox)
-            
             if strcmpi(MRS_struct.p.vendor,'GE')
                 ComWater = mean(WaterData,2);
             elseif strcmpi(MRS_struct.p.vendor,'Siemens')
@@ -286,15 +289,15 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
             % Line-broadening, zero-filling and FFT
             ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
             MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
-            
         end
-    end %End of H20 reference loop
+    end %End of H2O reference loop
     
     % Line-broadening, zero-filling and FFT
     FullData = FullData .* repmat((exp(-time'*MRS_struct.p.LB*pi)), [1 size(FullData,2)]);
     MRS_struct.fids.FullData = FullData;
     AllFramesFT = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
-    % work out frequency scale
+    
+    % Work out frequency scale
     freqrange = MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
     MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
     % MM (170119)
@@ -330,23 +333,25 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
             AllFramesFTrealign = AllFramesFT;
     end
     
+    % MM (170703)
     freqWaterRange = MRS_struct.spec.freq(water_range);
-    MRS_struct.fids.waterfreq(ii,:) = freqWaterRange(FrameMaxPos); % to be used for the output figure
-    % MM: Estimate average amount of F0 offset (170629)
+    MRS_struct.fids.waterfreq(ii,:) = freqWaterRange(FrameMaxPos);
+    
+    % MM (170629): Estimate average amount of F0 offset
     if any(strcmp(MRS_struct.p.vendor,{'Siemens','Siemens_twix'}))
         MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.7); % Siemens assumes 4.7 ppm as F0
     else
         MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.68);
     end
     
-    %Frame-by-Frame alignment
+    % Frame-by-frame alignment
     switch MRS_struct.p.AlignTo
         case 'Cr'
             [AllFramesFTrealign, MRS_struct] = AlignUsingPeak(AllFramesFTrealign,MRS_struct);
-            %AllFramesFTrealign=AlignUsingCr(AllFramesFTrealign,MRS_struct.p.ONOFForder,n);
+            %AllFramesFTrealign = AlignUsingCr(AllFramesFTrealign,MRS_struct.p.ONOFForder,n);
         case 'Cho'
             [AllFramesFTrealign, MRS_struct] = AlignUsingPeak(AllFramesFTrealign,MRS_struct);
-        case 'H20'
+        case 'H2O'
             [AllFramesFTrealign, MRS_struct] = AlignUsingH2O(AllFramesFTrealign,MRS_struct);
         case 'NAA'
             [AllFramesFTrealign, MRS_struct] = AlignUsingPeak(AllFramesFTrealign,MRS_struct);
@@ -355,14 +360,13 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
         case 'SpecRegDual'
             %Dual-channel Spectral Registration is applied separately to ON and OFF and they are coregistered after...
             [AllFramesFTrealign, MRS_struct] = Spectral_Registration(MRS_struct,0,1);
-        case 'SpecRegHERMES'
+        case 'SpecRegHERMES' % MM (170703)
             [AllFramesFTrealign, MRS_struct] = Spectral_Registration_HERMES(MRS_struct);
-    end %end of switch for alignment
+    end % end of switch for alignment
     
-    %Separate ON/OFF data and generate DIFF spectra
-    %To determine the output depending on the type of acquistion used -- MGSaleh 2016
-    for kk = 1:length(vox)
-        if MRS_struct.p.HERMES % MGSaleh & MM 2016
+    % Separate ON/OFF data and generate DIFF spectra
+    for kk = 1:length(vox) % loop over voxels -- MGSaleh 2016
+        if MRS_struct.p.HERMES % MGSaleh 2016, MM (170703)
             
             % Target 1: GABA or GSH
             OFF = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)' & MRS_struct.out.reject(:,ii)==0), 2);
@@ -386,40 +390,41 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
             
             % Remove residual water from diff and diff_noalign spectra using HSVD -- GO & MGSaleh 2016
             if MRS_struct.p.water_removal
-                % Save diff spectra before water filtering
+                % Save DIFF spectra before water filtering
                 %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_unfilt_h2o(ii,:)  = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
                 %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_unfilt_h2o(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:);
                 
                 %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign_unfilt_h2o(ii,:)  = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:);
                 %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign_unfilt_h2o(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:);
                 
-                % Convert spectra to time domain, apply water filter, convert back to frequency domain
-                % diff spectra
+                % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
-                    MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')), ...
-                    MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
                 
-                % diff_noalign spectra
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw/1000, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)));
                 
-                % Need to perform baseline correction
+                % MM (170703): Need to perform baseline correction on filtered data
                 freqbounds = MRS_struct.spec.freq <= 10 & MRS_struct.spec.freq >= 9;
+                baseMean_diff1 = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,freqbounds)));
+                baseMean_diffnoalign1 = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,freqbounds)));
+                baseMean_diff2 = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,freqbounds)));
+                baseMean_diffnoalign2 = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,freqbounds)));
                 
-                baseMean_diff = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,freqbounds)));
-                baseMean_diffnoalign = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,freqbounds)));
-                
-                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) - baseMean_diff;
-                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) - baseMean_diffnoalign;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) - baseMean_diff1;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) - baseMean_diffnoalign1;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) - baseMean_diff2;
+                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) - baseMean_diffnoalign2;
             end
             
         else
@@ -459,8 +464,8 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     if ishandle(101)
         clf(101) % MM (170629)
     end
-    h=figure(101);
-    % MM (170629) Open figure in center of screen
+    h = figure(101);
+    % MM (170629): Open figure in center of screen
     scr_sz = get(0, 'ScreenSize');
     fig_w = 1000;
     fig_h = 707;
@@ -469,51 +474,48 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     figTitle = 'GannetLoad Output';
     set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
     
-    %Top Left
-    ha=subplot(2,2,1);
+    % Top left
+    ha = subplot(2,2,1);
     GannetPlotPrePostAlign(MRS_struct, vox, ii);
     title({'Edited Spectrum';'(pre- and post-align)'});
     set(gca,'YTick',[]);
     
-    %Top Right
-    hb=subplot(2,2,2);
+    % Top right
+    hb = subplot(2,2,2);
     rejectframesplot = (1./MRS_struct.out.reject(:,ii).') .*  MRS_struct.fids.waterfreq(ii,:);
     plot(1:size(FullData,2), MRS_struct.fids.waterfreq(ii,:)', '-', 1:size(FullData,2), rejectframesplot, 'ro');
     set(gca,'XLim',[0 size(FullData,2)]);
     xlabel('average'); ylabel('\omega_0');
     title('Water Frequency, ppm');
     
-    %Bottom Left
-    hc=subplot(2,2,3);
-    if strcmp(MRS_struct.p.AlignTo,'no') ~= 1
-        CrFitLimLow=2.72;
-        CrFitLimHigh=3.12;
-        z=abs(MRS_struct.spec.freq-CrFitLimHigh);
-        lb=find(min(z)==z);
-        z=abs(MRS_struct.spec.freq-CrFitLimLow);
-        ub=find(min(z)==z);
-        CrFitRange=ub-lb;
-        plotrealign=[ real(AllFramesFT((lb):(ub),:)) ;
-            real(AllFramesFTrealign((lb):(ub),:)) ];
-        %don't display rejects
-        plotrealign((ub-lb+1):end,(MRS_struct.out.reject(:,ii).'==1))=min(plotrealign(:));
+    % Bottom left
+    hc = subplot(2,2,3);
+    if ~strcmp(MRS_struct.p.AlignTo,'no')
+        CrFitLimLow = 2.72;
+        CrFitLimHigh = 3.12;
+        plotrange = MRS_struct.spec.freq <= CrFitLimHigh & MRS_struct.spec.freq >= CrFitLimLow; % MM (170705)
+        CrFitRange = sum(plotrange);
+        plotrealign = [real(AllFramesFT(plotrange,:)); real(AllFramesFTrealign(plotrange,:))];
+        % Don't display rejects
+        plotrealign(CrFitRange+1:end,(MRS_struct.out.reject(:,ii).'==1))=min(plotrealign(:));
         imagesc(plotrealign);
         title('Cr Frequency, pre and post align');
         xlabel('average');
-        set(gca,'YTick',[1 CrFitRange CrFitRange+CrFitRange*(CrFitLimHigh-3.02)/(CrFitLimHigh-CrFitLimLow) CrFitRange*2]);
-        set(gca,'YTickLabel',[CrFitLimHigh CrFitLimLow 3.02 CrFitLimLow]);
-        %Add in labels for pre post
-        text(size(plotrealign,2)/18*17,0.4*size(plotrealign,1), 'PRE', 'Color',[1 1 1],'HorizontalAlignment','right');
-        text(size(plotrealign,2)/18*17,0.9*size(plotrealign,1), 'POST', 'Color',[1 1 1],'HorizontalAlignment','right');
+        set(gca,'YTick', [1 CrFitRange CrFitRange+CrFitRange*(CrFitLimHigh-3.02)/(CrFitLimHigh-CrFitLimLow) CrFitRange*2]);
+        set(gca,'YTickLabel', [CrFitLimHigh CrFitLimLow 3.02 CrFitLimLow]);
+        % Add in labels for pre/post
+        text(size(plotrealign,2)/18*17,0.4*size(plotrealign,1), 'PRE', 'Color', [1 1 1], 'HorizontalAlignment', 'right');
+        text(size(plotrealign,2)/18*17,0.9*size(plotrealign,1), 'POST', 'Color', [1 1 1], 'HorizontalAlignment', 'right');
     else
         tmp = 'No realignment';
         text(0, 0.9, tmp, 'FontName', 'Courier');
     end
     
-    %Bottom Right
+    % Bottom right
     subplot(2,2,4);
     axis off;
     
+    % MM (170703): Cleaner text alignment
     if strcmp(MRS_struct.p.vendor,'Siemens')
         tmp = [': ' MRS_struct.gabafile{ii*2-1}];
     else
@@ -567,14 +569,6 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
         fullpath = regexprep(fullpath, '.data', '_data'); % NP see below
         fullpath = regexprep(fullpath, '\', '_');
         fullpath = regexprep(fullpath, '/', '_');
-        %NP edit 02012013
-        %Previous code somehow didn't run when running from hierarchical
-        %folder (e.g. GABA_file = '.\name\MRI\raw.data) I got an error when Gannet tried to save the pdf for
-        %.data file. E.g. ??? Error using ==> saveas at 115 Invalid or missing path: MRSload_output/.\7011-0124\MRI\raw_008.data.pdf
-        %So it obviously didn't rewrite the path properly for the pdf here, but it IS important to get both folder and filename
-        %as a lot of the .data files have similar names (e.g.
-        %%raw_001.data). This change works for me for now, might not
-        %%be most elegant
     end
     tmp = strfind(pfil_nopath,'/');
     tmp2 = strfind(pfil_nopath,'\');
@@ -589,9 +583,9 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
     end
     
     if strcmpi(MRS_struct.p.vendor,'Philips')
-        tmp = strfind(pfil_nopath, '.sdat');
-        tmp1= strfind(pfil_nopath, '.SDAT');
-        if size(tmp,1)>size(tmp1,1)
+        tmp = strfind(pfil_nopath,'.sdat');
+        tmp1 = strfind(pfil_nopath,'.SDAT');
+        if size(tmp,1) > size(tmp1,1)
             dot7 = tmp(end); % just in case there's another .sdat somewhere else...
         else
             dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
@@ -618,19 +612,18 @@ for ii = 1:numpfiles    %Loop over all files in the batch (from gabafile)
         set(hc,'FontName','Helvetica');
     end
     
-    % Save PDF output
+    % Save PDF
     set(gcf,'PaperUnits','inches');
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
-    % MM (170201)
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
-        pdfname = ['GannetLoad_output/' fullpath '_load.pdf'];
+        pdfname = ['GannetLoad_output/' fullpath '_load.pdf']; % MM (170201)
     else
-        pdfname = ['GannetLoad_output/' pfil_nopath  '_load.pdf'];
+        pdfname = ['GannetLoad_output/' pfil_nopath  '_load.pdf']; % MM (170201)
     end
     saveas(h, pdfname);
     
-    %Save the processed data into an SDAT file
+    % Save the processed data into an SDAT file
     if MRS_struct.p.sdat
         if strcmpi(MRS_struct.p.vendor,'Philips')
             if strcmpi(MRS_struct.p.vendor,'Philips_data')

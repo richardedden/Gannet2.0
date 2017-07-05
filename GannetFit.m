@@ -49,13 +49,13 @@ else
 end
 
 freq = MRS_struct.spec.freq;
-MRS_struct.versionfit = '170630';
+MRS_struct.versionfit = '170705';
 pdfdirname = './GannetFit_output'; % MM (170121)
 
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts,'MaxIter',1e5);
+nlinopts = statset(nlinopts,'MaxIter',1e4);
 
 % Loop over voxels if PRIAM
 for kk = 1:length(vox)
@@ -67,7 +67,7 @@ for kk = 1:length(vox)
     % Loop over edited spectra if HERMES
     for trg = 1:length(target)
         
-        fprintf('\nFitting %s...\n',target{trg});
+        fprintf('\nFitting %s...',target{trg});
         
         % Defining variables -- MGSaleh 2016
         DIFF = MRS_struct.spec.(vox{kk}).(target{trg}).diff;
@@ -83,25 +83,20 @@ for kk = 1:length(vox)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 %Hard code it to fit from 2.79 ppm to 3.55 ppm
-                z=abs(MRS_struct.spec.freq-3.55);
-                lowerbound=find(min(z)==z);
-                z=abs(MRS_struct.spec.freq-2.79);
-                upperbound=find(min(z)==z);
-                freqbounds=lowerbound:upperbound;
-                plotbounds=(lowerbound-150):(upperbound+150);
-                maxinGABA=abs(max(real(DIFF(MRS_struct.ii,freqbounds)))-min(real(DIFF(MRS_struct.ii,freqbounds))));
+                freqbounds = find(freq <= 3.55 & freq >= 2.79); % MM (170705)
+                plotbounds = find(freq <= 3.6 & freq >= 2.7);
                 
-                % smarter estimation of baseline params, Krish's idea (taken from Johns
-                % code; NAP 121211
-                grad_points = (real(DIFF(ii,upperbound)) - real(DIFF(ii,lowerbound))) ./ (upperbound - lowerbound); %in points
-                LinearInit = grad_points ./ (MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)); %in ppm
-                constInit = (real(DIFF(ii,upperbound)) + real(DIFF(ii,lowerbound))) ./2;
-                GaussModelInit = [maxinGABA -90 3.026 -LinearInit constInit]; %default in 131016
-                lb = [0 -200 2.87 -40*maxinGABA -2000*maxinGABA]; %NP; our bounds are 0.03 less due to creatine shift
+                maxinGABA = abs(max(real(DIFF(ii,freqbounds))) - min(real(DIFF(ii,freqbounds))));                
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1)); %in points
+                LinearInit = grad_points ./ abs(freq(1) - freq(2)); %in ppm
+                constInit = (real(DIFF(ii,freqbounds(end))) + real(DIFF(ii,freqbounds(1))))./2;
+                
+                GaussModelInit1 = [maxinGABA -90 3.026 -LinearInit constInit];
+                lb = [0 -200 2.87 -40*maxinGABA -2000*maxinGABA];
                 ub = [4000*maxinGABA -40 3.12 40*maxinGABA 1000*maxinGABA];
                 
                 % Least-squares model fitting
-                GaussModelInit = lsqcurvefit(@GaussModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
+                GaussModelInit = lsqcurvefit(@GaussModel, GaussModelInit1, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
                 [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @GaussModel, GaussModelInit, nlinopts);
                 % 1111013 restart the optimisation, to ensure convergence
                 %for fit_iter = 1:100
@@ -127,38 +122,21 @@ for kk = 1:length(vox)
                 %   1.  GSH Fit
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                %Hard code it to fit from 2 ppm to 4 ppm
-                z=abs(MRS_struct.spec.freq-3.3);
-                lowerbound=find(min(z)==z);
-                z=abs(MRS_struct.spec.freq-2.35);
-                upperbound=find(min(z)==z);
-                freqbounds=lowerbound:upperbound;
-                plotbounds=(lowerbound-150):(upperbound+150);
+                %Hard code it to fit from 2.35 ppm to 3.3 ppm
+                freqbounds = find(freq <= 3.3 & freq >= 2.35); % MM (170705)
+                plotbounds = find(freq <= 4.2 & freq >= 1.75);
+                
                 %offset = real(mean(DIFF(ii, freqbounds(1:10)),2) + mean(DIFF(ii, freqbounds((end-9):end)),2))/2;
                 %slope = real(mean(DIFF(ii, freqbounds(1:10)),2) - mean(DIFF(ii, freqbounds((end-9):end)),2))/real(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
-                
                 peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
                 
-                initx = [peak_amp*0.7 -300 2.95 peak_amp*0.8 -500 2.73 -peak_amp*2.5 -1000 2.61 -peak_amp*2.5 -1000 2.55 peak_amp*0.5 -600 2.42  0 0 0.02];
+                FiveGaussModelInit = [peak_amp*0.7 -300 2.95 peak_amp*0.8 -500 2.73 -peak_amp*2.5 -1000 2.61 -peak_amp*2.5 -1000 2.55 peak_amp*0.5 -600 2.42  0 0 0.02];
                 lb = [0 -5000   2.9 0 -5000  2.68 -0.3 -5000    2.57 -0.3 -5000   2.48 0 -5000    2.3 -0.1 -0.01 -0.01];
                 ub = [0.1 -50   3.0 0.1 -50   2.8   0 -50    2.68      0 -50   2.57 0.1 0     2.43 0.1 0.01 0.03];
-                %figure(87);
-                %plot(MRS_struct.spec.freq(freqbounds), ...
-                %    FiveGaussModel(initx,MRS_struct.spec.freq(freqbounds)),MRS_struct.spec.freq(freqbounds),real(DIFF(ii,freqbounds)));
                 
-                [FiveGaussModelParam, ~, resid] = lsqcurvefit(@(xdummy,ydummy) FiveGaussModel(xdummy,ydummy), ...
-                    initx, MRS_struct.spec.freq(freqbounds),real(DIFF(ii,freqbounds)), ...
-                    lb,ub,lsqopts);
-                resid = -resid;
-                
-                %initx = FiveGaussModelParam;
-                % 1111013 restart the optimisation, to ensure convergence
-                %for fit_iter = 1:10
-                %    [FiveGaussModelParam,~,residg] = lsqcurvefit(@(xdummy,ydummy) FiveGaussModel(xdummy,ydummy), ...
-                %        initx, MRS_struct.spec.freq(freqbounds),real(Datadiff(ii,freqbounds)), ...
-                %        lb,ub,options);
-                %    initx = FiveGaussModelParam;
-                %end
+                % Least-squares model fitting
+                FiveGaussModelInit = lsqcurvefit(@FiveGaussModel, FiveGaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
+                [FiveGaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @FiveGaussModel, FiveGaussModelInit, nlinopts);
                 
                 MRS_struct.out.(vox{kk}).GSH.FiveGaussModel(ii,:)=FiveGaussModelParam;
                 GSHGaussModelParam=FiveGaussModelParam;
@@ -167,29 +145,23 @@ for kk = 1:length(vox)
                 %NAAGaussModelParam(1)=0;
                 
                 BaselineModelParam=GSHGaussModelParam;
-                BaselineModelParam(1)=0;
-                
-                %MRS_struct.out.(vox{kk}).(target{trg}).Area(ii)=real(sum(FiveGaussModel(GSHGaussModelParam, MRS_struct.spec.freq(freqbounds))-FiveGaussModel(BaselineModelParam(ii,:), MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
-                %%Not sure how to handle fit error. For now, do whole range
-                %GSHheight = GSHGaussModelParam(ii,1);
-                %MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii)=  100*std(residg)/GSHheight;
+                BaselineModelParam(1)=0;                
                 
                 % GSH fitting output -- MGSaleh
-                MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = real(sum(FiveGaussModel(GSHGaussModelParam, MRS_struct.spec.freq(freqbounds)) - FiveGaussModel(BaselineModelParam, MRS_struct.spec.freq(freqbounds)))) ...
-                    * abs(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
+                MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = real(sum(FiveGaussModel(GSHGaussModelParam, freq(freqbounds)) - FiveGaussModel(BaselineModelParam, freq(freqbounds)))) ...
+                    * abs(freq(1)-freq(2));
                 GSHheight = GSHGaussModelParam(1);
                 
-                % Range to determine residuals for GSH
-                z=abs(MRS_struct.spec.freq-3.3);  % For GSH - Added by MGSaleh 2017
-                midbound1=find(min(z)==z);        % For GSH - Added by MGSaleh 2017
-                z=abs(MRS_struct.spec.freq-2.77);
-                midbound2=find(min(z)==z);
+                % Range to determine residuals for GSH (MM: 170705)
+                residfreq = freq(freqbounds);
+                residGSH = resid(residfreq <= 3.3 & residfreq >= 2.77);
                 
-                MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(resid(:,1:(midbound2-(midbound1-1))))/GSHheight; % The residuals is from the whole range specified above for the the fitting --MGSaleh
+                % GSH fitting output -- MGSaleh
+                MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(residGSH)/GSHheight;
                 sigma = sqrt(1/(2*(abs(GSHGaussModelParam(2)))));
                 MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) =  abs((2*MRS_struct.p.LarmorFreq)*sigma);
                 MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GSHGaussModelParam;
-                MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = resid(:,1:(midbound2-(midbound1-1)));
+                MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = residGSH;
                 
                 % Calculate SNR of GSH signal (MM: 170502)
                 noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
@@ -202,18 +174,15 @@ for kk = 1:length(vox)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 %This is a work in progress - currenly mainly code copied form GSH
-                %Hard code it to fit from 0.8 ppm to 1.8 ppm
-                z=abs(MRS_struct.spec.freq-1.8);
-                lowerbound=find(min(z)==z);
-                z=abs(MRS_struct.spec.freq-0.5);
-                upperbound=find(min(z)==z);
-                freqbounds=lowerbound:upperbound;
-                plotbounds=(lowerbound-150):(upperbound+150);
-                offset = (mean(DIFF(ii, freqbounds(1:10)),2) + mean(DIFF(ii, freqbounds((end-9):end)),2))/2;
-                slope = (mean(DIFF(ii, freqbounds(1:10)),2) - mean(DIFF(ii, freqbounds((end-9):end)),2))/(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
+                %Hard code it to fit from 0.5 ppm to 1.8 ppm              
+                freqbounds = find(freq <= 1.8 & freq >= 0.5); % MM (170705)
+                plotbounds = find(freq <= 2 & freq >= 0);
+                
+                offset = (mean(DIFF(ii,freqbounds(1:10)),2) + mean(DIFF(ii,freqbounds((end-9):end)),2))/2;
+                slope = (mean(DIFF(ii,freqbounds(1:10)),2) - mean(DIFF(ii,freqbounds((end-9):end)),2))/abs(freq(freqbounds(1)) - freq(freqbounds(end)));
                 peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
                 
-                initx = [peak_amp*0.16 -100 1.18 peak_amp*0.3 -1000 1.325   offset slope 0];
+                FourGaussModelInit = [peak_amp*0.16 -100 1.18 peak_amp*0.3 -1000 1.325   offset slope 0];
                 lb = [0 -300 0.9 0 -5000 1.0  -1 -1 -1];
                 ub = [1 0 1.4 1 0 1.6  1 1 1];
                 
@@ -222,16 +191,13 @@ for kk = 1:length(vox)
                 %subplot(1,2,1)
                 %plot(MRS_struct.spec.freq(freqbounds),real(MRS_struct.spec.diff(ii,freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel(initx,MRS_struct.spec.freq(freqbounds)));
                 
-                [FourGaussModelParam, ~, resid] = lsqcurvefit(@(xdummy,ydummy) FourGaussModel(xdummy,ydummy), ...
-                    initx, MRS_struct.spec.freq(freqbounds),real(DIFF(ii,freqbounds)), ...
-                    lb,ub,lsqopts);
-                
+                FourGaussModelInit = lsqcurvefit(@FourGaussModel, FourGaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub,lsqopts);
+                [FourGaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @FourGaussModel, FourGaussModelInit, nlinopts);
+
                 %subplot(1,2,2)
                 %plot(MRS_struct.spec.freq(freqbounds),real(MRS_struct.spec.diff(ii,freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel(FourGaussModelParam,MRS_struct.spec.freq(freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel([FourGaussModelParam(1:3) 0 FourGaussModelParam(5:end)],MRS_struct.spec.freq(freqbounds)));
-                %error('Fitting Init model plot')
+                %error('Fitting Init model plot')                
                 
-                
-                resid = -resid;
                 LacGaussModelParam=FourGaussModelParam;
                 LacGaussModelParam(1)=0;
                 MMGaussModelParam=FourGaussModelParam;
@@ -240,7 +206,7 @@ for kk = 1:length(vox)
                 BaselineModelParam=MMGaussModelParam;
                 BaselineModelParam(1)=0;
                 
-                MRS_struct.out.GABAArea(ii)=real(sum(FourGaussModel(LacGaussModelParam, MRS_struct.spec.freq(freqbounds))-FourGaussModel(BaselineModelParam, MRS_struct.spec.freq(freqbounds))))*(MRS_struct.spec.freq(1)-MRS_struct.spec.freq(2));
+                MRS_struct.out.GABAArea(ii)=real(sum(FourGaussModel(LacGaussModelParam, freq(freqbounds))-FourGaussModel(BaselineModelParam, freq(freqbounds))))*(freq(1)-freq(2));
                 %Not sure how to handle fit error. For now, do whole range
                 GABAheight = LacGaussModelParam(ii,4);
                 MRS_struct.out.GABAFitError(ii)=  100*std(resid)/GABAheight;
@@ -251,63 +217,38 @@ for kk = 1:length(vox)
                 %   1.  Glx Fit
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                % Hard code it to fit from 3.45 ppm to 4.10 ppm
+                % Hard code it to fit from 3.45 ppm to 4.1 ppm
                 % MM: Larger fit range helps to avoid fitting of Cr-CH3 artefact(?)
                 % at 3.91 ppm
-                z=abs(MRS_struct.spec.freq-4.10); %4.10
-                lowerbound=find(min(z)==z);
-                z=abs(MRS_struct.spec.freq-3.45); %3.45
-                upperbound=find(min(z)==z);
-                freqbounds=lowerbound:upperbound;
-                plotbounds=(lowerbound-150):(upperbound+150);
-                maxinGABA=max(real(DIFF(MRS_struct.ii,freqbounds)));
+                freqbounds = find(freq <= 4.1 & freq >= 3.45); % MM (170705)
+                plotbounds = find(freq <= 4.5 & freq >= 3);
+                
+                maxinGABA = max(real(DIFF(ii,freqbounds)));
                 % smarter estimation of baseline params, Krish's idea (taken from Johns
                 % code; NAP 121211
-                grad_points = (real(DIFF(ii,upperbound)) - real(DIFF(ii,lowerbound))) ./ ...
-                    (upperbound - lowerbound); %in points
-                LinearInit = grad_points ./ (MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)); %in ppm
-                constInit = (real(DIFF(ii,upperbound)) + real(DIFF(ii,lowerbound))) ./2;
-                %End copy code
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1)); %in points
+                LinearInit = grad_points ./ abs(freq(1) - freq(2)); %in ppm
+                constInit = (real(DIFF(ii,freqbounds(end))) + real(DIFF(ii,freqbounds(1))))./2;
                 
-                % To fit a Double Gaussian
-                % MM: Allowing peaks to vary individually seems to work better
-                % than keeping the distance fixed (i.e., including J in the
-                % function)
                 GaussModelInit = [maxinGABA -90 3.72 maxinGABA -90 3.77 -LinearInit constInit];
                 lb = [0 -200 3.72-0.01 0 -200 3.77-0.01 -40*maxinGABA -2000*maxinGABA];
                 ub = [4000*maxinGABA -40 3.72+0.01 4000*maxinGABA -40 3.77+0.01 40*maxinGABA 1000*maxinGABA];
                 
-                lsqopts = optimset('lsqcurvefit');
-                lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
-                nlinopts = statset('nlinfit');
-                nlinopts = statset(nlinopts, 'MaxIter', 1e5);
+                GaussModelInit = lsqcurvefit(@DoubleGaussModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
+                [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @DoubleGaussModel, GaussModelInit, nlinopts);
                 
-                [GaussModelParam, ~, resid] = lsqcurvefit(@(xdummy,ydummy) DoubleGaussModel(xdummy,ydummy), ...
-                    GaussModelInit, freq(freqbounds),real(DIFF(ii,freqbounds)), ...
-                    lb,ub,lsqopts);
-                resid = -resid;
-                if FIT_NLINFIT
-                    GaussModelInit = GaussModelParam;
-                    % 111013 restart the optimisation, to ensure convergence
-                    for fit_iter = 1:100
-                        [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), ...
-                            @DoubleGaussModel, GaussModelInit, nlinopts);
-                        MRS_struct.out.Glx.fitparams_iter(fit_iter,:,ii) = GaussModelParam;
-                        GaussModelInit = GaussModelParam;
-                    end
-                end
-                
-                Glxheight = max(GaussModelParam(ii,[1,4]));
-                % GABAFitError reports the standard deviation of the residuals / GABAheight
+                Glxheight = max(GaussModelParam([1,4]));
                 MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(resid)/Glxheight;
-                % This sets GABAArea as the area under the curve
-                MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = (GaussModelParam(ii,1)./sqrt(-GaussModelParam(ii,2))*sqrt(pi)) + ...
-                    (GaussModelParam(ii,4)./sqrt(-GaussModelParam(ii,5))*sqrt(pi));
-                sigma = ((1/(2*(abs(GaussModelParam(ii,2))))).^(1/2)) + ((1/(2*(abs(GaussModelParam(ii,5))))).^(1/2));
+                MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = (GaussModelParam(1)./sqrt(-GaussModelParam(2))*sqrt(pi)) + ...
+                    (GaussModelParam(4)./sqrt(-GaussModelParam(5))*sqrt(pi));
+                sigma = ((1/(2*(abs(GaussModelParam(2))))).^(1/2)) + ((1/(2*(abs(GaussModelParam(5))))).^(1/2));
                 MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
                 MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GaussModelParam;
-                MRS_struct.out.(vox{kk}).(target{trg}).resid(ii,:) = resid;
-                MRS_struct.out.(vox{kk}).(target{trg}).snr(ii) = Glxheight / std(resid);
+                MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = resid;
+                
+                % Calculate SNR of Glx signal (MM: 170502)
+                noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
+                MRS_struct.out.(vox{kk}).Glx.SNR(ii) = abs(Glxheight)/noiseSigma_DIFF;
                 
             elseif strcmp(target{trg},'GABAGlx')
                 
@@ -315,25 +256,15 @@ for kk = 1:length(vox)
                 %   1.  GABA+Glx Fit
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                % Hard code it to fit from 2.79 ppm to 4.10 ppm
-                % Full range of GABA and Glx fitting above
-                z=abs(MRS_struct.spec.freq-4.10);
-                lowerbound=find(min(z)==z);
-                z=abs(MRS_struct.spec.freq-2.79);
-                upperbound=find(min(z)==z);
-                freqbounds=lowerbound:upperbound;
-                plotbounds=(lowerbound-150):(upperbound+150);
-                maxinGABA=max(real(DIFF(MRS_struct.ii,freqbounds)));
-                % smarter estimation of baseline params, Krish's idea (taken from Johns
-                % code; NAP 121211
-                grad_points = (real(DIFF(ii,upperbound)) - real(DIFF(ii,lowerbound))) ./ (upperbound - lowerbound); %in points
-                LinearInit = grad_points ./ (MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)); %in ppm
+                % Hard code it to fit from 2.79 ppm to 4.1 ppm
+                freqbounds = find(freq <= 4.1 & freq >= 2.79); % MM (170705)
+                plotbounds = find(freq <= 4.2 & freq >= 2.7);
                 
-                % To fit a Triple Gaussian
-                % MM: Allowing peaks to vary individually seems to work better
-                % than keeping the distance fixed (i.e., including J in the
-                % function)
-                GaussModelInit = [maxinGABA -400 3.725 maxinGABA -400 3.775 maxinGABA -90 3.02 -LinearInit 0 0];
+                maxinGABA = max(real(DIFF(ii,freqbounds)));
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
+                LinearInit = grad_points ./ abs(freq(1) - freq(2));
+                
+                GaussModelInit = [maxinGABA -400 3.725 maxinGABA -400 3.775 maxinGABA -90 3.02 LinearInit 0 0];
                 lb = [-4000*maxinGABA -800 3.725-0.02 -4000*maxinGABA -800 3.775-0.02 -4000*maxinGABA -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA];
                 ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
                 
@@ -342,20 +273,24 @@ for kk = 1:length(vox)
                 % weights in nonlinear regression; improves accuracy of
                 % peak fittings (MM: 170701)
                 w = ones(size(DIFF(ii,freqbounds)));
-                fitRange = freq(freqbounds);
-                ChoRange = fitRange >= 3.16 & fitRange <= 3.285;
-                GlxDownFieldRange = fitRange >= 3.9 & fitRange <= 4.2;
-                w(ChoRange | GlxDownFieldRange) = 0.001;
+                residfreq = freq(freqbounds);
+                ChoRange = residfreq >= 3.16 & residfreq <= 3.285;
+                GlxDownFieldRange = residfreq >= 3.9 & residfreq <= 4.2;
+                if MRS_struct.p.HERMES
+                    w(ChoRange | GlxDownFieldRange) = 0.001;
+                else
+                    w(ChoRange) = 0.001;
+                end
                 
                 % Least-squares model fitting
                 GaussModelInit = lsqcurvefit(@GABAGlxModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
                 [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @GABAGlxModel, GaussModelInit, nlinopts, 'Weights', w);
                 
-                residFreq = freq(freqbounds);
-                residGABA = resid(residFreq <= 3.55 & residFreq >= 2.79);
-                residGlx = resid(residFreq <= 4.10 & residFreq >= 3.45);
+                % Range to determine residuals for GABA and Glx (MM: 170705)
+                residGABA = resid(residfreq <= 3.55 & residfreq >= 2.79);
+                residGlx = resid(residfreq <= 4.10 & residfreq >= 3.45);
                 
-                % GABA fitting output --MGSaleh
+                % GABA fitting output -- MGSaleh
                 MRS_struct.out.(vox{kk}).GABA.Area(ii) = (GaussModelParam(7)./sqrt(-GaussModelParam(8))*sqrt(pi));
                 GABAheight = GaussModelParam(7);
                 MRS_struct.out.(vox{kk}).GABA.FitError(ii) = 100*std(residGABA)/GABAheight;
@@ -407,38 +342,35 @@ for kk = 1:length(vox)
             
             % GABA plot
             ha = subplot(2,2,1);
-            % find peak of GABA plot... plot residuals above this...
-            gabamin = min(real(DIFF(ii,plotbounds)));
-            gabamax = max(real(DIFF(ii,plotbounds)));
+            metabmin = min(real(DIFF(ii,plotbounds)));
+            metabmax = max(real(DIFF(ii,plotbounds)));
             resmax = max(resid);
-            resid = resid + gabamin - resmax;
+            resid = resid + metabmin - resmax;
             if strcmp(target{trg},'GABA')
-                plot(freq(freqbounds), GaussModel(GaussModelParam,freq(freqbounds)), 'r',...
-                    freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                    freq(freqbounds), GaussModel(GaussModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds), resid, 'k');
                 set(gca,'XLim',[2.6 3.6]);
             elseif strcmp(target{trg},'GSH')
-                freqrange=MRS_struct.spec.freq(freqbounds);
-                plot(MRS_struct.spec.freq, real(DIFF(ii,:)), 'b' ,...
-                    freqrange, FiveGaussModel(FiveGaussModelParam, freqrange), 'r', ...
-                    freqrange, FiveGaussModel(GSHGaussModelParam, freqrange),'g',...
-                    MRS_struct.spec.freq(freqbounds),resid,'k');
+                plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b' ,...
+                    freq(freqbounds), FiveGaussModel(FiveGaussModelParam,freq(freqbounds)), 'r', ...
+                    freq(freqbounds), FiveGaussModel(GSHGaussModelParam,freq(freqbounds)), 'g', ...
+                    freq(freqbounds),resid, 'k');
                 set(gca,'XLim',[1.8 4.2]);
             elseif strcmp(target{trg},'Lac')
-                freqrange=MRS_struct.spec.freq(freqbounds);
-                plot(MRS_struct.spec.freq, real(DIFF(ii,:)), 'b', ...
-                    freqrange, FourGaussModel(FourGaussModelParam, freqrange),'r', ...
-                    freqrange, FourGaussModel(MMGaussModelParam, freqrange), 'r' ,...
-                    MRS_struct.spec.freq(freqbounds), resid, 'k');
-                set(gca,'XLim',[0.7 1.9]);
+                plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                    freq(freqbounds), FourGaussModel(FourGaussModelParam,freq(freqbounds)), 'r', ...
+                    freq(freqbounds), FourGaussModel(MMGaussModelParam, freq(freqbounds)), 'r' , ...
+                    freq(freqbounds), resid, 'k');
+                set(gca,'XLim',[0 2.1]);
             elseif strcmp(target{trg},'Glx')
-                plot(freq(freqbounds), DoubleGaussModel(GaussModelParam,freq(freqbounds)), 'r',...
-                    freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
-                    freq(freqbounds), resid,'k');
+                plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                    freq(freqbounds), DoubleGaussModel(GaussModelParam,freq(freqbounds)), 'r', ...
+                    freq(freqbounds), resid, 'k');
                 set(gca,'XLim',[3.4 4.2])
             elseif strcmp (target{trg},'GABAGlx')
-                plot(freq(freqbounds), GABAGlxModel(GaussModelParam,freq(freqbounds)), 'r',...
-                    freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                    freq(freqbounds), GABAGlxModel(GaussModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds), resid, 'k');
                 set(gca,'XLim',[2.7 4.2])
             end
@@ -450,64 +382,53 @@ for kk = 1:length(vox)
             title(legendtxt);
             set(gca,'XDir','reverse');
             
+            % From here on is cosmetic - adding labels etc.
             switch target{trg}
                 case 'GABA'
-                    %%%%From here on is cosmetic - adding labels (and deciding where to).
-                    hgaba=text(3,gabamax/4,MRS_struct.p.target);
-                    set(hgaba,'horizontalAlignment', 'center');
-                    %determine values of GABA tail (below 2.8 ppm.
-                    z=abs(MRS_struct.spec.freq-2.79);%2.75
-                    upperbound=find(min(z)==z);
-                    tailtop=max(real(DIFF(ii,upperbound:(upperbound+150))));
-                    tailbottom=min(real(DIFF(ii,upperbound:(upperbound+150))));
-                    hgabares=text(2.8,min(resid),'residual');
-                    set(hgabares,'horizontalAlignment', 'left');
-                    text(2.8,tailtop+gabamax/20,'data','Color',[0 0 1]);
-                    text(2.8,tailbottom-gabamax/20,'model','Color',[1 0 0]);
+                    h = text(3,metabmax/4,MRS_struct.p.target);
+                    set(h, 'horizontalAlignment', 'center');
+                    labelbounds = freq <= 2.4 & freq >= 2; % MM (170705)
+                    tailtop = max(real(DIFF(ii,labelbounds)));
+                    tailbottom = min(real(DIFF(ii,labelbounds)));
+                    h = text(2.8, min(resid), 'residual');
+                    set(h, 'horizontalAlignment', 'left');
+                    text(2.8, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
+                    text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'GSH'
-                    %%%%From here on is cosmetic - adding labels (and deciding where to).
-                    hgaba=text(2.95,gabamax,target{trg});
-                    set(hgaba,'horizontalAlignment', 'center');
-                    %determine values of GABA tail (below 2.8 ppm.
-                    z=abs(MRS_struct.spec.freq-2.00);%2.75
-                    upperbound=find(min(z)==z);
-                    tailtop=max(real(DIFF(ii,upperbound:(upperbound+150))));
-                    tailbottom=min(real(DIFF(ii,upperbound:(upperbound+150))));
-                    hgabares=text(2.25,min(resid),'residual');
-                    set(hgabares,'horizontalAlignment', 'left');
-                    text(2.25,tailtop+gabamax/20,'data','Color',[0 0 1]);
-                    text(2.45,tailbottom-20*gabamax/20,'model','Color',[1 0 0]);
+                    h = text(2.95,metabmax,target{trg});
+                    set(h, 'horizontalAlignment', 'center');
+                    labelbounds = freq <= 2.4 & freq >= 1.75; % MM (170705)
+                    tailtop = max(real(DIFF(ii,labelbounds)));
+                    tailbottom = min(real(DIFF(ii,labelbounds)));
+                    h = text(2.25, min(resid),'residual');
+                    set(h, 'horizontalAlignment', 'left');
+                    text(2.25, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
+                    text(2.45, tailbottom-20*metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'Glx'
-                    %%%%From here on is cosmetic - adding labels (and deciding where to).
-                    hgaba=text(3.8,gabamax/4,MRS_struct.p.target);
-                    set(hgaba,'horizontalAlignment', 'center');
-                    %determine values of GABA tail (below 2.8 ppm.
-                    z=abs(MRS_struct.spec.freq-2.79);%2.75
-                    upperbound=find(min(z)==z);
-                    tailtop=max(real(DIFF(ii,upperbound:(upperbound+150))));
-                    tailbottom=min(real(DIFF(ii,upperbound:(upperbound+150))));
-                    hgabares=text(3.5,min(resid),'residual');
-                    set(hgabares,'horizontalAlignment', 'left');
-                    text(3.5,tailtop+gabamax/20,'data','Color',[0 0 1]);
-                    text(3.5,tailbottom-gabamax/20,'model','Color',[1 0 0]);
+                    h = text(3.8,metabmax/4,MRS_struct.p.target);
+                    set(h, 'horizontalAlignment', 'center');
+                    labelbounds = freq <= 3.6 & freq >= 3.4; % MM (170705)
+                    tailtop = max(real(DIFF(ii,labelbounds)));
+                    tailbottom = min(real(DIFF(ii,labelbounds)));
+                    h = text(3.5, min(resid),'residual');
+                    set(h, 'horizontalAlignment', 'left');
+                    text(3.5, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
+                    text(3.5, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'GABAGlx'
-                    %%%%From here on is cosmetic - adding labels (and deciding where to).
-                    hgaba=text(3,gabamax/4,'GABA');
-                    hglx=text(3.755,gabamax/4,'Glx');
-                    set(hgaba,'horizontalAlignment', 'center');
-                    set(hglx,'horizontalAlignment', 'center');
-                    %determine values of GABA tail (below 2.8 ppm.
-                    hgabaglxres=text(2.8,min(resid),'residual');
-                    set(hgabaglxres,'horizontalAlignment', 'left');
-                    z=abs(MRS_struct.spec.freq-2.79);%2.75
-                    upperbound=find(min(z)==z);
-                    tailtop=max(real(DIFF(ii,upperbound:(upperbound+150))));
-                    tailbottom=min(real(DIFF(ii,upperbound:(upperbound+150))));
-                    text(3.5,tailtop+gabamax/20,'data','Color',[0 0 1]);
-                    text(3.5,tailbottom-gabamax/20,'model','Color',[1 0 0]);
+                    h = text(3, metabmax/4, 'GABA');
+                    h2 = text(3.755, metabmax/4, 'Glx');
+                    set(h, 'horizontalAlignment', 'center');
+                    set(h2, 'horizontalAlignment', 'center');
+                    h = text(2.8, min(resid), 'residual');
+                    set(h, 'horizontalAlignment', 'left');
+                    labelbounds = freq <= 2.8 & freq >= 2.7; % MM (170705)
+                    tailtop = max(real(DIFF(ii,labelbounds)));
+                    tailbottom = min(real(DIFF(ii,labelbounds)));
+                    text(2.8, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
+                    text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
             end
             set(gca,'YTick',[]);
             set(gca,'Box','off');
@@ -531,11 +452,8 @@ for kk = 1:length(vox)
                     %Run preliminary fit of data
                     LGModelInit = [maxinWater 20 freq(watermaxindex) 0 waterbase -50];
                     %Fit from 5.6 ppm to 3.8 ppm RE 110826
-                    z=abs(MRS_struct.spec.freq-5.6);
-                    waterlow=find(min(z)==z);
-                    z=abs(MRS_struct.spec.freq-3.8);
-                    waterhigh=find(min(z)==z);
-                    freqbounds=waterlow:waterhigh;
+                    freqbounds = freq <= 5.6 & freq >= 3.8; % MM (170705)
+                    
                     % Do the water fit (Lorentz-Gauss)
                     LGModelParam = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)), @LorentzGaussModel, LGModelInit, nlinopts);
                     
@@ -554,15 +472,12 @@ for kk = 1:length(vox)
                 ublg = [40*maxinWater 100 4.8 0.000001 1 0 pi];
                 
                 %Fit from 5.6 ppm to 3.8 ppm RE 110826
-                z=abs(MRS_struct.spec.freq-5.6);
-                waterlow=find(min(z)==z);
-                z=abs(MRS_struct.spec.freq-3.8);
-                waterhigh=find(min(z)==z);
-                freqbounds=waterlow:waterhigh;
+                freqbounds = freq <= 5.6 & freq >= 3.8; % MM (170705)
                 
                 % Least-squares model fitting
                 LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freq(freqbounds), real(WaterData(ii,freqbounds)), lblg, ublg, lsqopts);
                 [LGPModelParam, residw] = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)), @LorentzGaussModelP, LGPModelInit, nlinopts);
+                % MM (170705)
                 %if ~any(strcmpi(MRS_struct.p.vendor,{'GE','Siemens'}))
                 %    % Remove phase and run again
                 %    WaterData(ii,:) = WaterData(ii,:)*exp(1i*LGPModelParam(ii,7));
@@ -609,7 +524,7 @@ for kk = 1:length(vox)
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
                 end
                 
-                % Generate scaled spectrum (for plotting) CJE Jan2011
+                % Generate scaled spectra (for plotting) CJE Jan2011, MM (170705)
                 MRS_struct.spec.(vox{kk}).(target{trg}).off_scaled(ii,:) = ...
                     MRS_struct.spec.(vox{kk}).(target{trg}).off(ii,:) .* (1/MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1));
                 MRS_struct.spec.(vox{kk}).(target{trg}).on_scaled(ii,:) = ...
@@ -617,7 +532,7 @@ for kk = 1:length(vox)
                 MRS_struct.spec.(vox{kk}).(target{trg}).diff_scaled(ii,:) = ...
                     MRS_struct.spec.(vox{kk}).(target{trg}).diff(ii,:) .* (1/MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1));
                 
-                % Reorder structure fields
+                % MM (170703): Reorder structure fields 
                 MRS_struct.out.(vox{kk}).Water = orderfields(MRS_struct.out.(vox{kk}).Water, {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError'});
                 
                 hb = subplot(2,2,3);
@@ -625,26 +540,23 @@ for kk = 1:length(vox)
                 watmax = max(real(WaterData(ii,:)));
                 resmax = max(residw);
                 residw = residw + watmin - resmax;
-                plot(freq(freqbounds), real(LorentzGaussModelP(LGPModelParam,freq(freqbounds))), 'r', ...
-                    freq(freqbounds), real(WaterData(ii,freqbounds)),'b', ...
+                plot(freq(freqbounds), real(WaterData(ii,freqbounds)), 'b', ...
+                    freq(freqbounds), real(LorentzGaussModelP(LGPModelParam,freq(freqbounds))), 'r', ...
                     freq(freqbounds), residw, 'k');
                 set(gca,'XDir','reverse');
                 set(gca,'YTick',[]);
                 set(gca,'Box','off');
                 set(gca,'YColor','white');
                 xlim([4.2 5.2]);
-                %Add on some labels
-                hwat=text(4.8,watmax/2,'Water');
-                set(hwat,'HorizontalAlignment', 'right');
-                %Get the right vertical offset for the residual label
-                z=abs(freq(freqbounds)-4.4);
-                waterrlow=find(min(z)==z);
-                z=abs(freq(freqbounds)-4.25);
-                waterrhigh=find(min(z)==z);
-                rlabelbounds=waterrlow:waterrhigh;
-                axis_bottom=axis;
-                hwatres=text(4.4,max(min(residw(rlabelbounds))-0.05*watmax,axis_bottom(3)),'residual');
-                set(hwatres,'horizontalAlignment', 'left');
+                % Add on some labels
+                hwat = text(4.8,watmax/2,'Water');
+                set(hwat,'HorizontalAlignment','right');
+                % Get the right vertical offset for the residual label
+                labelfreq = freq(freqbounds); % MM (170705)
+                rlabelbounds = labelfreq <= 4.4 & labelfreq >= 4.25;
+                axis_bottom = axis;
+                hwatres = text(4.4, max(min(residw(rlabelbounds))-0.05*watmax, axis_bottom(3)), 'residual');
+                set(hwatres, 'horizontalAlignment', 'left');
                 
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -685,42 +597,35 @@ for kk = 1:length(vox)
             %   3.  Cr Fit
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            Cr_OFF=OFF(ii,:);
             %Fit Cho and Cr
-            ChoCrFitLimLow=2.6;
-            ChoCrFitLimHigh=3.6;
-            %Still need ranges for Creatine align plot
-            z=abs(MRS_struct.spec.freq-ChoCrFitLimHigh);
-            cclb=find(min(z)==z);
-            z=abs(MRS_struct.spec.freq-ChoCrFitLimLow);
-            ccub=find(min(z)==z);
-            freqrangecc=MRS_struct.spec.freq(cclb:ccub);
+            Cr_OFF=OFF(ii,:);
+            freqboundscc = freq <= 3.6 & freq >= 2.6; % MM (170705)
+            
             %Do some detective work to figure out the initial parameters
-            ChoCrMeanSpec = Cr_OFF(cclb:ccub).';
+            ChoCrMeanSpec = Cr_OFF(freqboundscc).';
             Baseline_offset = real(ChoCrMeanSpec(1)+ChoCrMeanSpec(end))/2;
             Width_estimate = 0.05;
             Area_estimate = (max(real(ChoCrMeanSpec))-min(real(ChoCrMeanSpec)))*Width_estimate*4;
             ChoCr_initx = [Area_estimate Width_estimate 3.02 0 Baseline_offset 0 1] ...
                 .* [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
-            ChoCrModelParam = FitChoCr(freqrangecc, ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
+            ChoCrModelParam = FitChoCr(freq(freqboundscc), ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
             MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:) = ChoCrModelParam ./ [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
             
-            %Initialise fitting pars
-            z=abs(MRS_struct.spec.freq-3.12);
-            lb=find(min(z)==z);
-            z=abs(MRS_struct.spec.freq-2.72);
-            ub=find(min(z)==z);
-            Cr_initx = [max(real(Cr_OFF(lb:ub))) 0.05 3.0 0 0 0];
-            freqrange = MRS_struct.spec.freq(lb:ub);
+            %Initialise fitting pars     
+            freqbounds = freq <= 3.12 & freq >= 2.72; % MM (170705)
+            Cr_initx = [max(real(Cr_OFF(freqbounds))) 0.05 3.0 0 0 0];
+
             %Then use the same function as the Cr Fit in GannetLoad
-            [LorentzModelParam, residCr] = nlinfit(freqrange, real(Cr_OFF(lb:ub)), @LorentzModel, Cr_initx, nlinopts);
+            [LorentzModelParam, residCr] = nlinfit(freq(freqbounds), real(Cr_OFF(freqbounds)), @LorentzModel, Cr_initx, nlinopts);
             MRS_struct.out.(vox{kk}).Cr.ModelParam(ii,:) = LorentzModelParam; % MM (160913)
             Crheight = LorentzModelParam(1)/(2*pi*LorentzModelParam(2)); % MM (170202)
             MRS_struct.out.(vox{kk}).Cr.FitError(ii) = 100*std(residCr)/Crheight;
             MRS_struct.out.(vox{kk}).Cr.Resid(ii,:) = residCr;
             
-            MRS_struct.out.(vox{kk}).Cr.Area(ii) = sum(real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freqrangecc) - TwoLorentzModel([0 MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,2:(end-1)) 0],freqrangecc))) * abs(freq(1)-freq(2));
-            MRS_struct.out.(vox{kk}).Cho.Area(ii) = sum(real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end)),freqrangecc) - TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freqrangecc))) * abs(freq(1)-freq(2));
+            MRS_struct.out.(vox{kk}).Cr.Area(ii) = sum(real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc)) - ...
+                TwoLorentzModel([0 MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,2:(end-1)) 0],freq(freqboundscc)))) * abs(freq(1)-freq(2));
+            MRS_struct.out.(vox{kk}).Cho.Area(ii) = sum(real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end)),freq(freqboundscc)) - ...
+                TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc)))) * abs(freq(1)-freq(2));
             MRS_struct.out.(vox{kk}).Cr.FWHM(ii) = ChoCrModelParam(2);
             
             % Calculate SNR of Cr signal (MM: 170502)
@@ -753,7 +658,7 @@ for kk = 1:length(vox)
                     MRS_struct.out.(vox{kk}).GSH.ConcCho(ii) = MRS_struct.out.(vox{kk}).GSH.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
             end
             
-            % Reorder structure fields
+            % MM (170703): Reorder structure fields
             if ~MRS_struct.p.HERMES % MM (170703): work on this for GSH data
                 if strcmp(MRS_struct.p.Reference_compound,'H2O')
                     if strcmpi(target{trg},'GABAGlx')
@@ -784,17 +689,16 @@ for kk = 1:length(vox)
             %   4. Build GannetFit Output
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            Crmin = min(real(Cr_OFF(lb:ub)));
-            Crmax = max(real(Cr_OFF(lb:ub)));
+            Crmin = min(real(Cr_OFF(freqbounds)));
+            Crmax = max(real(Cr_OFF(freqbounds)));
             resmaxCr = max(residCr);
             residCr = residCr + Crmin - resmaxCr;
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
-                %Plot the Cr fit
-                h2=subplot(2,2,4);
-                plot(freqrangecc,real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freqrangecc)), 'r', ...
-                    freqrangecc,real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freqrangecc)), 'r', ...
-                    MRS_struct.spec.freq,real(Cr_OFF(:)),'b', ...
-                    freqrange, residCr, 'k');
+                h = subplot(2,2,4);
+                plot(freq, real(Cr_OFF), 'b', ...
+                    freq(freqboundscc), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundscc))), 'r', ...
+                    freq(freqboundscc), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc))), 'r', ...                    
+                    freq(freqbounds), residCr, 'k');
                 set(gca,'XDir','reverse');
                 set(gca,'YTick',[],'Box','off');
                 xlim([2.6 3.6]);
@@ -803,7 +707,7 @@ for kk = 1:length(vox)
                 set(hcr,'horizontalAlignment', 'left')
                 %Transfer Cr plot into insert
                 subplot(2,2,3)
-                [h_m, h_i]=inset(hb,h2);
+                [h_m, h_i]=inset(hb,h);
                 set(h_i,'fontsize',6);
                 insert=get(h_i,'pos');
                 axi=get(hb,'pos');
@@ -816,33 +720,28 @@ for kk = 1:length(vox)
                 set(gca,'Box','off')
                 set(gca,'YColor','white');
             else
-                %Plot the Cr fit
                 hb=subplot(2,2,3);
-                plot(freqrangecc,real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freqrangecc)), 'r', ...
-                    freqrangecc,real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freqrangecc)), 'r', ...
-                    MRS_struct.spec.freq,real(Cr_OFF(:)),'b', ...
-                    freqrange, residCr, 'k');
+                plot(freq, real(Cr_OFF), 'b', ...
+                    freq(freqboundscc), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundscc))), 'r', ...
+                    freq(freqboundscc), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc))), 'r', ...
+                    freq(freqbounds), residCr, 'k');
                 set(gca,'XDir','reverse');
                 set(gca,'YTick',[]);
                 xlim([2.6 3.6]);
-                z=abs(freq(lb:ub)-3.12);
-                crlow=find(min(z)==z);
-                z=abs(freq(lb:ub)-2.9);
-                crhigh=find(min(z)==z);
-                crlabelbounds=crlow:crhigh;
-                hcres=text(3.12,max(residCr(crlabelbounds))+0.05*Crmax,'residual');
+                crlabelbounds = freq <= 3.12 & freq >= 2.9; % MM (170705)
+                hcres=text(3.12, max(residCr(crlabelbounds))+0.05*Crmax, 'residual');
                 set(hcres,'horizontalAlignment', 'left');
                 text(2.8,0.3*Crmax,'data','Color',[0 0 1]);
                 text(2.8,0.2*Crmax,'model','Color',[1 0 0]);
                 text(2.94,Crmax*0.75,'Creatine');
             end
             
-            %and running the plot
+            % And running the plot
             if any(strcmp('mask',fieldnames(MRS_struct))) == 1
                 h=subplot(2,2,2);
                 get(h,'pos'); % get position of axes
                 set(h,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
-                imagesc(squeeze(MRS_struct.mask.img(MRS_struct.ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
+                imagesc(squeeze(MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
                 colormap('gray');
                 caxis([0 1])
                 axis equal;
@@ -854,6 +753,7 @@ for kk = 1:length(vox)
                 axis off;
             end
             
+            % MM (170703): Cleaner text alignment
             text_pos = 0.9; % A variable to determine y-position of text on printout on figure -- Added by MGSaleh
             
             if strcmp(MRS_struct.p.vendor,'Siemens')
@@ -900,7 +800,7 @@ for kk = 1:length(vox)
             text(0, text_pos-0.3, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos-0.3, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
             
-            % Some changes to accomodate multiplexed fitting output
+            % MGSaleh 2016, MM (170703): Some changes to accomodate multiplexed fitting output
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
                 
                 tmp = sprintf(': %.3g/%.3g', MRS_struct.out.(vox{kk}).Water.Area(ii), MRS_struct.out.(vox{kk}).Cr.Area(ii));
@@ -908,7 +808,7 @@ for kk = 1:length(vox)
                 text(0.375, text_pos-0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
                 
                 tmp = sprintf(': %.1f/%.1f Hz', MRS_struct.out.(vox{kk}).Water.FWHM(ii), MRS_struct.out.(vox{kk}).Cr.FWHM(ii));
-                text(0, text_pos-0.5, 'FWHM of Water/Cr', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.5, 'FWHM (Water/Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
                 switch target{trg}
@@ -948,7 +848,7 @@ for kk = 1:length(vox)
                 text(0.375, text_pos-0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
                 
                 tmp = sprintf(': %.1f Hz', MRS_struct.out.(vox{kk}).Cr.FWHM(ii));
-                text(0, text_pos-0.5, 'FWHM of Cr', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.5, 'FWHM (Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
                 switch target{trg}
@@ -978,7 +878,7 @@ for kk = 1:length(vox)
             text(0, text_pos-0.9, 'FitVer', 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos-0.9, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
             
-            %Add Gannet logo
+            % Add Gannet logo
             if any(strcmp('mask',fieldnames(MRS_struct))) == 1
                 subplot(2,2,4)
             else
@@ -991,26 +891,18 @@ for kk = 1:length(vox)
             axes('Position',[0.80, 0.05, 0.15, 0.15]);
             image(A_2); axis off; axis square;
             
-            %%%% Save PDF %%%%%
+            % Save PDF
             if strcmp(MRS_struct.p.vendor,'Siemens')
                 pfil_nopath = MRS_struct.gabafile{ii*2-1};
             else
                 pfil_nopath = MRS_struct.gabafile{ii};
             end
-            %for Philips .data
+            % For Philips .data
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
                 fullpath = MRS_struct.gabafile{ii};
                 fullpath = regexprep(fullpath, '.data', '_data');
                 fullpath = regexprep(fullpath, '\', '_');
                 fullpath = regexprep(fullpath, '/', '_');
-                %NP edit 02012013
-                %Previous code somehow didn't run when running from hierarchical
-                %folder (e.g. GABA_file = '.\name\MRI\raw.data) I got an error when Gannet tried to save the pdf for
-                %.data file. E.g. ??? Error using ==> saveas at 115 Invalid or missing path: ./MRSfit_140102/.\7011-0124\MRI\raw_008.data.pdf
-                %So it obviously didn't rewrite the path properly for the pdf here, but it IS important to get both folder and filename
-                %as a lot of the .data files have similar names (e.g.
-                %%raw_001.data). This change works for me for now, might not
-                %%be most elegant
             end
             tmp = strfind(pfil_nopath,'/');
             tmp2 = strfind(pfil_nopath,'\');
@@ -1024,9 +916,9 @@ for kk = 1:length(vox)
                 lastslash=0;
             end
             if strcmpi(MRS_struct.p.vendor,'Philips')
-                tmp = strfind(pfil_nopath, '.sdat');
-                tmp1 = strfind(pfil_nopath, '.SDAT');
-                if size(tmp,1)>size(tmp1,1)
+                tmp = strfind(pfil_nopath,'.sdat');
+                tmp1 = strfind(pfil_nopath,'.SDAT');
+                if size(tmp,1) > size(tmp1,1)
                     dot7 = tmp(end); % just in case there's another .sdat somewhere else...
                 else
                     dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
@@ -1056,11 +948,11 @@ for kk = 1:length(vox)
             set(gcf,'PaperSize',[11 8.5]);
             set(gcf,'PaperPosition',[0 0 11 8.5]);
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                pdfname = [pdfdirname '/' fullpath '_' target{trg} '_fit.pdf'];
+                pdfname = [pdfdirname '/' fullpath '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
             else
-                pdfname = [pdfdirname '/' pfil_nopath  '_' target{trg} '_fit.pdf'];
+                pdfname = [pdfdirname '/' pfil_nopath  '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
             end
-            if exist(pdfdirname,'dir') ~= 7
+            if ~exist(pdfdirname,'dir')
                 mkdir(pdfdirname);
             end
             saveas(gcf, pdfname);
@@ -1127,7 +1019,7 @@ for kk = 1:length(vox)
         end
     end
     
-    fprintf('\n');
+    fprintf('\n\n');
     
 end
 
@@ -1164,7 +1056,7 @@ function F = LorentzGaussModel(x,freq)
 % F is a normalised Lorentzian - height independent of hwhm
 %   = Lorentzian / Peak
 
-F = (x(1)*ones(size(freq))./(x(2)^2*(freq-x(3)).*(freq-x(3))+1)) ...
+F = (x(1)*ones(size(freq))./(x(2)^2*(freq-x(3)).*(freq-x(3))+1)) ... % Lorentzian
     .* (exp(x(6)*(freq-x(3)).*(freq-x(3)))) ... % Gaussian
     + x(4)*(freq-x(3)) ... % linear baseline
     + x(5); % constant baseline
@@ -1188,7 +1080,7 @@ function F = LorentzGaussModelP(x,freq)
 % F is a normalised Lorentzian - height independent of hwhm
 %   = Lorentzian / Peak
 
-F = ((cos(x(7))*x(1)*ones(size(freq)) + sin(x(7))*x(1)*x(2)*(freq-x(3)))./(x(2)^2*(freq-x(3)).*(freq-x(3))+1)) ...
+F = ((cos(x(7))*x(1)*ones(size(freq)) + sin(x(7))*x(1)*x(2)*(freq-x(3)))./(x(2)^2*(freq-x(3)).*(freq-x(3))+1)) ... % Lorentzian
     .* (exp(x(6)*(freq-x(3)).*(freq-x(3)))) ... % Gaussian
     + x(4)*(freq-x(3)) ... % linear baseline
     + x(5); % constant baseline
@@ -1254,7 +1146,6 @@ F = x(2)*(freq-x(1))+x(3);
 %%%%%%%%%%%%%%%%%%% CALC INST UNITS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function MRS_struct = CalcInstUnits(MRS_struct, vox, metab, ii)
 % Function for quantifying concentration in institutional units
-
 % Convert metabolits and water areas to institutional units
 % (pseudo-concentration in mmol/L)
 
@@ -1262,19 +1153,20 @@ TR = MRS_struct.p.TR(ii)/1000;
 TE = MRS_struct.p.TE(ii)/1000;
 PureWaterConc = 55000; % mmol/L
 WaterVisibility = 0.65; % this is approx the value from Ernst, Kreis, Ross (1993, JMR)
-T1_Water = 1.100; % average of WM and GM, estimated from Wansapura et al. (1999
-T2_Water = 0.095; % average of WM and GM, estimated from Wansapura et al. (1999)
+T1_Water = 1.100; % average of WM and GM, estimated from Wansapura et al. (1999, JMRI)
+T2_Water = 0.095; % average of WM and GM, estimated from Wansapura et al. (1999, JMRI)
 N_H_Water = 2;
 
+% MGSaleh 2016
 switch metab
     case 'GABA'
         EditingEfficiency = 0.5;
-        T1_Metab = 1.31; % from Puts et al. (2013, JMRI)
+        T1_Metab = 1.31;  % from Puts et al. (2013, JMRI)
         T2_Metab = 0.088; % from Edden et al. (2012, JMRI)
         N_H_Metab = 2;
         MM = 0.45; % MM correction: fraction of GABA in GABA+ peak. (In TrypDep, 30 subjects: 55% of GABA+ was MM)
-        %This fraction is platform and implementation dependent, base on length and
-        %shape of editing pulses and ifis Henry method.
+        % This fraction is platform and implementation dependent, base on length and
+        % shape of editing pulses and ifis Henry method
         T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
         T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
         
@@ -1289,13 +1181,13 @@ switch metab
         
     case 'GSH'
         EditingEfficiency = 0.74;  % At 3T based on Quantification of Glutathione in the Human Brain by MR Spectroscopy at 3 Tesla:
-        %Comparison of PRESS and MEGA-PRESS
-        %Faezeh Sanaei Nezhad etal. DOI 10.1002/mrm.26532, 2016 -- MGSaleh
+        % Comparison of PRESS and MEGA-PRESS
+        % Faezeh Sanaei Nezhad etal. DOI 10.1002/mrm.26532, 2016 -- MGSaleh
         T1_Metab = 0.40 ; % At 3T based on Doubly selective multiple quantum chemical shift imaging and
         % T1 relaxation time measurement of glutathione (GSH) in the human brain in vivo
         % In-Young Choi et al. NMR Biomed. 2013; 26: 28?34 -- MGSaleh
         T2_Metab = 0.12; % At 3T based on the ISMRM abstract
-        %T2 relaxation times of 18 brain metabolites determined in 83 healthy volunteers in vivo
+        % T2 relaxation times of 18 brain metabolites determined in 83 healthy volunteers in vivo
         % Milan Scheidegger et al. Proc. Intl. Soc. Mag. Reson. Med. 22 (2014)-- MGSaleh
         N_H_Metab = 2;
         MM = 1;

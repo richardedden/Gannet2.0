@@ -5,10 +5,6 @@ function GannetPlotPrePostAlign(MRS_struct, reg, specno)
 %            by mean height of GABA
 % Updates by MGSaleh 2016, MM 2017
 
-% MM: 170701
-specColorPre = [0.9 0 0];
-specColorPost = [0 0 1];
-
 for kk = 1:length(reg)
     
     if MRS_struct.p.HERMES
@@ -20,23 +16,16 @@ for kk = 1:length(reg)
             MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(specno,:)];
         
         % Estimate baseline from between GABAGlx or Lac and GSH. The values might be changed depending on the future choice of metabolites
-        if strcmp(MRS_struct.p.target2, 'Lac')         
-            z=abs(MRS_struct.spec.freq-1.5);
-            Glx_right=find(min(z)==z);
-            z=abs(MRS_struct.spec.freq-1.0);
-            GABA_left=find(min(z)==z);
-            z=abs(MRS_struct.spec.freq-0.5);
-            GABA_right=find(min(z)==z);            
+        % MM (170705)
+        if strcmp(MRS_struct.p.target2, 'Lac')
+            Glx_r_GABA_l = MRS_struct.spec.freq <= 1.5 & MRS_struct.spec.freq >= 1.0;
+            Glx_r_GABA_r = MRS_struct.spec.freq <= 1.5 & MRS_struct.spec.freq >= 0.5;
         else
-            z=abs(MRS_struct.spec.freq-3.1);
-            Glx_right=find(min(z)==z);
-            z=abs(MRS_struct.spec.freq-2.9);
-            GABA_left=find(min(z)==z);
-            z=abs(MRS_struct.spec.freq-2.8);
-            GABA_right=find(min(z)==z);
-        end        
+            Glx_r_GABA_l = MRS_struct.spec.freq <= 3.1 & MRS_struct.spec.freq >= 2.9;
+            Glx_r_GABA_r = MRS_struct.spec.freq <= 3.1 & MRS_struct.spec.freq >= 2.8;
+        end
         
-        specbaseline = (mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2));
+        specbaseline = (mean(real(SpectraToPlot(1,Glx_r_GABA_l)),2));
         
     else
         
@@ -45,20 +34,18 @@ for kk = 1:length(reg)
             MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(specno,:)];
         
         % Estimate baseline from between Glx and GABA
-        z=abs(MRS_struct.spec.freq-3.6);
-        Glx_right=find(min(z)==z);
-        z=abs(MRS_struct.spec.freq-3.3);
-        GABA_left=find(min(z)==z);
-        z=abs(MRS_struct.spec.freq-2.8);
-        GABA_right=find(min(z)==z);
-        specbaseline = (mean(real(SpectraToPlot(1,Glx_right:GABA_left)),2));
+        % MM (170705)
+        Glx_r_GABA_l = MRS_struct.spec.freq <= 3.6 & MRS_struct.spec.freq >= 3.3;
+        Glx_r_GABA_r = MRS_struct.spec.freq <= 3.6 & MRS_struct.spec.freq >= 2.8;
+        
+        specbaseline = (mean(real(SpectraToPlot(1,Glx_r_GABA_l)),2));
         
     end
     
     if MRS_struct.p.HERMES
         
-        % averaged gaba height across all scans - to estimate stack spacing
-        gabaheight = abs(max(SpectraToPlot(1,Glx_right:GABA_right),[],2));
+        % Averaged gaba height across all scans - to estimate stack spacing
+        gabaheight = abs(max(SpectraToPlot(1,Glx_r_GABA_r),[],2));
         gabaheight = mean(gabaheight);
         plotstackoffset = (0:(numspec-1))';
         
@@ -71,12 +58,12 @@ for kk = 1:length(reg)
         
         aa = 1.2;
         hold on;
-        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(2,:)), 'Color', specColorPre);
-        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(1,:)), 'Color', specColorPost);
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(2,:)), 'Color', 'r');
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(1,:)), 'Color', 'b');
         shift = repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
         SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shift,[],1); max(shift,[],1)] ;
-        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(4,:)), 'Color', specColorPre);
-        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(3,:)), 'Color', specColorPost);
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(4,:)), 'Color', 'r');
+        plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(3,:)), 'Color', 'b');
         hold off;
         
         if strcmp(MRS_struct.p.target2, 'Lac')
@@ -92,8 +79,8 @@ for kk = 1:length(reg)
         
     else
         
-        % averaged gaba height across all scans - to estimate stack spacing
-        gabaheight = abs(max(SpectraToPlot([1 2],Glx_right:GABA_right),[],2));
+        % Averaged gaba height across all scans - to estimate stack spacing
+        gabaheight = abs(max(SpectraToPlot([1 2],Glx_r_GABA_r),[],2));
         gabaheight = max(gabaheight);
         plotstackoffset = (0:(numspec-1))';
         plotstackoffset = plotstackoffset * gabaheight;
@@ -101,12 +88,12 @@ for kk = 1:length(reg)
         
         SpectraToPlot = SpectraToPlot + repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
         hold on;
-        plot(MRS_struct.spec.freq, real(SpectraToPlot(2,:)), 'Color', specColorPre);
-        plot(MRS_struct.spec.freq, real(SpectraToPlot(1,:)), 'Color', specColorPost);
+        plot(MRS_struct.spec.freq, real(SpectraToPlot(2,:)), 'Color', 'r');
+        plot(MRS_struct.spec.freq, real(SpectraToPlot(1,:)), 'Color', 'b');
         hold off;
         
-        yaxismax = 1.5*abs(max(max(real(SpectraToPlot([1 2],Glx_right:GABA_right)),[],2)));
-        yaxismin = -10.0*abs(min(min(real(SpectraToPlot([1 2],Glx_right:GABA_right)),[],2)));
+        yaxismax = 1.5*abs(max(max(real(SpectraToPlot([1 2],Glx_r_GABA_r)),[],2)));
+        yaxismin = -10.0*abs(min(min(real(SpectraToPlot([1 2],Glx_r_GABA_r)),[],2)));
         if yaxismax < yaxismin
             [yaxismax, yaxismin] = deal(yaxismin, yaxismax); % MM (170701)
         end
