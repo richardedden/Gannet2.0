@@ -20,7 +20,7 @@ function MRS_struct = GannetFit(MRS_struct, varargin)
 % Determine whether multiple regions and fitting targets or not and then use it to
 % create a loop -- MGSaleh 2016
 
-if MRS_struct.p.PRIAM % Deciding how many regions are there -- MGSaleh 2016
+if MRS_struct.p.PRIAM % deciding how many regions are there -- MGSaleh 2016
     vox = {MRS_struct.p.Vox};
 else
     vox = {MRS_struct.p.Vox{1}};
@@ -82,13 +82,13 @@ for kk = 1:length(vox)
                 %   1.  GABA Fit
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                %Hard code it to fit from 2.79 ppm to 3.55 ppm
+                % Hard code it to fit from 2.79 ppm to 3.55 ppm
                 freqbounds = find(freq <= 3.55 & freq >= 2.79); % MM (170705)
                 plotbounds = find(freq <= 3.6 & freq >= 2.7);
                 
                 maxinGABA = abs(max(real(DIFF(ii,freqbounds))) - min(real(DIFF(ii,freqbounds))));                
-                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1)); %in points
-                LinearInit = grad_points ./ abs(freq(1) - freq(2)); %in ppm
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
+                LinearInit = grad_points ./ abs(freq(1) - freq(2));
                 constInit = (real(DIFF(ii,freqbounds(end))) + real(DIFF(ii,freqbounds(1))))./2;
                 
                 GaussModelInit1 = [maxinGABA -90 3.026 -LinearInit constInit];
@@ -122,7 +122,7 @@ for kk = 1:length(vox)
                 %   1.  GSH Fit
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                %Hard code it to fit from 2.35 ppm to 3.3 ppm
+                % Hard code it to fit from 2.35 ppm to 3.3 ppm
                 freqbounds = find(freq <= 3.3 & freq >= 2.35); % MM (170705)
                 plotbounds = find(freq <= 4.2 & freq >= 1.75);
                 
@@ -173,8 +173,8 @@ for kk = 1:length(vox)
                 %   1.  Lac Fit
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                %This is a work in progress - currenly mainly code copied form GSH
-                %Hard code it to fit from 0.5 ppm to 1.8 ppm              
+                % This is a work in progress - currenly mainly code copied form GSH
+                % Hard code it to fit from 0.5 ppm to 1.8 ppm              
                 freqbounds = find(freq <= 1.8 & freq >= 0.5); % MM (170705)
                 plotbounds = find(freq <= 2 & freq >= 0);
                 
@@ -218,16 +218,12 @@ for kk = 1:length(vox)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 % Hard code it to fit from 3.45 ppm to 4.1 ppm
-                % MM: Larger fit range helps to avoid fitting of Cr-CH3 artefact(?)
-                % at 3.91 ppm
                 freqbounds = find(freq <= 4.1 & freq >= 3.45); % MM (170705)
                 plotbounds = find(freq <= 4.5 & freq >= 3);
                 
                 maxinGABA = max(real(DIFF(ii,freqbounds)));
-                % smarter estimation of baseline params, Krish's idea (taken from Johns
-                % code; NAP 121211
-                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1)); %in points
-                LinearInit = grad_points ./ abs(freq(1) - freq(2)); %in ppm
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
+                LinearInit = grad_points ./ abs(freq(1) - freq(2));
                 constInit = (real(DIFF(ii,freqbounds(end))) + real(DIFF(ii,freqbounds(1))))./2;
                 
                 GaussModelInit = [maxinGABA -90 3.72 maxinGABA -90 3.77 -LinearInit constInit];
@@ -330,7 +326,7 @@ for kk = 1:length(vox)
             if ishandle(102)
                 clf(102) % MM (170629)
             end
-            h=figure(102);
+            h = figure(102);
             % MM (170629): Open figure in center of screen
             scr_sz = get(0, 'ScreenSize');
             fig_w = 1000;
@@ -597,11 +593,10 @@ for kk = 1:length(vox)
             %   3.  Cr Fit
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            %Fit Cho and Cr
             Cr_OFF=OFF(ii,:);
             freqboundscc = freq <= 3.6 & freq >= 2.6; % MM (170705)
             
-            %Do some detective work to figure out the initial parameters
+            % Do some detective work to figure out the initial parameters
             ChoCrMeanSpec = Cr_OFF(freqboundscc).';
             Baseline_offset = real(ChoCrMeanSpec(1)+ChoCrMeanSpec(end))/2;
             Width_estimate = 0.05;
@@ -611,7 +606,7 @@ for kk = 1:length(vox)
             ChoCrModelParam = FitChoCr(freq(freqboundscc), ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
             MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:) = ChoCrModelParam ./ [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
             
-            %Initialise fitting pars     
+            % Initialise fitting pars     
             freqbounds = freq <= 3.12 & freq >= 2.72; % MM (170705)
             Cr_initx = [max(real(Cr_OFF(freqbounds))) 0.05 3.0 0 0 0];
 
@@ -909,7 +904,7 @@ for kk = 1:length(vox)
             if tmp
                 lastslash=tmp(end);
             elseif tmp2
-                %maybe it's Windows...
+                % maybe it's Windows...
                 lastslash=tmp2(end);
             else
                 % it's in the current dir...
@@ -965,7 +960,7 @@ for kk = 1:length(vox)
                 save(matname,'MRS_struct');
             end
             
-            %140116: ADH reorder structure
+            % 140116: ADH reorder structure
             if isfield(MRS_struct, 'mask') == 1
                 if isfield(MRS_struct, 'waterfile') == 1
                     structorder = {'versionload', 'versionfit', 'ii', ...

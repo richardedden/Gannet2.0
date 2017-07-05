@@ -236,7 +236,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                     MRS_struct.fids.ON_OFF = MRS_struct.fids.ON_OFF(:).';
             end
             
-    end % End of vendor switch loop for data load
+    end % end of vendor switch loop for data load
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -290,7 +290,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
             ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
             MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
         end
-    end %End of H2O reference loop
+    end % end of H2O reference loop
     
     % Line-broadening, zero-filling and FFT
     FullData = FullData .* repmat((exp(-time'*MRS_struct.p.LB*pi)), [1 size(FullData,2)]);
@@ -667,7 +667,8 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     end
     MRS_struct = orderfields(MRS_struct, structorder);
     
-end %end of load-and-processing loop over datasets
+end % end of load-and-processing loop over datasets
+
 end
 
 
