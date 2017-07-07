@@ -255,15 +255,15 @@ for kk = 1:length(vox)
                 % Hard code it to fit from 2.79 ppm to 4.1 ppm
                 freqbounds = find(freq <= 4.1 & freq >= 2.79); % MM (170705)
                 plotbounds = find(freq <= 4.2 & freq >= 2.7);
-                
+
                 maxinGABA = max(real(DIFF(ii,freqbounds)));
                 grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
                 LinearInit = grad_points ./ abs(freq(1) - freq(2));
-                
+
                 GaussModelInit = [maxinGABA -400 3.725 maxinGABA -400 3.775 maxinGABA -90 3.02 LinearInit 0 0];
                 lb = [-4000*maxinGABA -800 3.725-0.02 -4000*maxinGABA -800 3.775-0.02 -4000*maxinGABA -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA];
                 ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
-                
+                                
                 % Down-weight Cho subtraction artifact and signals
                 % downfield of Glx (for HERMES) by including observation
                 % weights in nonlinear regression; improves accuracy of
@@ -881,10 +881,10 @@ for kk = 1:length(vox)
             end
             axis off;
             script_path=which('GannetFit');
-            Gannet_circle_white=[script_path(1:(end-12)) '/GANNET_circle_white.jpg'];
-            A_2=imread(Gannet_circle_white);
+            Gannet_logo=[script_path(1:(end-12)) '/Gannet3_logo.png'];
+            A2=imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
             axes('Position',[0.80, 0.05, 0.15, 0.15]);
-            image(A_2); axis off; axis square;
+            image(A2); axis off; axis square;
             
             % Save PDF
             if strcmp(MRS_struct.p.vendor,'Siemens')

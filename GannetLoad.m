@@ -552,8 +552,8 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     text(0.275, 0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     script_path=which('GannetLoad');
-    Gannet_circle_white=[script_path(1:(end-13)) '/GANNET_circle_white.jpg'];
-    A2=imread(Gannet_circle_white);
+    Gannet_logo=[script_path(1:(end-13)) '/Gannet3_logo.png'];
+    A2=imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
     axes('Position',[0.80, 0.05, 0.15, 0.15]);
     image(A2); axis off; axis square;
     
