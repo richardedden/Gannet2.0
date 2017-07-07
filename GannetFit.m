@@ -259,11 +259,11 @@ for kk = 1:length(vox)
                 maxinGABA = max(real(DIFF(ii,freqbounds)));
                 grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
                 LinearInit = grad_points ./ abs(freq(1) - freq(2));
-
-                GaussModelInit = [maxinGABA -400 3.725 maxinGABA -400 3.775 maxinGABA -90 3.02 LinearInit 0 0];
+                
+                GaussModelInit = [maxinGABA -400 3.725 maxinGABA -400 3.775 maxinGABA -90 3.02 -LinearInit 0 0];
                 lb = [-4000*maxinGABA -800 3.725-0.02 -4000*maxinGABA -800 3.775-0.02 -4000*maxinGABA -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA];
                 ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
-                                
+                
                 % Down-weight Cho subtraction artifact and signals
                 % downfield of Glx (for HERMES) by including observation
                 % weights in nonlinear regression; improves accuracy of
@@ -464,21 +464,21 @@ for kk = 1:length(vox)
                 end
                 
                 LGPModelInit = [maxinWater 20 freq(watermaxindex) 0 waterbase -50 0];
-                lblg = [0.01*maxinWater 1 4.6 0 0 -50 -pi];
-                ublg = [40*maxinWater 100 4.8 0.000001 1 0 pi];
+                lb = [0.01*maxinWater 1 4.6 0 0 -50 -pi];
+                ub = [40*maxinWater 100 4.8 0.000001 1 0 pi];
                 
                 %Fit from 5.6 ppm to 3.8 ppm RE 110826
                 freqbounds = freq <= 5.6 & freq >= 3.8; % MM (170705)
                 
                 % Least-squares model fitting
-                LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freq(freqbounds), real(WaterData(ii,freqbounds)), lblg, ublg, lsqopts);
+                LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freq(freqbounds), real(WaterData(ii,freqbounds)), lb, ub, lsqopts);
                 [LGPModelParam, residw] = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)), @LorentzGaussModelP, LGPModelInit, nlinopts);
                 % MM (170705)
                 %if ~any(strcmpi(MRS_struct.p.vendor,{'GE','Siemens'}))
-                %    % Remove phase and run again
-                %    WaterData(ii,:) = WaterData(ii,:)*exp(1i*LGPModelParam(ii,7));
-                %    LGPModelParam(ii,7) = 0;
-                %    [LGPModelParam,residw] = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)), @LorentzGaussModelP, LGPModelParam, nlinopts);
+                %   % Remove phase and run again
+                %   WaterData(ii,:) = WaterData(ii,:)*exp(1i*LGPModelParam(7));
+                %   LGPModelParam(7) = 0;
+                %   [LGPModelParam, residw] = nlinfit(freq(freqbounds), real(WaterData(ii,freqbounds)), @LorentzGaussModelP, LGPModelParam, nlinopts);
                 %end
                 
                 WaterArea = sum(real(LorentzGaussModel(LGPModelParam(1:end-1),freq(freqbounds))) - BaselineModel(LGPModelParam(3:5),freq(freqbounds)),2);
@@ -570,10 +570,10 @@ for kk = 1:length(vox)
                     maxResidWater = s * maxResidWater;
                     waterbase = mean(real(OFF(ii,1:500)));
                     LGPModelInit = [maxResidWater 20 4.68 0 waterbase -50 0];
-                    lblg = [maxResidWater-abs(2*maxResidWater) 1 4.6 0 0 -200 -pi];
-                    ublg = [maxResidWater+abs(2*maxResidWater) 100 4.8 0.000001 1 0 pi];
+                    lb = [maxResidWater-abs(2*maxResidWater) 1 4.6 0 0 -200 -pi];
+                    ub = [maxResidWater+abs(2*maxResidWater) 100 4.8 0.000001 1 0 pi];
                     
-                    LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freq(freqWaterOFF), real(water_OFF), lblg, ublg, lsqopts);
+                    LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freq(freqWaterOFF), real(water_OFF), lb, ub, lsqopts);
                     [MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,:), residRW] = nlinfit(freq(freqWaterOFF), real(water_OFF), @LorentzGaussModelP, LGPModelInit, nlinopts);
                     MRS_struct.out.(vox{kk}).ResidWater.FitError(ii) = 100*std(residRW)/MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1);
                     
@@ -593,64 +593,93 @@ for kk = 1:length(vox)
             %   3.  Cr Fit
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            Cr_OFF=OFF(ii,:);
-            freqboundscc = freq <= 3.6 & freq >= 2.6; % MM (170705)
+            Cr_OFF = OFF(ii,:);
+            freqboundsChoCr = freq <= 3.6 & freq >= 2.6; % MM (170705)
             
             % Do some detective work to figure out the initial parameters
-            ChoCrMeanSpec = Cr_OFF(freqboundscc).';
+            ChoCrMeanSpec = Cr_OFF(freqboundsChoCr).';
             Baseline_offset = real(ChoCrMeanSpec(1)+ChoCrMeanSpec(end))/2;
             Width_estimate = 0.05;
             Area_estimate = (max(real(ChoCrMeanSpec))-min(real(ChoCrMeanSpec)))*Width_estimate*4;
             ChoCr_initx = [Area_estimate Width_estimate 3.02 0 Baseline_offset 0 1] ...
                 .* [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
-            ChoCrModelParam = FitChoCr(freq(freqboundscc), ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
+            ChoCrModelParam = FitChoCr(freq(freqboundsChoCr), ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
             MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:) = ChoCrModelParam ./ [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
             
             % Initialise fitting pars     
-            freqbounds = freq <= 3.12 & freq >= 2.72; % MM (170705)
-            Cr_initx = [max(real(Cr_OFF(freqbounds))) 0.05 3.0 0 0 0];
+            freqboundsCr = freq <= 3.12 & freq >= 2.72; % MM (170705)
+            LorentzModelInit = [max(real(Cr_OFF(freqboundsCr))) 0.05 3.0 0 0 0];
 
-            %Then use the same function as the Cr Fit in GannetLoad
-            [LorentzModelParam, residCr] = nlinfit(freq(freqbounds), real(Cr_OFF(freqbounds)), @LorentzModel, Cr_initx, nlinopts);
+            % Least-squares model fitting
+            LorentzModelInit = lsqcurvefit(@LorentzModel, LorentzModelInit, freq(freqboundsCr), real(Cr_OFF(freqboundsCr)), [], [], lsqopts);
+            [LorentzModelParam, residCr] = nlinfit(freq(freqboundsCr), real(Cr_OFF(freqboundsCr)), @LorentzModel, LorentzModelInit, nlinopts);
+            
             MRS_struct.out.(vox{kk}).Cr.ModelParam(ii,:) = LorentzModelParam; % MM (160913)
             Crheight = LorentzModelParam(1)/(2*pi*LorentzModelParam(2)); % MM (170202)
             MRS_struct.out.(vox{kk}).Cr.FitError(ii) = 100*std(residCr)/Crheight;
             MRS_struct.out.(vox{kk}).Cr.Resid(ii,:) = residCr;
             
-            MRS_struct.out.(vox{kk}).Cr.Area(ii) = sum(real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc)) - ...
-                TwoLorentzModel([0 MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,2:(end-1)) 0],freq(freqboundscc)))) * abs(freq(1)-freq(2));
-            MRS_struct.out.(vox{kk}).Cho.Area(ii) = sum(real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end)),freq(freqboundscc)) - ...
-                TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc)))) * abs(freq(1)-freq(2));
+            MRS_struct.out.(vox{kk}).Cr.Area(ii) = sum(real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundsChoCr)) - ...
+                TwoLorentzModel([0 MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,2:(end-1)) 0],freq(freqboundsChoCr)))) * abs(freq(1)-freq(2));
+            MRS_struct.out.(vox{kk}).Cho.Area(ii) = sum(real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end)),freq(freqboundsChoCr)) - ...
+                TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundsChoCr)))) * abs(freq(1)-freq(2));
             MRS_struct.out.(vox{kk}).Cr.FWHM(ii) = ChoCrModelParam(2);
             
             % Calculate SNR of Cr signal (MM: 170502)
             noiseSigma_OFF = CalcNoise(freq, OFF(ii,:));
-            MRS_struct.out.(vox{kk}).Cr.SNR(ii) = abs(Crheight)/noiseSigma_OFF;
+            MRS_struct.out.(vox{kk}).Cr.SNR(ii) = abs(Crheight)/noiseSigma_OFF;            
             
-            % Root sum square fit error and concentration as metabolite ratio -- MGSaleh & MM
-            switch target{trg}
-                case 'GABA'
-                    MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
-                    MRS_struct.out.(vox{kk}).GABA.ConcCr(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
-                    MRS_struct.out.(vox{kk}).GABA.ConcCho(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
-                    
-                case 'Glx'
-                    MRS_struct.out.(vox{kk}).Glx.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
-                    MRS_struct.out.(vox{kk}).Glx.ConcCr(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
-                    MRS_struct.out.(vox{kk}).Glx.ConcCho(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
-                    
-                case 'GABAGlx'
-                    MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
-                    MRS_struct.out.(vox{kk}).Glx.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
-                    MRS_struct.out.(vox{kk}).GABA.ConcCr(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
-                    MRS_struct.out.(vox{kk}).GABA.ConcCho(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
-                    MRS_struct.out.(vox{kk}).Glx.ConcCr(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
-                    MRS_struct.out.(vox{kk}).Glx.ConcCho(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
-                    
-                case 'GSH'
-                    MRS_struct.out.(vox{kk}).GSH.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).GSH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
-                    MRS_struct.out.(vox{kk}).GSH.ConcCr(ii) = MRS_struct.out.(vox{kk}).GSH.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
-                    MRS_struct.out.(vox{kk}).GSH.ConcCho(ii) = MRS_struct.out.(vox{kk}).GSH.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %   4.  NAA Fit
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            NAA_OFF = OFF(ii,:);
+            freqbounds = find(freq <= 2.25 & freq >= 1.75); % MM (170705)
+            
+            maxinNAA = max(real(NAA_OFF(freqbounds)));
+            grad_points = (real(NAA_OFF(freqbounds(end))) - real(NAA_OFF(freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1)); %in points
+            LinearInit = grad_points ./ abs(freq(1) - freq(2));
+            constInit = (real(NAA_OFF(freqbounds(end))) + real(NAA_OFF(freqbounds(1)))) ./ 2;
+            
+            LorentzModelInit = [maxinNAA 0.05 2.01 0 -LinearInit constInit];
+            lb = [0 0.01 1.97 0 -40*maxinNAA -2000*maxinNAA];
+            ub = [4000*maxinNAA 0.1 2.05 0.5 40*maxinNAA 1000*maxinNAA];
+            
+            % Least-squares model fitting
+            LorentzModelInit = lsqcurvefit(@LorentzModel, LorentzModelInit, freq(freqbounds), real(NAA_OFF(freqbounds)), lb, ub, lsqopts);
+            [LorentzModelParam, resid] = nlinfit(freq(freqbounds), real(NAA_OFF(freqbounds)), @LorentzModel, LorentzModelInit, nlinopts);            
+            
+            NAAheight = LorentzModelParam(1)/(2*pi*LorentzModelParam(2));
+            MRS_struct.out.(vox{kk}).NAA.FitError(ii) = 100*std(resid)/NAAheight;
+            NAAModelParam = LorentzModelParam;
+            NAAModelParam(4) = 0;
+            MRS_struct.out.(vox{kk}).NAA.Area(ii) = sum(LorentzModel(NAAModelParam,freq(freqbounds)) - BaselineModel(NAAModelParam([3 6 5]),freq(freqbounds)), 2) * abs(freq(1)-freq(2));
+            MRS_struct.out.(vox{kk}).NAA.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq) * NAAModelParam(2));
+            MRS_struct.out.(vox{kk}).NAA.ModelParam(ii,:) = LorentzModelParam;
+            MRS_struct.out.(vox{kk}).NAA.Resid(ii,:) = resid;
+            
+            % Calculate SNR of NAA signal (MM: 170502)
+            MRS_struct.out.(vox{kk}).NAA.SNR(ii) = abs(NAAheight) / noiseSigma_OFF;
+                        
+            % Root sum square fit errors and concentrations as metabolite ratios -- MGSaleh & MM
+            if strcmpi(target{trg},'GABAGlx')
+                MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
+                MRS_struct.out.(vox{kk}).Glx.FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
+                MRS_struct.out.(vox{kk}).GABA.FitError_NAA(ii) = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).NAA.FitError(ii).^2);
+                MRS_struct.out.(vox{kk}).Glx.FitError_NAA(ii) = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).NAA.FitError(ii).^2);
+                MRS_struct.out.(vox{kk}).GABA.ConcCr(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
+                MRS_struct.out.(vox{kk}).GABA.ConcCho(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
+                MRS_struct.out.(vox{kk}).GABA.ConcNAA(ii) = MRS_struct.out.(vox{kk}).GABA.Area(ii) / MRS_struct.out.(vox{kk}).NAA.Area(ii);
+                MRS_struct.out.(vox{kk}).Glx.ConcCr(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
+                MRS_struct.out.(vox{kk}).Glx.ConcCho(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
+                MRS_struct.out.(vox{kk}).Glx.ConcNAA(ii) = MRS_struct.out.(vox{kk}).Glx.Area(ii) / MRS_struct.out.(vox{kk}).NAA.Area(ii);                
+            else
+                MRS_struct.out.(vox{kk}).(target{trg}).FitError_Cr(ii) = sqrt(MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii).^2 + MRS_struct.out.(vox{kk}).Cr.FitError(ii).^2);
+                MRS_struct.out.(vox{kk}).(target{trg}).FitError_NAA(ii) = sqrt(MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii).^2 + MRS_struct.out.(vox{kk}).NAA.FitError(ii).^2);
+                MRS_struct.out.(vox{kk}).(target{trg}).ConcCr(ii) = MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) / MRS_struct.out.(vox{kk}).Cr.Area(ii);
+                MRS_struct.out.(vox{kk}).(target{trg}).ConcCho(ii) = MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) / MRS_struct.out.(vox{kk}).Cho.Area(ii);
+                MRS_struct.out.(vox{kk}).(target{trg}).ConcNAA(ii) = MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) / MRS_struct.out.(vox{kk}).NAA.Area(ii);
             end
             
             % MM (170703): Reorder structure fields
@@ -658,42 +687,43 @@ for kk = 1:length(vox)
                 if strcmp(MRS_struct.p.Reference_compound,'H2O')
                     if strcmpi(target{trg},'GABAGlx')
                         MRS_struct.out.(vox{kk}).GABA = orderfields(MRS_struct.out.(vox{kk}).GABA, ...
-                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_W', 'FitError_Cr', 'ConcIU', 'ConcCr', 'ConcCho'});
+                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_W', 'FitError_Cr', 'FitError_NAA', 'ConcIU', 'ConcCr', 'ConcCho', 'ConcNAA'});
                         MRS_struct.out.(vox{kk}).Glx = orderfields(MRS_struct.out.(vox{kk}).Glx, ...
-                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_W', 'FitError_Cr', 'ConcIU', 'ConcCr', 'ConcCho'});
+                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_W', 'FitError_Cr', 'FitError_NAA', 'ConcIU', 'ConcCr', 'ConcCho', 'ConcNAA'});
                     else
                         MRS_struct.out.(vox{kk}).(target{trg}) = orderfields(MRS_struct.out.(vox{kk}).(target{trg}), ...
-                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_W', 'FitError_Cr', 'ConcIU', 'ConcCr', 'ConcCho'});
+                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_W', 'FitError_Cr', 'FitError_NAA', 'ConcIU', 'ConcCr', 'ConcCho', 'ConcNAA'});
                     end
                 else
                     if strcmpi(target{trg},'GABAGlx')
                         MRS_struct.out.(vox{kk}).GABA = orderfields(MRS_struct.out.(vox{kk}).GABA, ...
-                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_Cr', 'ConcCr', 'ConcCho'});
+                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_Cr', 'FitError_NAA', 'ConcCr', 'ConcCho', 'ConcNAA'});
                         MRS_struct.out.(vox{kk}).Glx = orderfields(MRS_struct.out.(vox{kk}).Glx, ...
-                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_Cr', 'ConcCr', 'ConcCho'});
+                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_Cr', 'FitError_NAA', 'ConcCr', 'ConcCho', 'ConcNAA'});
                     else
                         MRS_struct.out.(vox{kk}).(target{trg}) = orderfields(MRS_struct.out.(vox{kk}).(target{trg}), ...
-                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_Cr', 'ConcCr', 'ConcCho'});
+                            {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError', 'FitError_Cr', 'FitError_NAA', 'ConcCr', 'ConcCho', 'ConcNAA'});
                     end
                 end
             end
             MRS_struct.out.(vox{kk}).Cr = orderfields(MRS_struct.out.(vox{kk}).Cr, {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError'});
-            
+            MRS_struct.out.(vox{kk}).NAA = orderfields(MRS_struct.out.(vox{kk}).NAA, {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError'});
+                        
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %   4. Build GannetFit Output
+            %   5. Build GannetFit Output
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            Crmin = min(real(Cr_OFF(freqbounds)));
-            Crmax = max(real(Cr_OFF(freqbounds)));
+            Crmin = min(real(Cr_OFF(freqboundsCr)));
+            Crmax = max(real(Cr_OFF(freqboundsCr)));
             resmaxCr = max(residCr);
             residCr = residCr + Crmin - resmaxCr;
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
                 h = subplot(2,2,4);
                 plot(freq, real(Cr_OFF), 'b', ...
-                    freq(freqboundscc), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundscc))), 'r', ...
-                    freq(freqboundscc), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc))), 'r', ...                    
-                    freq(freqbounds), residCr, 'k');
+                    freq(freqboundsChoCr), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundsChoCr))), 'r', ...
+                    freq(freqboundsChoCr), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundsChoCr))), 'r', ...                    
+                    freq(freqboundsCr), residCr, 'k');
                 set(gca,'XDir','reverse');
                 set(gca,'YTick',[],'Box','off');
                 xlim([2.6 3.6]);
@@ -717,9 +747,9 @@ for kk = 1:length(vox)
             else
                 hb=subplot(2,2,3);
                 plot(freq, real(Cr_OFF), 'b', ...
-                    freq(freqboundscc), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundscc))), 'r', ...
-                    freq(freqboundscc), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundscc))), 'r', ...
-                    freq(freqbounds), residCr, 'k');
+                    freq(freqboundsChoCr), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundsChoCr))), 'r', ...
+                    freq(freqboundsChoCr), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundsChoCr))), 'r', ...
+                    freq(freqboundsCr), residCr, 'k');
                 set(gca,'XDir','reverse');
                 set(gca,'YTick',[]);
                 xlim([2.6 3.6]);
