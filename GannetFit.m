@@ -265,7 +265,7 @@ for kk = 1:length(vox)
                 ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
                 
                 % Down-weight Cho subtraction artifact and signals
-                % downfield of Glx (for HERMES) by including observation
+                % downfield of Glx (if HERMES) by including observation
                 % weights in nonlinear regression; improves accuracy of
                 % peak fittings (MM: 170701)
                 w = ones(size(DIFF(ii,freqbounds)));
@@ -273,14 +273,17 @@ for kk = 1:length(vox)
                 ChoRange = residfreq >= 3.16 & residfreq <= 3.285;
                 GlxDownFieldRange = residfreq >= 3.9 & residfreq <= 4.2;
                 if MRS_struct.p.HERMES
-                    w(ChoRange | GlxDownFieldRange) = 0.001;
+                    weightRange = ChoRange | GlxDownFieldRange;
                 else
-                    w(ChoRange) = 0.001;
+                    weightRange = ChoRange;
                 end
-                
+                w(weightRange) = 0.001;
+
                 % Least-squares model fitting
                 GaussModelInit = lsqcurvefit(@GABAGlxModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
-                [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @GABAGlxModel, GaussModelInit, nlinopts, 'Weights', w);
+                modelFun_w = @(x,freq) sqrt(w) .* GABAGlxModel(x,freq); % add weights to the model
+                [GaussModelParam, resid] = nlinfit(freq(freqbounds), sqrt(w) .* real(DIFF(ii,freqbounds)), modelFun_w, GaussModelInit, nlinopts); % add weights to the data
+                [~, residPlot] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @GABAGlxModel, GaussModelInit, nlinopts); % re-run for residuals for output figure
                 
                 % Range to determine residuals for GABA and Glx (MM: 170705)
                 residGABA = resid(residfreq <= 3.55 & residfreq >= 2.79);
@@ -363,12 +366,25 @@ for kk = 1:length(vox)
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
                     freq(freqbounds), DoubleGaussModel(GaussModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds), resid, 'k');
-                set(gca,'XLim',[3.4 4.2])
+                set(gca,'XLim',[3.4 4.2]);
             elseif strcmp (target{trg},'GABAGlx')
+                resmax = max(residPlot);
+                residPlot = residPlot + metabmin - resmax;
+                residPlot2 = residPlot;
+                residPlot2(weightRange) = NaN;
+                hold on;
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
                     freq(freqbounds), GABAGlxModel(GaussModelParam,freq(freqbounds)), 'r', ...
-                    freq(freqbounds), resid, 'k');
-                set(gca,'XLim',[2.7 4.2])
+                    freq(freqbounds), residPlot2, 'k');
+                % MM (170713): Plot weighted portion of residuals in different color
+                if MRS_struct.p.HERMES
+                    plot(freq(freqbounds(ChoRange)), residPlot(ChoRange), 'Color', [255 160 64]/255);
+                    plot(freq(freqbounds(GlxDownFieldRange)), residPlot(GlxDownFieldRange), 'Color', [255 160 64]/255);
+                else
+                    plot(freq(freqbounds(ChoRange)), residPlot(ChoRange), 'Color', [255 160 64]/255);
+                end
+                hold off;
+                set(gca,'XLim',[2.7 4.2]);
             end
             if strcmpi(MRS_struct.p.vendor,'Siemens')
                 legendtxt = regexprep(MRS_struct.gabafile{ii*2-1}, '_','-');
@@ -425,6 +441,7 @@ for kk = 1:length(vox)
                     tailbottom = min(real(DIFF(ii,labelbounds)));
                     text(2.8, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
                     text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
+                    text(3.2, max(residPlot)+5e-4, 'weighted', 'Color', [255 160 64]/255);
             end
             set(gca,'YTick',[]);
             set(gca,'Box','off');
@@ -742,7 +759,7 @@ for kk = 1:length(vox)
                 set(hwat,'horizontalAlignment', 'right')
                 set(h_m,'YTickLabel',[]);
                 set(h_m,'XTickLabel',[]);
-                set(gca,'Box','off')
+                set(gca,'Box','off');
                 set(gca,'YColor','white');
             else
                 hb=subplot(2,2,3);
@@ -753,12 +770,14 @@ for kk = 1:length(vox)
                 set(gca,'XDir','reverse');
                 set(gca,'YTick',[]);
                 xlim([2.6 3.6]);
-                crlabelbounds = freq <= 3.12 & freq >= 2.9; % MM (170705)
-                hcres=text(3.12, max(residCr(crlabelbounds))+0.05*Crmax, 'residual');
-                set(hcres,'horizontalAlignment', 'left');
-                text(2.8,0.3*Crmax,'data','Color',[0 0 1]);
-                text(2.8,0.2*Crmax,'model','Color',[1 0 0]);
+                crlabelbounds = freq(freqboundsCr) <= 3.12 & freq(freqboundsCr) >= 2.72; % MM (170705)
+                hcres=text(3, max(residCr(crlabelbounds))+0.05*Crmax, 'residual');
+                set(hcres,'horizontalAlignment', 'center');
+                text(2.7,0.1*Crmax,'data','Color',[0 0 1]);
+                text(2.7,0.01*Crmax,'model','Color',[1 0 0]);
                 text(2.94,Crmax*0.75,'Creatine');
+                set(gca,'Box','off');
+                set(gca,'YColor','white');
             end
             
             % And running the plot
