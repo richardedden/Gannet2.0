@@ -441,7 +441,7 @@ for kk = 1:length(vox)
                     tailbottom = min(real(DIFF(ii,labelbounds)));
                     text(2.8, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
                     text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
-                    text(3.2, max(residPlot)+5e-4, 'weighted', 'Color', [255 160 64]/255);
+                    text(3.2, min(residPlot)-0.5*abs(max(residPlot)), 'weighted', 'Color', [255 160 64]/255, 'horizontalAlignment', 'center');
             end
             set(gca,'YTick',[]);
             set(gca,'Box','off');

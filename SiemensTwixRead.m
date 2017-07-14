@@ -69,8 +69,7 @@ if nargin == 3
     WaterData = WaterData(:,(MRS_struct.p.pointsBeforeEcho_water+1):end,:);
     MRS_struct.p.npoints_water = MRS_struct.p.npoints_water - MRS_struct.p.pointsBeforeEcho_water; % MM (160914)
     
-    %Combine data based upon first point of FIDs (mean over all averages)
-    % MM (170123)
+    % Coil combination and prephasing
     firstpoint_water = conj(WaterData(:,1,:));
     channels_scale = squeeze(sqrt(sum(firstpoint_water .* conj(firstpoint_water),1)));
     channels_scale = repmat(channels_scale, [1 size(WaterData,1) MRS_struct.p.npoints_water]);
@@ -93,7 +92,7 @@ if isfield(MRS_struct.p,'seqtype_water') && strcmp(MRS_struct.p.seqtype_water,'M
     firstpoint = repmat(firstpoint, [1 1 size(MetabData,3)]);
     MetabData = MetabData .* firstpoint;
     MetabData = conj(squeeze(sum(MetabData,1)));
-    MRS_struct.fids.data = MetabData;
+    MRS_struct.fids.data = double(MetabData);
 else
     % If no water data (or PRESS water reference) provided, combine data 
     % based upon first point of metabolite data (average all transients)
@@ -103,7 +102,7 @@ else
         disp('No water reference found!');
     end
     disp('Phasing metabolite data...');
-    %Combine data based upon first point of FIDs (mean over all averages)
+    % Coil combination and prephasing (mean over all averages)
     firstpoint=mean(conj(MetabData(:,1,:)),3);
     channels_scale=squeeze(sqrt(sum(firstpoint.*conj(firstpoint))));
     firstpoint=repmat(firstpoint, [1 MRS_struct.p.npoints MRS_struct.p.nrows])/channels_scale;
