@@ -17,6 +17,7 @@ function TWIXDeIdentify(fnames)
 %       VB20P
 %       VD13D
 %       VE11A
+%       VE11C
 %
 %   However, for your particular configuration/software version, it can not be
 %   guaranteed that the code is running without error, or catching all
@@ -53,6 +54,8 @@ function TWIXDeIdentify(fnames)
 %       2016-08-25: First version of the code.
 %       2016-08-26: Added various fields to be de-identified.
 %       2017-02-02: Fixed errors for certain header formats.
+%                   Added various fields to be de-identified.
+%       2017-02-07: Added further fields to be de-identified.
 
 if nargin < 1 % De-identify all DAT files in current directory
 
@@ -184,6 +187,7 @@ for ii = 1:length(fnames)
     
     % Loop over all scans within the TWIX file (only VD and higher!)
     for s=1:NScans
+        s
         fseek(fid,cPos,'bof');
         hdr_len = fread(fid, 1,'uint32');
         
@@ -199,6 +203,7 @@ for ii = 1:length(fnames)
         
         % Jump to end
         cPos = filePos( end );
+        filePos( end ) = [];
     end
     fclose(fid);
     
@@ -417,6 +422,7 @@ function newbuffer = parse_deid(buffer)
 %   tReferenceImage0 (2017-02-02)
 %   tReferenceImage1 (2017-02-02)
 %   tReferenceImage2 (2017-02-02)
+%   DeviceSerialNumber (2017-02-06)
 %
 % the double parameter fields with "precision" tag
 %   flUsedPatientWeight
@@ -445,6 +451,11 @@ function newbuffer = parse_deid(buffer)
 % the array parameter fields with "default" tag
 %   ReferencedImageSequence (2017-02-02)
 %
+% the simple text field in the MeasYaps header part
+%   tReferenceImage0 (2017-02-07)
+%   tReferenceImage1 (2017-02-07)
+%   tReferenceImage2 (2017-02-07)
+%
 % If your specific implementation requires more fields to be de-identified,
 % please note the author.
 %
@@ -452,16 +463,18 @@ function newbuffer = parse_deid(buffer)
 %         Johns Hopkins University, 08/23/2016
 %
 % History: 2016-08-23: First version.
-%          2017-02-02: Added fields containing device IDs and date stamps.
+%          2017-02-02: Added fields containing date stamps.
+%          2017-02-07: Added fields containing device IDs.
 
-newbuffer1 = regexprep(buffer, '<Param(?:Bool|Long|String)\."(?:PatientID|PatientBirthDay|tPatientName|PatientName|PatientsName|PatientSex|lPatientSex|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID|tReferenceImage0|tReferenceImage1|tReferenceImage2)">\s*\n*\s*{\s*([^}]*)','${write_xxx($0,$1)}');
+newbuffer1 = regexprep(buffer, '<Param(?:Bool|Long|String)\."(?:PatientID|PatientBirthDay|tPatientName|PatientName|PatientsName|PatientSex|lPatientSex|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID|tReferenceImage0|tReferenceImage1|tReferenceImage2|DeviceSerialNumber)">\s*\n*\s*{\s*([^}]*)','${write_xxx($0,$1)}');
 newbuffer2 = regexprep(newbuffer1, '<ParamDouble\."(?:flPatientAge|flUsedPatientWeight|PatientAge|PatientWeight)">\s*{\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$2)}');
 newbuffer3 = regexprep(newbuffer2, '<ParamDouble\."(?:flPatientHeight)">\s*{\s*<Unit>.*"\[mm\]"\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$2)}');
 newbuffer4 = regexprep(newbuffer3, '<Param(?:Bool|Long|String)\."(?:PatientName|PatientBirthDay|PatientSex|PatientID|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID)">\s*{\s*(<Visible>\s*"\w*")?\s*([^}]*)','${write_xxx($0,$2)}');
 newbuffer5 = regexprep(newbuffer4, '<ParamArray\."ReferencedImageSequence">\s*{\s*(<Default>\s*<ParamString."">)?\s*{\s*}\s*{\s*([^}]*)','${write_xxx($0,$2)}');
 newbuffer6 = regexprep(newbuffer5, '<ParamArray\."ReferencedImageSequence">\s*{\s*(<Default>\s*<ParamString."">)?\s*{\s*}\s*{\s*([^}]*)}\s*{\s*([^}]*)}\s*{\s*([^}]*)','${write_xxx($0,$3)}');
 newbuffer7 = regexprep(newbuffer6, '<ParamArray\."ReferencedImageSequence">\s*{\s*(<Default>\s*<ParamString."">)?\s*{\s*}\s*{\s*([^}]*)}\s*{\s*([^}]*)}\s*{\s*([^}]*)','${write_xxx($0,$4)}');
-newbuffer = regexprep(newbuffer7, '<ParamDouble\."(?:PatientAge|PatientWeight)">\s*{\s*(<Visible>\s*"\w*")\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$3)}');
+newbuffer8 = regexprep(newbuffer7,'"\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*"','${write_xxx($0,$0)}');
+newbuffer = regexprep(newbuffer8, '<ParamDouble\."(?:PatientAge|PatientWeight)">\s*{\s*(<Visible>\s*"\w*")\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$3)}');
 
 end % of parse_deid()
 
