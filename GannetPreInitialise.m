@@ -13,9 +13,7 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
     MRS_struct.p.target2 = 'GSH'; % for HERMES only; options are 'GSH' or 'Lac'
     MRS_struct.p.ONOFForder = 'offfirst'; % options are 'onfirst' or 'offfirst'
     MRS_struct.p.Water_Positive = 1; % for Philips MOIST ws, set to 0
-    % Siemens header information differs between versions; switch for different versions
-    MRS_struct.p.Siemens_type = 1; % 1 = TIM TRIO WIP; 2 = Near seq; 3 = Skyra WIP; 4 = Prisma (VD13C); 5 = Prisma (Minnesota); 6 = Jamie's VE11B (Jena)
-        
+    
 % Analysis Parameters
     MRS_struct.p.LB = 3; % line-broadening (in Hz)
     MRS_struct.p.water_phase_correction = 1; % perform phase correction; 1 = YES
