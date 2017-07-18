@@ -1,7 +1,7 @@
 function MRS_struct = GannetLoad(gabafile, waterfile)
 %Gannet 3.0 GannetLoad
 %Started by RAEE Nov 5, 2012
-%Updates by MGS, MM 2016-2017
+%Updates by MGS, MM, GO 2016-2017
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Work flow summary
@@ -41,7 +41,7 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.versionload = '170705'; % set to date when final updates have been made
+MRS_struct.versionload = '20170713'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.gabafile = gabafile;
 MRS_struct = GannetPreInitialise(MRS_struct);

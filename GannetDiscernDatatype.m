@@ -18,12 +18,16 @@ elseif strcmpi(last4char,'SDAT')
     end
 elseif strcmpi(last2char,'TA')
     MRS_struct.p.vendor = 'Philips_data';
+elseif(strcmpi(last4char,'.RAW')) % GO 11/01/2016
+    MRS_struct.p.vendor = 'Philips_raw'; % GO 11/01/2016
 elseif strcmpi(last2char,'DA')
     MRS_struct.p.vendor = 'Siemens';
 elseif strcmpi(last4char,'.DAT')
     MRS_struct.p.vendor = 'Siemens_twix';
+elseif(strcmpi(last4char,'.IMA')) % GO 11/11/2016
+    MRS_struct.p.vendor = 'Siemens_dicom'; % GO 11/11/2016
 else
-    error('Unrecognised filetype: should end .7 .SDAT or .RDA')
+    error('Unrecognised filetype: should end .7 .SDAT .DATA .RAW .RDA .IMA or .DAT'); % GO 11/11/2016
 end
 
 end
