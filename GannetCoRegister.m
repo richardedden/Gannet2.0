@@ -43,7 +43,8 @@ for ii = 1:MRS_struct.ii
         %       MRS_struct.p.vendor = 'Philips_data'
         end
     case 'Siemens'
-        error(['GannetCoRegister does not yet support ' MRS_struct.p.vendor ' data.']);        
+            fname = MRS_struct.gabafile{ii};
+            MRS_struct=GannetMask_Siemens(fname,nii_name{ii},MRS_struct, ii);     
     case 'Siemens_twix'
             fname = MRS_struct.gabafile{ii};
             MRS_struct=GannetMask_SiemensTWIX(fname,nii_name{ii},MRS_struct, ii);
@@ -208,17 +209,24 @@ tmp = strfind(pfil_nopath,'/');
     elseif(strcmpi(MRS_struct.p.vendor,'GE'))
         tmp = strfind(pfil_nopath, '.7');
         dot7 = tmp(end); % just in case there's another .7 somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))  % make this be sdat
+    elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))
         tmp = strfind(pfil_nopath, '.data');
         dot7 = tmp(end); % just in case there's another .data somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))
+        tmp = strfind(pfil_nopath, '.rda');
+        dot7 = tmp(end); % just in case there's another .rda somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Siemens_twix'))
+        tmp = strfind(pfil_nopath, '.dat');
+        dot7 = tmp(end); % just in case there's another .dat somewhere else...
     end
+end
     pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
 
     
     
     %Save pdf output
     
-set(gcf, 'PaperUnits', 'inches');
+    set(gcf, 'PaperUnits', 'inches');
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
     if(strcmpi(MRS_struct.p.vendor,'Philips_data'))

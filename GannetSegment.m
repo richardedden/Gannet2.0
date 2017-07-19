@@ -7,7 +7,7 @@ function [MRS_struct] =  GannetSegment(MRS_struct)
 % for the GM WM and CSF segmentations. If these files are present, they are
 % loaded and used for the voxel segmentation
 
-MRS_struct.out.tissue.version= '20140730';
+MRS_struct.out.tissue.version= '20170713';
 
 for ii = 1:MRS_struct.ii
     
@@ -91,8 +91,11 @@ MRS_struct.out.tissue.GMfra(ii) = gmfra;
 MRS_struct.out.tissue.WMfra(ii) = wmfra;
 MRS_struct.out.tissue.CSFfra(ii) = csffra;
 
-
-MRS_struct.out.GABAconciuTissCorr(ii) = MRS_struct.out.GABAconciu(ii)./tissuefra;
+% Correction of institutional units only feasible if water-scaling is 
+% performed, skip otherwise (GO 07/13/2017)
+if isfield(MRS_struct,'waterfile')
+    MRS_struct.out.GABAconciuTissCorr(ii) = MRS_struct.out.GABAconciu(ii)./tissuefra;
+end
 
 %4 - build output
 
@@ -105,7 +108,7 @@ h=figure(fignum);
 
 set(h, 'Position', [100, 100, 1000, 707]);
 set(h,'Color',[1 1 1]);
-figTitle = 'GannetSegement Output';
+figTitle = 'GannetSegment Output';
 set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
 % GABA plot
 
@@ -122,15 +125,15 @@ axis off;
  
 
 subplot(2, 2, 3);    % replot of GABA fit spec
-    z=abs(MRS_struct.spec.freq-3.55);
-    lowerbound=find(min(z)==z);
-    z=abs(MRS_struct.spec.freq-2.79);
-    upperbound=find(min(z)==z);
-    freqbounds=lowerbound:upperbound;
-    freq=MRS_struct.spec.freq(1,freqbounds);
-    plot( ...
-        real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(ii,:)), ...
-        'k',freq,GaussModel(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
+z=abs(MRS_struct.spec.freq-3.55);
+lowerbound=find(min(z)==z);
+z=abs(MRS_struct.spec.freq-2.79);
+upperbound=find(min(z)==z);
+freqbounds=lowerbound:upperbound;
+freq=MRS_struct.spec.freq(1,freqbounds);
+plot( ...
+    real(MRS_struct.spec.freq(1,:)),real(MRS_struct.spec.diff(ii,:)), ...
+    'k',freq,GaussModel(MRS_struct.out.GABAModelFit(ii,:),freq),'r');  % this part may be broken
         
 zz=abs(MRS_struct.spec.freq-3.6);
 Glx_right=find(min(zz)==zz);
@@ -158,10 +161,14 @@ set(gca,'XDir','reverse');
 subplot(2,2,2)  % output results
 axis off;
 
-tmp = ['GABAconc(iu) tissue corr:  ' num2str(MRS_struct.out.GABAconciuTissCorr(ii))];
+% Print correction of institutional units only feasible if water-scaling is 
+% performed, skip otherwise (GO 07/13/2017)
+if isfield(MRS_struct,'waterfile')
+    tmp = ['GABAconc(iu) tissue corr:  ' num2str(MRS_struct.out.GABAconciuTissCorr(ii))];
     text(0, 0.87, tmp, 'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'top',...
             'FontName', 'Helvetica','FontSize',13);
+end
 
 tmp = ['Voxel fraction GM:  ' num2str(MRS_struct.out.tissue.GMfra(ii))];
 text(0,0.75, tmp, 'HorizontalAlignment', 'left', ...
@@ -247,9 +254,15 @@ tmp = strfind(pfil_nopath,'/');
     elseif(strcmpi(MRS_struct.p.vendor,'GE'))
         tmp = strfind(pfil_nopath, '.7');
         dot7 = tmp(end); % just in case there's another .7 somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))  % make this be sdat
+    elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))
         tmp = strfind(pfil_nopath, '.data');
         dot7 = tmp(end); % just in case there's another .data somewhere else...
+            elseif(strcmpi(MRS_struct.p.vendor,'Siemens'))
+        tmp = strfind(pfil_nopath, '.rda');
+        dot7 = tmp(end); % just in case there's another .rda somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Siemens_twix'))
+        tmp = strfind(pfil_nopath, '.dat');
+        dot7 = tmp(end); % just in case there's another .dat somewhere else...
     end
     pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
 
