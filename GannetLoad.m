@@ -244,7 +244,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % MM (160919): Zero-fill to obtain nominal spectral resolution of 0.061 Hz/point
-    MRS_struct.p.ZeroFillTo = 32768/2000*MRS_struct.p.sw;
+    MRS_struct.p.ZeroFillTo = round(32768/2000*MRS_struct.p.sw); % MM (170727): round in case of non-integers
     MRS_struct.p.zf = MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
     time = (1:1:size(FullData,1))/MRS_struct.p.sw;
     
