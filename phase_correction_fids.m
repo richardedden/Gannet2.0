@@ -14,7 +14,7 @@ fids=zeros(sz_mat);
 
 for kk=1:sz_mat(1)
     K_data=abs(data(kk,:));
-    Kphase_data=phase(data(kk,:));
+    Kphase_data=unwrap(angle(data(kk,:)));
     Kphase_corr=(Kphase_data)-Kphase;
     fids(kk,:)=K_data.* exp(1i*Kphase_corr);
 end
