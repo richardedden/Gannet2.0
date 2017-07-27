@@ -10,10 +10,10 @@ if MRS_struct.p.HERMES % run registration four times - once for each HERMES expe
     SpecRegLoop = 3;
     SubspecToAlign = repmat([3 2 1 0], [1 size(MRS_struct.fids.data,2)/4]);
 else % run registration once or twice for MEGA-PRESS acquisitions
-    %SpecRegLoop = 1;
-    %SubspecToAlign = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]);
-    SpecRegLoop = 0;
-    SubspecToAlign = zeros(1, size(MRS_struct.fids.data,2));
+    SpecRegLoop = 1;
+    SubspecToAlign = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]);
+    %SpecRegLoop = 0;
+    %SubspecToAlign = zeros(1, size(MRS_struct.fids.data,2));
 end
 
 % Pre-allocate memory

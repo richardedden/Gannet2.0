@@ -50,7 +50,7 @@ MRS_struct.p.voxang(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
 MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints, MRS_struct.p.nrows);
 
-% Undo time series phase cycling to match GE
+% Undo phase cycling
 corrph = repmat([-1 1], [1 size(MRS_struct.fids.data,2)/2]); % MM (170703)
 corrph = repmat(corrph, [size(MRS_struct.fids.data,1) 1]);
 MRS_struct.fids.data = MRS_struct.fids.data .* corrph;

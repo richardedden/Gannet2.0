@@ -55,7 +55,7 @@ pdfdirname = './GannetFit_output'; % MM (170121)
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts,'MaxIter',1e4);
+nlinopts = statset(nlinopts,'MaxIter',1e5);
 
 % Loop over voxels if PRIAM
 for kk = 1:length(vox)

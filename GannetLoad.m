@@ -41,7 +41,7 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.versionload = '20170713'; % set to date when final updates have been made
+MRS_struct.versionload = '170713'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.gabafile = gabafile;
 MRS_struct = GannetPreInitialise(MRS_struct);
