@@ -4,7 +4,7 @@ function out = phase_correction_fids(data, water_data)
 % The function subtracts the phase of the unsuppressed (water_data) data
 % from the phase of the suppressed data.
 
-Kphase=phase(water_data(1,:));
+Kphase=unwrap(angle(water_data(1,:)));
 sz_mat=size(data);
 fids=zeros(sz_mat);
 
@@ -14,8 +14,8 @@ fids=zeros(sz_mat);
 
 for kk=1:sz_mat(1)
     K_data=abs(data(kk,:));
-    Kphase_data=phase(data(kk,:));    
-    Kphase_corr=(Kphase_data)-Kphase;    
+    Kphase_data=phase(data(kk,:));
+    Kphase_corr=(Kphase_data)-Kphase;
     fids(kk,:)=K_data.* exp(1i*Kphase_corr);
 end
 
