@@ -26,19 +26,22 @@ ii = MRS_struct.ii;
 % Populate MRS_struct with relevant info.
 MRS_struct.p.pointsBeforeEcho       = MetabHeader.pointsBeforeEcho;
 MRS_struct.p.sw                     = 1/MetabHeader.dwellTime;
-MRS_struct.p.LarmorFreq             = MetabHeader.Bo*42.577;
+MRS_struct.p.LarmorFreq             = MetabHeader.tx_freq;
 MRS_struct.p.TR(ii)                 = MetabHeader.TR;
 MRS_struct.p.TE(ii)                 = MetabHeader.TE;
 MRS_struct.p.npoints                = size(MetabData,2);
 MRS_struct.p.nrows                  = size(MetabData,3);
 MRS_struct.p.Navg(ii)               = size(MetabData,3);
-if exist('MetabHeader.editRF','var')
-    MRS_struct.p.Siemens.editRF.freq(ii,:)      = TwixHeader.editRF.freq;
-    MRS_struct.p.Siemens.editRF.centerFreq(ii)  = TwixHeader.editRF.centerFreq;
-    MRS_struct.p.Siemens.editRF.bw(ii)          = TwixHeader.editRF.bw;
+MRS_struct.p.voxdim(ii,:)           = [MetabHeader.VoI_RoFOV ...
+                                       MetabHeader.VoI_PeFOV ...
+                                       MetabHeader.VoIThickness];
+if isfield(MetabHeader,'editRF')
+    MRS_struct.p.Siemens.editRF.freq(ii,:)      = MetabHeader.editRF.freq;
+    MRS_struct.p.Siemens.editRF.centerFreq(ii)  = MetabHeader.editRF.centerFreq;
+    MRS_struct.p.Siemens.editRF.bw(ii)          = MetabHeader.editRF.bw;
 end
-if exist('MetabHeader.deltaFreq','var')
-    MRS_struct.p.Siemens.deltaFreq.metab(ii)    = TwixHeader.deltaFreq;
+if isfield(MetabHeader,'deltaFreq')
+    MRS_struct.p.Siemens.deltaFreq.metab(ii)    = MetabHeader.deltaFreq;
     MRS_struct.p.Siemens = reorderstructure(MRS_struct.p.Siemens, 'editRF', 'deltaFreq');
 end
 
@@ -59,8 +62,8 @@ if nargin == 3
     MRS_struct.p.nrows_water             = size(WaterData,3);
     MRS_struct.p.Nwateravg(ii)           = size(WaterData,3);
     MRS_struct.p.seqtype_water           = WaterHeader.seqtype;
-    if exist('WaterHeader.deltaFreq','var')
-        MRS_struct.p.Siemens.deltaFreq.water(ii)    = TwixHeader.deltaFreq;
+    if isfield(WaterHeader,'deltaFreq')
+        MRS_struct.p.Siemens.deltaFreq.water(ii) = WaterHeader.deltaFreq;
         MRS_struct.p.Siemens = reorderstructure(MRS_struct.p.Siemens, 'editRF', 'deltaFreq');
     end
     
@@ -166,7 +169,7 @@ TwixHeader.PosCor               = twix_obj.hdr.Config.VoI_Position_Cor; % Corona
 TwixHeader.PosSag               = twix_obj.hdr.Config.VoI_Position_Sag; % Sagittal coordinate of voxel
 TwixHeader.PosTra               = twix_obj.hdr.Config.VoI_Position_Tra; % Transversal coordinate of voxel
 TwixHeader.SiemensSoftwareVersion  = twix_obj.hdr.Dicom.SoftwareVersions; % Full software version
-TwixHeader.Bo                   = twix_obj.hdr.Dicom.flMagneticFieldStrength; % Nominal B0 [T]
+TwixHeader.B0                   = twix_obj.hdr.Dicom.flMagneticFieldStrength; % Nominal B0 [T]
 TwixHeader.tx_freq              = twix_obj.hdr.Dicom.lFrequency * 1e-6; % Transmitter frequency [MHz]
 if iscell(twix_obj.hdr.MeasYaps.alTE)
     TwixHeader.TE               = twix_obj.hdr.MeasYaps.alTE{1} * 1e-3; % TE [ms]
