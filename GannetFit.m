@@ -178,11 +178,11 @@ for kk = 1:length(vox)
                 freqbounds = find(freq <= 1.8 & freq >= 0.5); % MM (170705)
                 plotbounds = find(freq <= 2 & freq >= 0);
                 
-                offset = (mean(DIFF(ii,freqbounds(1:10)),2) + mean(DIFF(ii,freqbounds((end-9):end)),2))/2;
-                slope = (mean(DIFF(ii,freqbounds(1:10)),2) - mean(DIFF(ii,freqbounds((end-9):end)),2))/abs(freq(freqbounds(1)) - freq(freqbounds(end)));
+                offset = (mean(real(DIFF(ii,freqbounds(1:10))),2) + mean(real(DIFF(ii,freqbounds((end-9):end))),2))/2;
+                slope = (mean(real(DIFF(ii,freqbounds(1:10))),2) - mean(real(DIFF(ii,freqbounds((end-9):end))),2))/abs(freq(freqbounds(1)) - freq(freqbounds(end)));
                 peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
                 
-                FourGaussModelInit = [peak_amp*0.16 -100 1.18 peak_amp*0.3 -1000 1.325   offset slope 0];
+                FourGaussModelInit = [peak_amp*0.16 -100 1.18 peak_amp*0.3 -1000 1.325 offset slope 0];
                 lb = [0 -300 0.9 0 -5000 1.0  -1 -1 -1];
                 ub = [1 0 1.4 1 0 1.6  1 1 1];
                 
@@ -198,18 +198,25 @@ for kk = 1:length(vox)
                 %plot(MRS_struct.spec.freq(freqbounds),real(MRS_struct.spec.diff(ii,freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel(FourGaussModelParam,MRS_struct.spec.freq(freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel([FourGaussModelParam(1:3) 0 FourGaussModelParam(5:end)],MRS_struct.spec.freq(freqbounds)));
                 %error('Fitting Init model plot')                
                 
-                LacGaussModelParam=FourGaussModelParam;
-                LacGaussModelParam(1)=0;
-                MMGaussModelParam=FourGaussModelParam;
-                MMGaussModelParam(4)=0;
+                LacGaussModelParam = FourGaussModelParam;
+                MRS_struct.out.(vox{kk}).Lac.ModelParam(ii,:) = LacGaussModelParam;
+                LacGaussModelParam(1) = 0;
+                MMGaussModelParam = FourGaussModelParam;
+                MMGaussModelParam(4) = 0;
                 
-                BaselineModelParam=MMGaussModelParam;
-                BaselineModelParam(1)=0;
+                BaselineModelParam = MMGaussModelParam;
+                BaselineModelParam(1) = 0;
                 
-                MRS_struct.out.GABAArea(ii)=real(sum(FourGaussModel(LacGaussModelParam, freq(freqbounds))-FourGaussModel(BaselineModelParam, freq(freqbounds))))*(freq(1)-freq(2));
+                MRS_struct.out.(vox{kk}).Lac.Area(ii) = real(sum(FourGaussModel(LacGaussModelParam,freq(freqbounds)) - FourGaussModel(BaselineModelParam,freq(freqbounds)))) * abs(freq(1)-freq(2));
                 %Not sure how to handle fit error. For now, do whole range
-                GABAheight = LacGaussModelParam(ii,4);
-                MRS_struct.out.GABAFitError(ii)=  100*std(resid)/GABAheight;
+                Lacheight = LacGaussModelParam(ii,4);
+                MRS_struct.out.(vox{kk}).Lac.FitError(ii) = 100*std(resid)/Lacheight;
+                MRS_struct.out.(vox{kk}).Lac.FWHM(ii) = NaN;
+                MRS_struct.out.(vox{kk}).Lac.Resid(ii,:) = resid;
+
+                % Calculate SNR of Lac signal (MM: 170502)
+                noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
+                MRS_struct.out.(vox{kk}).Lac.SNR(ii) = abs(Lacheight)/noiseSigma_DIFF;
                 
             elseif strcmp(MRS_struct.p.target,'Glx')
                 
@@ -359,7 +366,7 @@ for kk = 1:length(vox)
             elseif strcmp(target{trg},'Lac')
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
                     freq(freqbounds), FourGaussModel(FourGaussModelParam,freq(freqbounds)), 'r', ...
-                    freq(freqbounds), FourGaussModel(MMGaussModelParam, freq(freqbounds)), 'r' , ...
+                    freq(freqbounds), FourGaussModel(MMGaussModelParam,freq(freqbounds)), 'r' , ...
                     freq(freqbounds), resid, 'k');
                 set(gca,'XLim',[0 2.1]);
             elseif strcmp(target{trg},'Glx')
@@ -534,6 +541,10 @@ for kk = 1:length(vox)
                         
                     case 'GSH'
                         MRS_struct.out.(vox{kk}).GSH.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GSH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
+                        MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
+                        
+                    case 'Lac'
+                        MRS_struct.out.(vox{kk}).Lac.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Lac.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
                 end
                 
@@ -840,6 +851,10 @@ for kk = 1:length(vox)
                 case 'GSH'
                     tmp1 = 'GSH Area';
                     tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).(target{trg}).Area(ii));
+                    
+                case 'Lac'
+                    tmp1 = 'Lac Area';
+                    tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).(target{trg}).Area(ii));
             end
             text(0, text_pos-0.3, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos-0.3, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
@@ -856,7 +871,7 @@ for kk = 1:length(vox)
                 text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
                 switch target{trg}
-                    case {'GABA','Glx','GSH'}
+                    case {'GABA','Glx','GSH','Lac'}
                         tmp1 = sprintf(': %.1f/%.1f%%', MRS_struct.out.(vox{kk}).(target{trg}).FitError_W(ii), MRS_struct.out.(vox{kk}).(target{trg}).FitError_Cr(ii));
                         tmp2 = [target{trg} ' (Water)'];
                         tmp4 = [target{trg} ' (Cr)'];
@@ -896,7 +911,7 @@ for kk = 1:length(vox)
                 text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
                 switch target{trg}
-                    case {'GABA','Glx','GSH'}
+                    case {'GABA','Glx','GSH','Lac'}
                         tmp1 = sprintf(': %.1f%%', MRS_struct.out.(vox{kk}).(target{trg}).FitError_Cr(ii));
                         tmp2 = [target{trg} ' (Cr)'];
                         if strcmpi(target{trg},'GABA')
@@ -1239,10 +1254,10 @@ switch metab
         T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
         
     case 'Lac'
-        EditingEfficiency = 1.0;
+        EditingEfficiency = 1;
         T1_Metab = 1 ; % Need to check in the literature -- MGSaleh
         T2_Metab = 1; % Need to check in the literature -- MGSaleh
-        N_H_Metab = 2; % Need to check in the literature -- MGSaleh
+        N_H_Metab = 3;
         MM = 1; % Not affected by MM -- MGSaleh
         T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
         T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
