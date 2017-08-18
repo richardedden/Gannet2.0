@@ -186,32 +186,21 @@ for kk = 1:length(vox)
                 lb = [0 -300 0.9 0 -5000 1.0  -1 -1 -1];
                 ub = [1 0 1.4 1 0 1.6  1 1 1];
                 
-                %Plot the starting fit model
-                %figure(99)
-                %subplot(1,2,1)
-                %plot(MRS_struct.spec.freq(freqbounds),real(MRS_struct.spec.diff(ii,freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel(initx,MRS_struct.spec.freq(freqbounds)));
-                
                 FourGaussModelInit = lsqcurvefit(@FourGaussModel, FourGaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub,lsqopts);
                 [FourGaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @FourGaussModel, FourGaussModelInit, nlinopts);
 
-                %subplot(1,2,2)
-                %plot(MRS_struct.spec.freq(freqbounds),real(MRS_struct.spec.diff(ii,freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel(FourGaussModelParam,MRS_struct.spec.freq(freqbounds)),MRS_struct.spec.freq(freqbounds),FourGaussModel([FourGaussModelParam(1:3) 0 FourGaussModelParam(5:end)],MRS_struct.spec.freq(freqbounds)));
-                %error('Fitting Init model plot')                
-                
-                LacGaussModelParam = FourGaussModelParam;
-                MRS_struct.out.(vox{kk}).Lac.ModelParam(ii,:) = LacGaussModelParam;
-                LacGaussModelParam(1) = 0;
+                MRS_struct.out.(vox{kk}).Lac.ModelParam(ii,:) = FourGaussModelParam;
+                %LacGaussModelParam(1) = 0;
                 MMGaussModelParam = FourGaussModelParam;
-                MMGaussModelParam(4) = 0;
+                MMGaussModelParam(4) = 0;                
+                %BaselineModelParam = MMGaussModelParam;
+                %BaselineModelParam(1) = 0;
                 
-                BaselineModelParam = MMGaussModelParam;
-                BaselineModelParam(1) = 0;
-                
-                MRS_struct.out.(vox{kk}).Lac.Area(ii) = real(sum(FourGaussModel(LacGaussModelParam,freq(freqbounds)) - FourGaussModel(BaselineModelParam,freq(freqbounds)))) * abs(freq(1)-freq(2));
-                %Not sure how to handle fit error. For now, do whole range
-                Lacheight = LacGaussModelParam(ii,4);
+                %MRS_struct.out.(vox{kk}).Lac.Area(ii) = real(sum(FourGaussModel(LacGaussModelParam,freq(freqbounds)) - FourGaussModel(BaselineModelParam,freq(freqbounds)))) * abs(freq(1)-freq(2));
+                MRS_struct.out.(vox{kk}).Lac.Area(ii) = real(sum(FourGaussModel([FourGaussModelParam(1:6) 0 0 0],freq(freqbounds)))) * abs(freq(1)-freq(2));
+                Lacheight = FourGaussModelParam(ii,4);
                 MRS_struct.out.(vox{kk}).Lac.FitError(ii) = 100*std(resid)/Lacheight;
-                MRS_struct.out.(vox{kk}).Lac.FWHM(ii) = NaN;
+                MRS_struct.out.(vox{kk}).Lac.FWHM(ii) = NaN; % MM (170818): Still need to calculate FWHM
                 MRS_struct.out.(vox{kk}).Lac.Resid(ii,:) = resid;
 
                 % Calculate SNR of Lac signal (MM: 170502)
@@ -1212,31 +1201,27 @@ TR = MRS_struct.p.TR(ii)/1000;
 TE = MRS_struct.p.TE(ii)/1000;
 PureWaterConc = 55000; % mmol/L
 WaterVisibility = 0.65; % this is approx the value from Ernst, Kreis, Ross (1993, JMR)
-T1_Water = 1.100; % average of WM and GM, estimated from Wansapura et al. (1999, JMRI)
-T2_Water = 0.095; % average of WM and GM, estimated from Wansapura et al. (1999, JMRI)
+T1_Water = 1.100; % average of WM and GM, Wansapura et al. 1999 (JMRI)
+T2_Water = 0.095; % average of WM and GM, Wansapura et al. 1999 (JMRI)
 N_H_Water = 2;
 
 % MGSaleh 2016
 switch metab
     case 'GABA'
-        EditingEfficiency = 0.5;
-        T1_Metab = 1.31;  % from Puts et al. (2013, JMRI)
-        T2_Metab = 0.088; % from Edden et al. (2012, JMRI)
+        EditingEfficiency = 0.5; % For TE = 68 ms
+        T1_Metab = 1.31;  % Puts et al. 2013 (JMRI)
+        T2_Metab = 0.088; % Edden et al. 2012 (JMRI)
         N_H_Metab = 2;
         MM = 0.45; % MM correction: fraction of GABA in GABA+ peak. (In TrypDep, 30 subjects: 55% of GABA+ was MM)
         % This fraction is platform and implementation dependent, base on length and
         % shape of editing pulses and ifis Henry method
-        T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
-        T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
         
     case 'Glx'
-        EditingEfficiency = 0.4; % determined by FID-A simulations using 83-Hz (FWHM) editing pulses
+        EditingEfficiency = 0.4; % determined by FID-A simulations (for TE = 68 ms)
         T1_Metab = 1.23; % Posse et al. 2007 (MRM)
         T2_Metab = 0.18; % Ganji et al. 2012 (NMR Biomed)
         N_H_Metab = 1;
-        MM = 1; % MM not co-edited -- MGSaleh
-        T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
-        T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
+        MM = 1;
         
     case 'GSH'
         EditingEfficiency = 0.74;  % At 3T based on Quantification of Glutathione in the Human Brain by MR Spectroscopy at 3 Tesla:
@@ -1250,28 +1235,27 @@ switch metab
         % Milan Scheidegger et al. Proc. Intl. Soc. Mag. Reson. Med. 22 (2014)-- MGSaleh
         N_H_Metab = 2;
         MM = 1;
-        T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
-        T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
         
     case 'Lac'
-        EditingEfficiency = 1;
-        T1_Metab = 1 ; % Need to check in the literature -- MGSaleh
-        T2_Metab = 1; % Need to check in the literature -- MGSaleh
+        EditingEfficiency = 0.94; % determined by FID-A simulations (for TE = 140 ms)
+        T1_Metab = 1.50; % Wijnen et al. 2015 (NMR Biomed)
+        T2_Metab = 0.24; % Madan et al. 2015 (MRM) (NB: this was estimated in brain tumors)
         N_H_Metab = 3;
-        MM = 1; % Not affected by MM -- MGSaleh
-        T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
-        T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
+        MM = 1;
 end
+
+T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
+T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
 
 if strcmpi(MRS_struct.p.vendor,'Siemens')
     % Factor of 2 is appropriate for averaged Siemens data (read in separately as ON and OFF)
     MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).Water.Area(ii))  ...
-        * PureWaterConc * WaterVisibility * T1_Factor * T2_Factor * (N_H_Water./N_H_Metab) ...
-        * MM ./ 2 ./ EditingEfficiency;
+        .* PureWaterConc .* WaterVisibility .* T1_Factor .* T2_Factor .* (N_H_Water./N_H_Metab) ...
+        .* MM ./ 2 ./ EditingEfficiency;
 else
     MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).Water.Area(ii))  ...
-        * PureWaterConc * WaterVisibility * T1_Factor * T2_Factor * (N_H_Water./N_H_Metab) ...
-        * MM ./ EditingEfficiency;
+        .* PureWaterConc .* WaterVisibility .* T1_Factor .* T2_Factor .* (N_H_Water./N_H_Metab) ...
+        .* MM ./ EditingEfficiency;
 end
 
 
