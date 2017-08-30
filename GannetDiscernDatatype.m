@@ -26,8 +26,10 @@ elseif strcmpi(last4char,'.DAT')
     MRS_struct.p.vendor = 'Siemens_twix';
 elseif(strcmpi(last4char,'.IMA')) % GO 11/11/2016
     MRS_struct.p.vendor = 'Siemens_dicom'; % GO 11/11/2016
+elseif(strcmpi(last4char,'.DCM')) % GO 11/30/2016
+    MRS_struct.p.vendor = 'dicom'; % GO 11/30/2016
 else
-    error('Unrecognised filetype: should end .7 .SDAT .DATA .RAW .RDA .IMA or .DAT'); % GO 11/11/2016
+    error('Unrecognised filetype: should end .7 .SDAT .DATA .RAW .RDA .IMA .DCM or .DAT'); % GO 11/11/2016
 end
 
 end

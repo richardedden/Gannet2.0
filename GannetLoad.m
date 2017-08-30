@@ -143,6 +143,63 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                     MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
             
+        case 'Siemens_dicom' % GO 11/01/2016
+            if exist('waterfile','var')
+                % Load the data. GannetLoad specifies a file in the first
+                % place, so take apart that filename, and feed the containing
+                % folder into the SiemensDICOMRead function. % GO 11/01/2016
+                [imafolder,~,~] = fileparts(gabafile{ii}); % GO 02/05/2017
+                [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
+                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder,waterfolder); % GO 02/05/2017
+                MRS_struct.p.Reference_compound='H2O';
+                WaterData = MRS_struct.fids.data_water;
+            else
+                MRS_struct.p.Reference_compound='Cr';
+                % Same as above, but without parsing the waterfolder. % GO 02/05/2017
+                [imafolder,~,~] = fileparts(gabafile{ii}); % GO 11/01/2016
+                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder); % GO 11/01/2016
+            end
+            FullData = MRS_struct.fids.data;
+            
+            % fill up fields required for downstream processing % GO 11/01/2016
+            switch MRS_struct.p.ONOFForder
+                case 'onfirst'
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                case 'offfirst'
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+            end
+            
+        case 'dicom' % GO 11/30/2016
+            % care about water-unsuppressed files later % GO 11/30/2016
+            if exist('waterfile','var')
+                % Load the data. GannetLoad specifies a file in the first
+                % place, so take apart that filename, and feed the containing
+                % folder into the DICOMRead function. % GO 11/01/2016
+                [dcmfolder,~,~] = fileparts(gabafile{ii}); % GO 02/05/2017
+                [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
+                MRS_struct = DICOMRead(MRS_struct,dcmfolder,waterfolder); % GO 02/05/2017
+                MRS_struct.p.Reference_compound='H2O';
+                WaterData = MRS_struct.fids.data_water;
+            else
+                MRS_struct.p.Reference_compound='Cr';
+                % Same as above, but without parsing the waterfolder. % GO 02/05/2017
+                [dcmfolder,~,~] = fileparts(gabafile{ii}); % GO 11/01/2016
+                MRS_struct = DICOMRead(MRS_struct,dcmfolder); % GO 11/01/2016
+            end
+            FullData = MRS_struct.fids.data;
+            
+            % fill up fields required for downstream processing % GO 11/30/2016
+            switch MRS_struct.p.ONOFForder
+                case 'onfirst'
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                case 'offfirst'
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+            end
+            
         case 'Siemens'
             if exist('waterfile','var')
                 MRS_struct.p.Reference_compound = 'H2O';
@@ -257,6 +314,12 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                 ComWater = WaterData;
             elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
                 ComWater = WaterData;
+            elseif (strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 02/05/2017
+                ComWater = mean(WaterData,2);
+            elseif (strcmpi(MRS_struct.p.vendor,'dicom')) % GO 02/05/2017
+                ComWater = mean(WaterData,2);
+            elseif (strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 02/05/2017
+                ComWater = mean(WaterData(kk,:,:),2);
             else
                 ComWater = WaterData.';
             end
@@ -331,6 +394,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
             %AllFramesFTrealign
         case 'Siemens_twix'
             AllFramesFTrealign = AllFramesFT;
+        case 'Siemens_dicom'
+            AllFramesFTrealign = AllFramesFT;
+        case 'dicom'
+            AllFramesFTrealign = AllFramesFT;
     end
     
     % MM (170703)
@@ -338,7 +405,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     MRS_struct.fids.waterfreq(ii,:) = freqWaterRange(FrameMaxPos);
     
     % MM (170629): Estimate average amount of F0 offset
-    if any(strcmp(MRS_struct.p.vendor,{'Siemens','Siemens_twix'}))
+    if any(strcmp(MRS_struct.p.vendor,{'Siemens','Siemens_twix','Siemens_dicom'}))
         MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.7); % Siemens assumes 4.7 ppm as F0
     else
         MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.68);
@@ -602,6 +669,21 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
         tmp = strfind(pfil_nopath, '.dat');
         dot7 = tmp(end); % just in case there's another .dat somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 11/11/2016
+        tmp = strfind(pfil_nopath, '.IMA');
+        if isempty(tmp)
+            tmp = strfind(pfil_nopath, '.ima');
+        end
+        dot7 = tmp(end); % just in case there's another .IMA somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'dicom')) % GO 11/30/2016
+        tmp = strfind(pfil_nopath, '.DCM');
+        if isempty(tmp)
+            tmp = strfind(pfil_nopath, '.dcm');
+        end
+        dot7 = tmp(end); % just in case there's another .DCM somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 11/04/2016
+        tmp = strfind(pfil_nopath, '.raw');
+        dot7 = tmp(end); % just in case there's another .raw somewhere else...
     end
     pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
     % fix pdf output, where default is cm
