@@ -61,11 +61,11 @@ head_end_text   = '### ASCCONV END';
 
 tline = fgets(fid);
 
-while (~contains(tline , head_end_text))
+while (isempty(strfind(tline , head_end_text)))
     
     tline = fgets(fid);
     
-    if ( ~contains(tline , head_start_text) + ~contains(tline , head_end_text ) == 2)
+    if ( isempty(strfind (tline , head_start_text)) + isempty(strfind (tline , head_end_text )) == 2)
                 
         % Find lines with 'equal' signs, all the information is in there.    
         findequal = findstr('=',tline);

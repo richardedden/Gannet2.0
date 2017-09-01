@@ -17,7 +17,7 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
 % Analysis Parameters
     MRS_struct.p.LB = 3; % line-broadening (in Hz)
     MRS_struct.p.water_phase_correction = 1; % perform phase correction; 1 = YES
-    MRS_struct.p.data_phase_correction = 1; % perform phase correction; 1 = YES
+    MRS_struct.p.data_phase_correction = 0; % perform phase correction; 1 = YES
     MRS_struct.p.water_removal = 1; % remove residual water in HERMES data using HSVD; 1 = YES
     MRS_struct.p.AlignTo = 'SpecReg'; % options are 'SpecReg' (recommended for MEGA-PRESS), 'SpecRegHERMES' (recommended for HERMES), 'Cr', 'Cho', 'NAA', 'H2O', 'CrOFF'
     MRS_struct.p.Vox = {'vox1','vox2'}; % for naming voxels acquired by PRIAM, e.g: 'anterior' and 'posterior', 'right' and 'left', etc.
