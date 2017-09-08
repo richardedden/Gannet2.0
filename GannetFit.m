@@ -387,6 +387,9 @@ for kk = 1:length(vox)
             else
                 legendtxt = regexprep(MRS_struct.gabafile{ii}, '_','-');
             end
+            % GO (170905): Backslash in filenames interferes with TeX
+            % interpreter during PDF output production, replace:
+            legendtxt = strrep(legendtxt, '\','\\');
             title(legendtxt);
             set(gca,'XDir','reverse');
             
@@ -806,6 +809,9 @@ for kk = 1:length(vox)
                 tmp = [': ' MRS_struct.gabafile{ii}];
             end
             tmp = regexprep(tmp, '_','-');
+            % GO (170905): Backslash in filenames interferes with TeX
+            % interpreter during PDF output production, replace:
+            tmp = strrep(tmp, '\','\\');
             text(0, text_pos, 'Filename', 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
             
@@ -983,7 +989,23 @@ for kk = 1:length(vox)
             elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
                 tmp = strfind(pfil_nopath, '.dat');
                 dot7 = tmp(end); % just in case there's another .dat somewhere else...
+            elseif(strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 11/11/2016
+                tmp = strfind(pfil_nopath, '.IMA');
+                if isempty(tmp)
+                    tmp = strfind(pfil_nopath, '.ima');
+                end
+                dot7 = tmp(end); % just in case there's another .IMA somewhere else...
+            elseif(strcmpi(MRS_struct.p.vendor,'dicom')) % GO 11/30/2016
+                tmp = strfind(pfil_nopath, '.DCM');
+                if isempty(tmp)
+                    tmp = strfind(pfil_nopath, '.dcm');
+                end
+                dot7 = tmp(end); % just in case there's another .DCM somewhere else...
+            elseif(strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 11/04/2016
+                tmp = strfind(pfil_nopath, '.raw');
+                dot7 = tmp(end); % just in case there's another .raw somewhere else...
             end
+            
             pfil_nopath = pfil_nopath(lastslash+1:dot7-1);
             if sum(strcmp(listfonts,'Helvetica')) > 0
                 set(findall(h,'type','text'),'FontName','Helvetica');
@@ -996,9 +1018,9 @@ for kk = 1:length(vox)
             set(gcf,'PaperSize',[11 8.5]);
             set(gcf,'PaperPosition',[0 0 11 8.5]);
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                pdfname = [pdfdirname '/' fullpath '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
+                pdfname = [pdfdirname filesep fullpath '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
             else
-                pdfname = [pdfdirname '/' pfil_nopath  '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
+                pdfname = [pdfdirname filesep pfil_nopath  '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
             end
             if ~exist(pdfdirname,'dir')
                 mkdir(pdfdirname);
@@ -1006,9 +1028,9 @@ for kk = 1:length(vox)
             saveas(gcf, pdfname);
             if ii == numscans && MRS_struct.p.mat == 1
                 if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                    matname = [pdfdirname '/' 'MRS_struct' '.mat'];
+                    matname = [pdfdirname filesep 'MRS_struct' '.mat'];
                 else
-                    matname = [pdfdirname '/' 'MRS_struct' '.mat'];
+                    matname = [pdfdirname filesep 'MRS_struct' '.mat'];
                 end
                 save(matname,'MRS_struct');
             end
