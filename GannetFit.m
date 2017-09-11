@@ -928,9 +928,9 @@ for kk = 1:length(vox)
             
             % Add Gannet logo
             if any(strcmp('mask',fieldnames(MRS_struct))) == 1
-                subplot(2,2,4)
+                subplot(2,2,4);
             else
-                subplot(2,2,4,'replace')
+                subplot(2,2,4,'replace');
             end
             axis off;
             script_path=which('GannetFit');
@@ -1213,7 +1213,7 @@ switch metab
         T2_Metab = 0.088; % Edden et al. 2012 (JMRI)
         N_H_Metab = 2;
         MM = 0.45; % MM correction: fraction of GABA in GABA+ peak. (In TrypDep, 30 subjects: 55% of GABA+ was MM)
-        % This fraction is platform and implementation dependent, base on length and
+        % This fraction is platform and implementation dependent, based on length and
         % shape of editing pulses and ifis Henry method
         
     case 'Glx'

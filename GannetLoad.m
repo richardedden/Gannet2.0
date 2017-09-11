@@ -539,7 +539,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     set(h, 'Position', [(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
     set(h,'Color',[1 1 1]);
     figTitle = 'GannetLoad Output';
-    set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
+    set(gcf,'Name',figTitle,'Tag',figTitle,'NumberTitle','off');
     
     % Top left
     ha = subplot(2,2,1);

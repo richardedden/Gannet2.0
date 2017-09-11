@@ -1,6 +1,6 @@
-function [MRS_struct ] = GannetMask_SiemensTWIX(filename, nii_file, MRS_struct, ii)
+function MRS_struct = GannetMask_SiemensTWIX(filename, nii_file, MRS_struct, ii)
 
-% this relies on SPM and a nifti t
+% this relies on SPM and a nifti T1
 % being testing on data from Univ of Florida - will need to extend
 % also may need to extend to change dicoms into nifti
 
@@ -11,22 +11,22 @@ if(nargin == 2)
 end
 % some code to make ok wth 2 or 3  inputs
 % fix nifti inputs and writing output mask to directory of where the nifti
-% is. 
+% is.
 
 [path,name,ext] = fileparts(filename);
 [pathnii,namenii,extnii] = fileparts(nii_file);
 
-fidoutmask = fullfile(path,[name '_mask.nii'])
+fidoutmask = fullfile(path,[name '_mask.nii']);
 
 fid=fopen(filename);
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Normal_Sag">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_Normal_Sag">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_Normal_Sag">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 NormSag = line(equals_index+4:equals_index+16);
 NormSag = str2double(NormSag);
 
@@ -34,22 +34,22 @@ NormSag = str2double(NormSag);
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Normal_Cor">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_Normal_Cor">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_Normal_Cor">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 NormCor = line(equals_index+4:equals_index+16);
 NormCor = str2double(NormCor);
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Normal_Tra">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_Normal_Tra">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_Normal_Tra">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 NormTra = line(equals_index+4:equals_index+16);
 NormTra = str2double(NormTra);
 
@@ -57,11 +57,11 @@ NormTra = str2double(NormTra);
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Position_Sag">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_Position_Sag">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_Position_Sag">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 PosSag = line(equals_index+4:equals_index+16);
 PosSag = str2double(PosSag);
 
@@ -69,33 +69,33 @@ PosSag = str2double(PosSag);
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Position_Cor">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_Position_Cor">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_Position_Cor">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 PosCor = line(equals_index+4:equals_index+16);
 PosCor = str2double(PosCor);
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Position_Tra">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_Position_Tra">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_Position_Tra">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 PosTra = line(equals_index+4:equals_index+16);
 PosTra = str2double(PosTra);
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_SliceThickness">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_SliceThickness">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_SliceThickness">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 VOIThickness = line(equals_index+4:equals_index+16);
 VOIThickness = str2double(VOIThickness);
 
@@ -104,11 +104,11 @@ fid=fopen(filename);
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_InPlaneRotAngle">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_InPlaneRotAngle">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_InPlaneRotAngle">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 VoI_InPlaneRot = line(equals_index+4:equals_index+16);
 VoI_InPlaneRot = str2double(VoI_InPlaneRot);
 
@@ -116,22 +116,22 @@ VoI_InPlaneRot = str2double(VoI_InPlaneRot);
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_RoFOV">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_RoFOV">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_RoFOV">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 VoI_RoFOV = line(equals_index+4:equals_index+16);
 VoI_RoFOV = str2double(VoI_RoFOV);
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_PeFOV">  { <Precision> ');
 equals_index=strfind(line,'16 ');
-            while isempty(index) || isempty(equals_index)
-                line=fgets(fid);
-                index=strfind(line,'<ParamDouble."VoI_PeFOV">  { <Precision> ');
-                equals_index=strfind(line,'16 ');
-            end
+while isempty(index) || isempty(equals_index)
+    line=fgets(fid);
+    index=strfind(line,'<ParamDouble."VoI_PeFOV">  { <Precision> ');
+    equals_index=strfind(line,'16 ');
+end
 VoI_PeFOV = line(equals_index+4:equals_index+16);
 VoI_PeFOV = str2double(VoI_PeFOV);
 
@@ -186,7 +186,7 @@ Row(3) = Col(1) * ZED(2) - Col(2) * ZED(1);
 
 %MRS_struct.p.voxoff=[ rda.position(1) rda.position(2) rda.position(3)];
 MRS_struct.p.voxoff=[PosSag PosCor PosTra];
-MRS_struct.p.voxsize = [VoI_RoFOV VoI_PeFOV VOIThickness]; 
+MRS_struct.p.voxsize = [VoI_RoFOV VoI_PeFOV VOIThickness];
 MRS_Rot(:,1) = Row';
 MRS_Rot(:,2) = Col';
 
@@ -195,8 +195,8 @@ MRS_Rot(:,2)= MRS_Rot(:,2) .* [ -1 -1 1]';
 
 MRS_Rot(:,3)=cross(MRS_Rot(:,2),MRS_Rot(:,1));
 
-rotmat=MRS_Rot; % used to be rotmat = -MRS_rot but doesn't seem to do anything 
-    %- bc of corners defn in mat - the values just get reorded in the vox_corner mat
+rotmat=MRS_Rot; % used to be rotmat = -MRS_rot but doesn't seem to do anything
+%- bc of corners defn in mat - the values just get reorded in the vox_corner mat
 %rotmat(:,3) = [1 1 1];
 %error('gothere');
 
@@ -228,8 +228,8 @@ cc_off = MRS_struct.p.voxoff(3);
 %ap_ang = MRS_struct.p.voxang(2);
 %lr_ang = MRS_struct.p.voxang(1);
 %cc_ang = MRS_struct.p.voxang(3);
-% 
-% 
+%
+%
 %We need to flip ap and lr axes to match NIFTI convention
 ap_off = -ap_off;
 lr_off = -lr_off;
@@ -241,21 +241,21 @@ lr_off = -lr_off;
 
 
 
-% define the voxel - use x y z  
+% define the voxel - use x y z
 % currently have spar convention - will need to
 % check for everything in future...
 % x - left = positive
 % y - posterior = postive
 % z - superior = positive
 vox_ctr = ...
-      [lr_size/2 -ap_size/2 cc_size/2 ;
-       -lr_size/2 -ap_size/2 cc_size/2 ;
-       -lr_size/2 ap_size/2 cc_size/2 ;
-       lr_size/2 ap_size/2 cc_size/2 ;
-       -lr_size/2 ap_size/2 -cc_size/2 ;
-       lr_size/2 ap_size/2 -cc_size/2 ;
-       lr_size/2 -ap_size/2 -cc_size/2 ;
-       -lr_size/2 -ap_size/2 -cc_size/2 ];
+    [lr_size/2 -ap_size/2 cc_size/2 ;
+    -lr_size/2 -ap_size/2 cc_size/2 ;
+    -lr_size/2 ap_size/2 cc_size/2 ;
+    lr_size/2 ap_size/2 cc_size/2 ;
+    -lr_size/2 ap_size/2 -cc_size/2 ;
+    lr_size/2 ap_size/2 -cc_size/2 ;
+    lr_size/2 -ap_size/2 -cc_size/2 ;
+    -lr_size/2 -ap_size/2 -cc_size/2 ];
 
 % vox_ctr = ...
 %       [lr_size 0 cc_size ;
@@ -267,7 +267,7 @@ vox_ctr = ...
 %        lr_size 0 0 ;
 %        0 0 0];
 
-   
+
 vox_rot=rotmat*vox_ctr.';
 
 % calculate corner coordinates relative to xyz origin
@@ -307,8 +307,8 @@ T1img = T1/max(T1(:));
 T1img_mas = T1img + .2*mask;
 
 % construct output
-% 
- voxel_ctr = [-lr_off -ap_off cc_off];
+%
+voxel_ctr = [-lr_off -ap_off cc_off];
 
 
 
@@ -324,8 +324,8 @@ MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output pa
 voxel_ctr(1:2)=-voxel_ctr(1:2);
 voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
 voxel_search=sqrt(sum(voxel_search,1));
-[min2,index1]=min(voxel_search);
-[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1);
+[~,index1]=min(voxel_search);
+[slice(1), slice(2), slice(3)]=ind2sub(V.dim,index1);
 
 size_max=max(size(T1img_mas));
 three_plane_img=zeros([size_max 3*size_max]);

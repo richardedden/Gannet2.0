@@ -1,9 +1,9 @@
-function [MRS_struct ] = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2,ii)
+function MRS_struct = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2,ii)
 
 if(nargin ==3)
     if isstruct(MRS_struct)
         dcm_dir2={dcm_dir};
-               dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
+        dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
         ii =1;
     else
         dcm_dir2=MRS_struct;
@@ -24,25 +24,25 @@ if(nargin == 4)
 end
 
 
-if(nargin <3)    
+if(nargin <3)
     MRS_struct.ii=1;
     ii = 1;
     dcm_dir2={dcm_dir};
-        dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
+    dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
 end
 
-% this relies on SPM and anatomical images as dicoms 
+% this relies on SPM and anatomical images as dicoms
 
 
 [pathspar,namespar,ext] = fileparts(Pname);
 
-fidoutmask = fullfile(dcm_dir,[namespar '_mask.nii'])
+fidoutmask = fullfile(dcm_dir,[namespar '_mask.nii']);
 
-[Pname '.hdr' ]
+% [Pname '.hdr' ]
 ptr=fopen([Pname '.hdr' ]);
 MRSHead=fscanf(ptr,'%c');
 
-[m n]=size(MRSHead); 
+[m, n]=size(MRSHead);
 fclose(ptr);
 
 k = findstr(' user11:', MRSHead);
@@ -60,11 +60,11 @@ e=str2num(MRSHead(k+10:k+17));
 %e = 0.5*e; %e is the anterior posterior direction
 k = findstr(' user10:', MRSHead);
 f=str2num(MRSHead(k+11:k+18));
-MRS_struct.p.voxsize(ii,:) = [d e f ]; % works for ob-axial rotator 
+MRS_struct.p.voxsize(ii,:) = [d e f ]; % works for ob-axial rotator
 
 % MRS_struct.p.voxang is not contained in P-file header (really!)
 % The rotation is adopted from the image on which the voxel was placed
-% i.e. either the 3D T1 or a custom rotated localizer. 
+% i.e. either the 3D T1 or a custom rotated localizer.
 MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
 currdir=pwd;
 
@@ -82,12 +82,12 @@ end
 
 dcm_list2 =dcm_list.name;
 if dcm_list2((end-2:end))=='nii'
-   dcm_list2 =dcm_list(4).name;
+    dcm_list2 =dcm_list(4).name;
 end
 %%
 % check to see if this works...
 %
- MRSRotHead=dicominfo(dcm_list2); 
+MRSRotHead=dicominfo(dcm_list2);
 
 cd(currdir);
 %Do some housekeeping on dicom series
@@ -124,28 +124,28 @@ cc_off = MRS_struct.p.voxoff(ii,3);
 %ap_ang = MRS_struct.p.voxang(2);
 %lr_ang = MRS_struct.p.voxang(1);
 %cc_ang = MRS_struct.p.voxang(3);
-% 
-% 
+%
+%
 %We need to flip ap and lr axes to match NIFTI convention
 ap_off = -ap_off;
 lr_off = -lr_off;
 
 
 
-% define the voxel - use x y z  
+% define the voxel - use x y z
 % x - left = positive
 % y - posterior = postive
 % z - superior = positive
 vox_ctr = ...
-      [lr_size/2 -ap_size/2 cc_size/2 ;
-       -lr_size/2 -ap_size/2 cc_size/2 ;
-       -lr_size/2 ap_size/2 cc_size/2 ;
-       lr_size/2 ap_size/2 cc_size/2 ;
-       -lr_size/2 ap_size/2 -cc_size/2 ;
-       lr_size/2 ap_size/2 -cc_size/2 ;
-       lr_size/2 -ap_size/2 -cc_size/2 ;
-       -lr_size/2 -ap_size/2 -cc_size/2 ];
-   
+    [lr_size/2 -ap_size/2 cc_size/2 ;
+    -lr_size/2 -ap_size/2 cc_size/2 ;
+    -lr_size/2 ap_size/2 cc_size/2 ;
+    lr_size/2 ap_size/2 cc_size/2 ;
+    -lr_size/2 ap_size/2 -cc_size/2 ;
+    lr_size/2 ap_size/2 -cc_size/2 ;
+    lr_size/2 -ap_size/2 -cc_size/2 ;
+    -lr_size/2 -ap_size/2 -cc_size/2 ];
+
 %vox_rot=rotmat*vox_ctr.';
 
 
@@ -206,7 +206,7 @@ T1img = T1/max(T1(:));
 T1img_mas = T1img + .2*mask;
 
 % construct output
-% 
+%
 voxel_ctr = [-lr_off -ap_off cc_off];
 
 fidoutmask = cellstr(fidoutmask);
@@ -215,8 +215,8 @@ MRS_struct.mask.outfile(ii,:)=fidoutmask;
 voxel_ctr(1:2)=-voxel_ctr(1:2);
 voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
 voxel_search=sqrt(sum(voxel_search,1));
-[min2,index1]=min(voxel_search);
-[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1);
+[~,index1]=min(voxel_search);
+[slice(1), slice(2), slice(3)]=ind2sub( V.dim,index1);
 
 size_max=max(size(T1img_mas));
 three_plane_img=zeros([size_max 3*size_max]);
