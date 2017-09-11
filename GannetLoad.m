@@ -589,6 +589,9 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
         tmp = [': ' MRS_struct.gabafile{ii}];
     end
     tmp = regexprep(tmp,'_','-');
+    % GO (170905): Backslash in filenames interferes with TeX
+    % interpreter during PDF output production, replace:
+    tmp = strrep(tmp, '\','\\');
     text(0, 0.9, 'Filename', 'FontName', 'Helvetica', 'FontSize', 13);
     text(0.275, 0.9, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     

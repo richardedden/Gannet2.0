@@ -99,6 +99,7 @@ MRS_struct.p.LarmorFreq = rda.MRFrequency;
 MRS_struct.p.npoints = rda.VectorSize;
 MRS_struct.p.sw = 1/rda.DwellTime*1E6;
 MRS_struct.p.TR=rda.TR;
+MRS_struct.p.TE=rda.TE; % GO (17/09/08)
 
 %
 % So now we should have got to the point after the header text
