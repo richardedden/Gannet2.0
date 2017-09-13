@@ -1,15 +1,6 @@
 function MRS_struct = GannetQuantify(MRS_struct)
 
-% Objective: include segmentation of GM, WM and CSF components to integrate
-% T1 and T2 of water in these tissues properly.
-
-% need to bring in MRS_struct
-% need to re-develop the GABA_iu quantify equation - see notebook
-% need to make sure use proper T1 and T2 for water in GM, WM and CSF - see
-% notebook for values
-% then integrate this into MRS_struct
-
-MRS_struct.versionquantify = '170831';
+MRS_struct.version.quantify = '170831';
 
 cWM = 1; % concentration of GABA in pure WM
 cGM = 2; % concentration of GABA in pure GM
@@ -17,12 +8,12 @@ cGM = 2; % concentration of GABA in pure GM
 alpha = cWM/cGM;
 
 % Constants
-% from Wansapura 1999  JMRI; 9:531 (1999)
+% From Wansapura 1999  JMRI; 9:531 (1999)
 %        T1          T2
 % WM   832 +/- 10  79.2 +/- 0.6
 % GM  1331 +/- 13  110 +/- 2
 %
-% from Lu, JMRI; 2005; 22: 13
+% From Lu, JMRI; 2005; 22: 13
 % CSF T1 = 3817 +/- 424msec - but state may underestimated and that 4300ms
 % is likely more accurate - but the reference is to an ISMRM 2001 abstract
 % MacKay (last author) 2006 ISMRM abstract has T1 CSF = 3300 ms
@@ -42,7 +33,7 @@ T1w_CSF   = 3.817;
 T2w_CSF   = 0.503;
 N_H_Water = 2;
 
-% determine concentration of water in GM WM and CSF
+% Determine concentration of water in GM, WM and CSF
 % Gasparovic et al, MRM 2006; 55:1219 uses relative densities, ref to Ernst
 % fGM = 0.78
 % fWM = 0.65
@@ -51,6 +42,7 @@ N_H_Water = 2;
 % concw_GM = 0.78 * 55.51 mol/kg = 43.30
 % concw_WM = 0.65 * 55.51 mol/kg = 36.08
 % concw_CSF = 0.97 * 55.51 mol/kg = 53.84
+
 concw_GM  = 43.30*1e3;
 concw_WM  = 36.08*1e3;
 concw_CSF = 53.84*1e3;
@@ -77,7 +69,7 @@ if any(tmp)
     end
 end
 
-for ii = 1:length(MRS_struct.gabafile)
+for ii = 1:length(MRS_struct.metabfile)
     
     TR = MRS_struct.p.TR(ii)/1000;
     TE = MRS_struct.p.TE(ii)/1000;
@@ -133,7 +125,7 @@ for ii = 1:length(MRS_struct.gabafile)
                     MM = 1;
             end
             
-            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_Quant(ii) = (MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) ./ MRS_struct.out.(vox{kk}).Water.Area(ii)) * ...
+            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_Quant(ii) = (MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) ./ MRS_struct.out.(vox{kk}).water.Area(ii)) * ...
                 (N_H_Water/N_H_Metab) * MM / EditingEfficiency * ...
                 (fracGM * concw_GM * (1-exp(-TR/T1w_GM)) * (exp(-TE/T2w_GM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
                 fracWM * concw_WM * (1-exp(-TR/T1w_WM)) * (exp(-TE/T2w_WM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
@@ -259,7 +251,7 @@ for ii = 1:length(MRS_struct.gabafile)
         'VerticalAlignment', 'top',...
         'FontName', 'Helvetica','FontSize',13);
     
-    C = MRS_struct.gabafile{ii};
+    C = MRS_struct.metabfile{ii};
     if size(C,2) > 30
         [~,y] = fileparts(C);
     else
@@ -283,7 +275,7 @@ for ii = 1:length(MRS_struct.gabafile)
         'VerticalAlignment', 'top',...
         'FontName', 'Helvetica','FontSize',13);
     
-    tmp = ['QuantifyVer:  ' MRS_struct.versionquantify];
+    tmp = ['QuantifyVer:  ' MRS_struct.version.quantify];
     text(0,0.0, tmp, 'HorizontalAlignment', 'left', ...
         'VerticalAlignment', 'top',...
         'FontName', 'Helvetica','FontSize',13);
@@ -306,15 +298,15 @@ for ii = 1:length(MRS_struct.gabafile)
     image(A2); axis off; axis square;
     
     %%%% Save PDF %%%%%
-    pfil_nopath = MRS_struct.gabafile{ii};
-    fullpath = MRS_struct.gabafile{ii};
+    pfil_nopath = MRS_struct.metabfile{ii};
+    fullpath = MRS_struct.metabfile{ii};
     
     if(strcmp(fullpath(1:2) , '..'))
         fullpath = fullpath(4:end);
     end
     
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
-        fullpath = MRS_struct.gabafile{ii};
+        fullpath = MRS_struct.metabfile{ii};
         if strcmp(fullpath(1:2) , '..')
             fullpath = fullpath(4:end);
         end

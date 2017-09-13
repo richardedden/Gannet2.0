@@ -2,30 +2,29 @@ function MRS_struct = GannetCoRegister(MRS_struct, nii_name, rot_folder)
 
 %Coregistration of MRS voxel volumes to imaging datasets, based on headers.
 
-MRS_struct.versioncoreg = '170831';
+MRS_struct.version.coreg = '170831';
 
 if MRS_struct.ii ~= length(nii_name)
     error('The number of nifti files does not match the number of MRS files processed by GannetLoad.');
 end
 
-for ii = 1:length(MRS_struct.gabafile)
+for ii = 1:length(MRS_struct.metabfile)
     
     %Ultimately this switch will not be necessary...
     switch MRS_struct.p.vendor
         
         case 'Philips'
-            fname = MRS_struct.gabafile{ii};
+            fname = MRS_struct.metabfile{ii};
             sparname = [fname(1:(end-4)) MRS_struct.p.spar_string];
             MRS_struct = GannetMask_Philips(sparname, nii_name{ii}, MRS_struct, ii);
             
         case 'Philips_data'
-            if exist(MRS_struct.gabafile_sdat,'file') % MM (170720)
+            if exist(MRS_struct.metabfile_sdat,'file') % MM (170720)
                 MRS_struct.p.vendor = 'Philips';
-                MRS_struct.gabafile_data = MRS_struct.gabafile;
-                MRS_struct.gabafile_data = MRS_struct.gabafile;
-                MRS_struct.gabafile = MRS_struct.gabafile_sdat;
+                MRS_struct.metabfile_data = MRS_struct.metabfile;
+                MRS_struct.metabfile = MRS_struct.metabfile_sdat;
                 MRS_struct = GannetCoRegister(MRS_struct,nii_name);
-                MRS_struct.gabafile = MRS_struct.gabafile_data;
+                MRS_struct.metabfile = MRS_struct.metabfile_data;
                 MRS_struct.p.vendor = 'Philips_data';
             else
                 error([MRS_struct.p.vendor ' format does not include voxel location information in the header. See notes in GannetCoRegister.']);
@@ -33,27 +32,27 @@ for ii = 1:length(MRS_struct.gabafile)
                 %1. Switch vendor to Philips
                 %       MRS_struct.p.vendor = 'Philips';
                 %2. Copy .data filenames.
-                %       MRS_struct.gabafile_data = MRS_struct.gabafile;
+                %       MRS_struct.metabfile_data = MRS_struct.metabfile;
                 %3. Replace the list with the corrsponding SDAT files (in correct order)
-                %        MRS_struct.gabafile = {'SDATfile1.sdat' 'SDATfile2.SDAT'};
+                %        MRS_struct.metabfile = {'SDATfile1.sdat' 'SDATfile2.SDAT'};
                 %4. Rerun GannetCoRegister
                 %
                 %5.  Copy .sdat filenames and replace .data ones. Tidy up.
-                %       MRS_struct.gabafile_sdat = MRS_struct.gabafile;
-                %       MRS_struct.gabafile = MRS_struct.gabafile_data;
+                %       MRS_struct.metabfile_sdat = MRS_struct.metabfile;
+                %       MRS_struct.metabfile = MRS_struct.metabfile_data;
                 %       MRS_struct.p.vendor = 'Philips_data'
             end
             
         case 'Siemens'
-            fname = MRS_struct.gabafile{ii};
+            fname = MRS_struct.metabfile{ii};
             MRS_struct = GannetMask_Siemens(fname, nii_name{ii}, MRS_struct, ii);
             
         case 'Siemens_twix'
-            fname = MRS_struct.gabafile{ii};
+            fname = MRS_struct.metabfile{ii};
             MRS_struct = GannetMask_SiemensTWIX(fname, nii_name{ii}, MRS_struct, ii);
             
         case 'GE'
-            fname = MRS_struct.gabafile{ii};
+            fname = MRS_struct.metabfile{ii};
             if ~exist('rot_folder','var')
                 rot_folder = nii_name;
             end
@@ -143,14 +142,14 @@ for ii = 1:length(MRS_struct.gabafile)
     text(0.5,0.03, tmp, 'HorizontalAlignment','right', ...
         'VerticalAlignment', 'top', ...
         'FontName', 'Helvetica','FontSize',13);
-    tmp = [': ' MRS_struct.versioncoreg];
+    tmp = [': ' MRS_struct.version.coreg];
     text(.5, 0.03, tmp, ...
         'VerticalAlignment', 'top', ...
         'FontName', 'Helvetica','FontSize',13);
     
     h=subplot(2,3,1:3);
     
-    t = ['Voxel from ' MRS_struct.gabafile{ii} ' on ' MRS_struct.mask.T1image(ii,:)];
+    t = ['Voxel from ' MRS_struct.metabfile{ii} ' on ' MRS_struct.mask.T1image(ii,:)];
     t = regexprep(t, '_','-');
     
     imagesc(squeeze(MRS_struct.mask.img(ii,:,:)));
@@ -173,7 +172,7 @@ for ii = 1:length(MRS_struct.gabafile)
     
     %%%% Save PDF %%%%%
     pdfdirname = 'GannetCoRegister_output'; % MM (170720)
-    pfil_nopath = MRS_struct.gabafile{ii};
+    pfil_nopath = MRS_struct.metabfile{ii};
     
     tmp = strfind(pfil_nopath,'/');
     tmp2 = strfind(pfil_nopath,'\');

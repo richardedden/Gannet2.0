@@ -49,11 +49,11 @@ else
 end
 
 freq = MRS_struct.spec.freq;
-MRS_struct.versionfit = '170705';
+MRS_struct.version.fit = '170705';
 pdfdirname = './GannetFit_output'; % MM (170121)
 
 lsqopts = optimset('lsqcurvefit');
-lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
+lsqopts = optimset(lsqopts,'TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
 nlinopts = statset('nlinfit');
 nlinopts = statset(nlinopts,'MaxIter',1e5);
 
@@ -383,9 +383,9 @@ for kk = 1:length(vox)
                 set(gca,'XLim',[2.7 4.2]);
             end
             if strcmpi(MRS_struct.p.vendor,'Siemens')
-                legendtxt = regexprep(MRS_struct.gabafile{ii*2-1}, '_','-');
+                legendtxt = regexprep(MRS_struct.metabfile{ii*2-1}, '_','-');
             else
-                legendtxt = regexprep(MRS_struct.gabafile{ii}, '_','-');
+                legendtxt = regexprep(MRS_struct.metabfile{ii}, '_','-');
             end
             % GO (170905): Backslash in filenames interferes with TeX
             % interpreter during PDF output production, replace:
@@ -498,58 +498,58 @@ for kk = 1:length(vox)
                 %end
                 
                 WaterArea = sum(real(LorentzGaussModel(LGPModelParam(1:end-1),freq(freqbounds))) - BaselineModel(LGPModelParam(3:5),freq(freqbounds)),2);
-                MRS_struct.out.(vox{kk}).Water.Area(ii) = WaterArea * abs(freq(1)-freq(2));
+                MRS_struct.out.(vox{kk}).water.Area(ii) = WaterArea * abs(freq(1)-freq(2));
                 waterheight = LGPModelParam(1);
-                MRS_struct.out.(vox{kk}).Water.FitError(ii) = 100*std(residw)/waterheight;
+                MRS_struct.out.(vox{kk}).water.FitError(ii) = 100*std(residw)/waterheight;
                 % MM (170202)
                 LG = real(LorentzGaussModel(LGPModelParam(1:end-1),freq(freqbounds))) - BaselineModel(LGPModelParam(3:5),freq(freqbounds));
                 LG = LG./max(LG);
                 ind = find(LG >= 0.5);
                 f = freq(freqbounds);
                 w = abs(f(ind(1)) - f(ind(end)));
-                MRS_struct.out.(vox{kk}).Water.FWHM(ii) = w * MRS_struct.p.LarmorFreq;
-                MRS_struct.out.(vox{kk}).Water.ModelParam(ii,:) = LGPModelParam;
-                MRS_struct.out.(vox{kk}).Water.Resid(ii,:) = residw; % MM (160913)
+                MRS_struct.out.(vox{kk}).water.FWHM(ii) = w * MRS_struct.p.LarmorFreq;
+                MRS_struct.out.(vox{kk}).water.ModelParam(ii,:) = LGPModelParam;
+                MRS_struct.out.(vox{kk}).water.Resid(ii,:) = residw; % MM (160913)
                 
                 % Calculate SNR of GABA signal (MM: 170502)
                 noiseSigma_Water = CalcNoise(freq, WaterData(ii,:));
-                MRS_struct.out.(vox{kk}).Water.SNR(ii) = abs(waterheight)/noiseSigma_Water;
+                MRS_struct.out.(vox{kk}).water.SNR(ii) = abs(waterheight)/noiseSigma_Water;
                 
                 % Root sum square fit error and concentration in institutional units -- MGSaleh & MM
                 switch target{trg}
                     case 'GABA'
-                        MRS_struct.out.(vox{kk}).GABA.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).GABA.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'GABA', ii);
                         
                     case 'Glx'
-                        MRS_struct.out.(vox{kk}).Glx.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).Glx.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'Glx', ii);
                         
                     case 'GABAGlx'
-                        MRS_struct.out.(vox{kk}).GABA.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
-                        MRS_struct.out.(vox{kk}).Glx.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).GABA.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).Glx.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'GABA', ii);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'Glx', ii);
                         
                     case 'GSH'
-                        MRS_struct.out.(vox{kk}).GSH.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GSH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).GSH.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GSH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
                         
                     case 'Lac'
-                        MRS_struct.out.(vox{kk}).Lac.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Lac.FitError(ii).^2 + MRS_struct.out.(vox{kk}).Water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).Lac.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Lac.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
                 end
                 
                 % Generate scaled spectra (for plotting) CJE Jan2011, MM (170705)
                 MRS_struct.spec.(vox{kk}).(target{trg}).off_scaled(ii,:) = ...
-                    MRS_struct.spec.(vox{kk}).(target{trg}).off(ii,:) .* (1/MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1));
+                    MRS_struct.spec.(vox{kk}).(target{trg}).off(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
                 MRS_struct.spec.(vox{kk}).(target{trg}).on_scaled(ii,:) = ...
-                    MRS_struct.spec.(vox{kk}).(target{trg}).on(ii,:) .* (1/MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1));
+                    MRS_struct.spec.(vox{kk}).(target{trg}).on(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
                 MRS_struct.spec.(vox{kk}).(target{trg}).diff_scaled(ii,:) = ...
-                    MRS_struct.spec.(vox{kk}).(target{trg}).diff(ii,:) .* (1/MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1));
+                    MRS_struct.spec.(vox{kk}).(target{trg}).diff(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
                 
                 % MM (170703): Reorder structure fields 
-                MRS_struct.out.(vox{kk}).Water = orderfields(MRS_struct.out.(vox{kk}).Water, {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError'});
+                MRS_struct.out.(vox{kk}).water = orderfields(MRS_struct.out.(vox{kk}).water, {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError'});
                 
                 hb = subplot(2,2,3);
                 watmin = min(real(WaterData(ii,:)));
@@ -598,8 +598,8 @@ for kk = 1:length(vox)
                     MRS_struct.out.(vox{kk}).ResidWater.FitError(ii) = 100*std(residRW)/MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1);
                     
                     MRS_struct.out.(vox{kk}).ResidWater.SuppressionFactor(ii) = ...
-                        (MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1) - abs(MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1))) ...
-                        / MRS_struct.out.(vox{kk}).Water.ModelParam(ii,1);
+                        (MRS_struct.out.(vox{kk}).water.ModelParam(ii,1) - abs(MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1))) ...
+                        / MRS_struct.out.(vox{kk}).water.ModelParam(ii,1);
                     
                     %figure(22);
                     %plot(freq(freqWaterOFF), real(water_OFF), 'b', ...
@@ -804,9 +804,9 @@ for kk = 1:length(vox)
             text_pos = 0.9; % A variable to determine y-position of text on printout on figure -- Added by MGSaleh
             
             if strcmp(MRS_struct.p.vendor,'Siemens')
-                tmp = [': ' MRS_struct.gabafile{ii*2-1}];
+                tmp = [': ' MRS_struct.metabfile{ii*2-1}];
             else
-                tmp = [': ' MRS_struct.gabafile{ii}];
+                tmp = [': ' MRS_struct.metabfile{ii}];
             end
             tmp = regexprep(tmp, '_','-');
             % GO (170905): Backslash in filenames interferes with TeX
@@ -857,11 +857,11 @@ for kk = 1:length(vox)
             % MGSaleh 2016, MM (170703): Some changes to accomodate multiplexed fitting output
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
                 
-                tmp = sprintf(': %.3g/%.3g', MRS_struct.out.(vox{kk}).Water.Area(ii), MRS_struct.out.(vox{kk}).Cr.Area(ii));
+                tmp = sprintf(': %.3g/%.3g', MRS_struct.out.(vox{kk}).water.Area(ii), MRS_struct.out.(vox{kk}).Cr.Area(ii));
                 text(0, text_pos-0.4, 'Water/Cr Area', 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0.375, text_pos-0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
                 
-                tmp = sprintf(': %.1f/%.1f Hz', MRS_struct.out.(vox{kk}).Water.FWHM(ii), MRS_struct.out.(vox{kk}).Cr.FWHM(ii));
+                tmp = sprintf(': %.1f/%.1f Hz', MRS_struct.out.(vox{kk}).water.FWHM(ii), MRS_struct.out.(vox{kk}).Cr.FWHM(ii));
                 text(0, text_pos-0.5, 'FWHM (Water/Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
@@ -928,7 +928,7 @@ for kk = 1:length(vox)
                 
             end
             
-            tmp = [': ' MRS_struct.versionfit];
+            tmp = [': ' MRS_struct.version.fit];
             text(0, text_pos-0.9, 'FitVer', 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos-0.9, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
             
@@ -947,13 +947,13 @@ for kk = 1:length(vox)
             
             % Save PDF
             if strcmp(MRS_struct.p.vendor,'Siemens')
-                pfil_nopath = MRS_struct.gabafile{ii*2-1};
+                pfil_nopath = MRS_struct.metabfile{ii*2-1};
             else
-                pfil_nopath = MRS_struct.gabafile{ii};
+                pfil_nopath = MRS_struct.metabfile{ii};
             end
             % For Philips .data
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                fullpath = MRS_struct.gabafile{ii};
+                fullpath = MRS_struct.metabfile{ii};
                 fullpath = regexprep(fullpath, '.data', '_data');
                 fullpath = regexprep(fullpath, '\', '_');
                 fullpath = regexprep(fullpath, '/', '_');
@@ -1038,19 +1038,19 @@ for kk = 1:length(vox)
             % 140116: ADH reorder structure
             if isfield(MRS_struct, 'mask') == 1
                 if isfield(MRS_struct, 'waterfile') == 1
-                    structorder = {'versionload', 'versionfit', 'ii', ...
-                        'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
+                    structorder = {'version', 'ii', ...
+                        'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
                 else
-                    structorder = {'versionload', 'versionfit','ii', ...
-                        'gabafile', 'p', 'fids', 'spec', 'out', 'mask'};
+                    structorder = {'version', 'ii', ...
+                        'metabfile', 'p', 'fids', 'spec', 'out', 'mask'};
                 end
             else
                 if isfield(MRS_struct, 'waterfile') == 1
-                    structorder = {'versionload', 'versionfit', 'ii', ...
-                        'gabafile', 'waterfile', 'p', 'fids', 'spec', 'out'};
+                    structorder = {'version', 'ii', ...
+                        'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out'};
                 else
-                    structorder = {'versionload', 'versionfit','ii', ...
-                        'gabafile', 'p', 'fids', 'spec', 'out'};
+                    structorder = {'version','ii', ...
+                        'metabfile', 'p', 'fids', 'spec', 'out'};
                 end
             end
             
@@ -1271,11 +1271,11 @@ T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
 
 if strcmpi(MRS_struct.p.vendor,'Siemens')
     % Factor of 2 is appropriate for averaged Siemens data (read in separately as ON and OFF)
-    MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).Water.Area(ii))  ...
+    MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).water.Area(ii))  ...
         .* PureWaterConc .* WaterVisibility .* T1_Factor .* T2_Factor .* (N_H_Water./N_H_Metab) ...
         .* MM ./ 2 ./ EditingEfficiency;
 else
-    MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).Water.Area(ii))  ...
+    MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).water.Area(ii))  ...
         .* PureWaterConc .* WaterVisibility .* T1_Factor .* T2_Factor .* (N_H_Water./N_H_Metab) ...
         .* MM ./ EditingEfficiency;
 end

@@ -1,4 +1,4 @@
-function [ MRS_struct ] = PhilipsRead_data(MRS_struct, fname, fname_water )
+function [ MRS_struct ] = PhilipsRead_data2(MRS_struct, fname, fname_water )
 % RE/CJE Parse SPAR file for header info
 % 110825
 

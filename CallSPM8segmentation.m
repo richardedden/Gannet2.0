@@ -10,8 +10,8 @@ matlabbatch{1}.spm.spatial.preproc.output.CSF = [0 0 1];
 matlabbatch{1}.spm.spatial.preproc.output.biascor = 1;
 matlabbatch{1}.spm.spatial.preproc.output.cleanup = 0;
 matlabbatch{1}.spm.spatial.preproc.opts.tpm = {[spmhome '/tpm/grey.nii']
-    [spmhome '/tpm/white.nii']
-    [spmhome '/tpm/csf.nii']};
+                                               [spmhome '/tpm/white.nii']
+                                               [spmhome '/tpm/csf.nii']};
 matlabbatch{1}.spm.spatial.preproc.opts.ngaus = [2 2 2 4];
 matlabbatch{1}.spm.spatial.preproc.opts.regtype = 'mni';
 matlabbatch{1}.spm.spatial.preproc.opts.warpreg = 1;
@@ -55,8 +55,7 @@ matlabbatch{2}.spm.tools.preproc8.warp.affreg = 'mni';
 matlabbatch{2}.spm.tools.preproc8.warp.samp = 3;
 matlabbatch{2}.spm.tools.preproc8.warp.write = [0 0];
 
-spm_jobman('initcfg')
-spm_jobman('run',matlabbatch)
+spm_jobman('run',matlabbatch);
 
 end
 

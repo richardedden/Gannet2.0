@@ -39,8 +39,7 @@ matlabbatch{1}.spm.spatial.preproc.warp.fwhm = 0;
 matlabbatch{1}.spm.spatial.preproc.warp.samp = 3;
 matlabbatch{1}.spm.spatial.preproc.warp.write = [0 0];
 
-spm_jobman('initcfg')
-spm_jobman('run',matlabbatch)
+spm_jobman('run',matlabbatch);
 
 end
 

@@ -1,4 +1,4 @@
-function MRS_struct = GannetLoad(gabafile, waterfile)
+function MRS_struct = GannetLoad(metabfile, waterfile)
 %Gannet 3.0 GannetLoad
 %Started by RAEE Nov 5, 2012
 %Updates by MGS, MM, GO 2016-2017
@@ -18,9 +18,9 @@ function MRS_struct = GannetLoad(gabafile, waterfile)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 missing=0;
-for filecheck=1:length(gabafile)
-    if ~exist(gabafile{filecheck},'file')
-        disp(['The file ' gabafile{filecheck} ' (' num2str(filecheck) ')' ' is missing. Typo?'])
+for filecheck=1:length(metabfile)
+    if ~exist(metabfile{filecheck},'file')
+        disp(['The file ' metabfile{filecheck} ' (' num2str(filecheck) ')' ' is missing. Typo?'])
         missing=1;
     end
 end
@@ -41,9 +41,9 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.versionload = '170713'; % set to date when final updates have been made
+MRS_struct.version.load = '170713'; % set to date when final updates have been made
 MRS_struct.ii = 0;
-MRS_struct.gabafile = gabafile;
+MRS_struct.metabfile = metabfile;
 MRS_struct = GannetPreInitialise(MRS_struct);
 
 if MRS_struct.p.PRIAM % deciding how many voxels there are -- MGSaleh 2016
@@ -75,12 +75,12 @@ end
 %   2. Determine data parameters from header
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if iscell(gabafile) == 1 % it's a cell array, so work out the number of elements
-    numpfiles = numel(gabafile);
-    pfiles = gabafile;
+if iscell(metabfile) == 1 % it's a cell array, so work out the number of elements
+    numpfiles = numel(metabfile);
+    pfiles = metabfile;
 else
     numpfiles = 1;  % it's just one pfile
-    pfiles{1} = gabafile;
+    pfiles{1} = metabfile;
 end
 
 MRS_struct = GannetDiscernDatatype(pfiles{1}, MRS_struct);
@@ -104,14 +104,14 @@ end
 %   4. Load data from files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
+for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     
     MRS_struct.ii = ii;
     
     switch MRS_struct.p.vendor
         
         case 'GE'
-            MRS_struct = GERead(MRS_struct, gabafile{ii});
+            MRS_struct = GERead(MRS_struct, metabfile{ii});
             WaterData = MRS_struct.fids.data_water;
             MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);
             FullData = MRS_struct.fids.data;
@@ -125,10 +125,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
             
         case 'Siemens_twix'
             if exist('waterfile','var')
-                MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii}, waterfile{ii});
+                MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii}, waterfile{ii});
                 WaterData = MRS_struct.fids.data_water;
             else
-                MRS_struct = SiemensTwixRead(MRS_struct, gabafile{ii});
+                MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii});
             end
             % MM (160914): Need to set Water_Positive based on water signal
             if MRS_struct.p.Water_Positive == 0
@@ -148,7 +148,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                 % Load the data. GannetLoad specifies a file in the first
                 % place, so take apart that filename, and feed the containing
                 % folder into the SiemensDICOMRead function. % GO 11/01/2016
-                [imafolder,~,~] = fileparts(gabafile{ii}); % GO 02/05/2017
+                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 02/05/2017
                 [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
                 MRS_struct = SiemensDICOMRead(MRS_struct,imafolder,waterfolder); % GO 02/05/2017
                 MRS_struct.p.Reference_compound='H2O';
@@ -156,7 +156,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
             else
                 MRS_struct.p.Reference_compound='Cr';
                 % Same as above, but without parsing the waterfolder. % GO 02/05/2017
-                [imafolder,~,~] = fileparts(gabafile{ii}); % GO 11/01/2016
+                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 11/01/2016
                 MRS_struct = SiemensDICOMRead(MRS_struct,imafolder); % GO 11/01/2016
             end
             FullData = MRS_struct.fids.data;
@@ -177,7 +177,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                 % Load the data. GannetLoad specifies a file in the first
                 % place, so take apart that filename, and feed the containing
                 % folder into the DICOMRead function. % GO 11/01/2016
-                [dcmfolder,~,~] = fileparts(gabafile{ii}); % GO 02/05/2017
+                [dcmfolder,~,~] = fileparts(metabfile{ii}); % GO 02/05/2017
                 [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
                 MRS_struct = DICOMRead(MRS_struct,dcmfolder,waterfolder); % GO 02/05/2017
                 MRS_struct.p.Reference_compound='H2O';
@@ -185,7 +185,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
             else
                 MRS_struct.p.Reference_compound='Cr';
                 % Same as above, but without parsing the waterfolder. % GO 02/05/2017
-                [dcmfolder,~,~] = fileparts(gabafile{ii}); % GO 11/01/2016
+                [dcmfolder,~,~] = fileparts(metabfile{ii}); % GO 11/01/2016
                 MRS_struct = DICOMRead(MRS_struct,dcmfolder); % GO 11/01/2016
             end
             FullData = MRS_struct.fids.data;
@@ -205,18 +205,18 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                 MRS_struct.p.Reference_compound = 'H2O';
                 switch MRS_struct.p.ONOFForder
                     case 'offfirst'
-                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2-1},gabafile{ii*2}, waterfile{ii});
+                        MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2-1},metabfile{ii*2}, waterfile{ii});
                     case 'onfirst'
-                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2},gabafile{ii*2-1}, waterfile{ii});
+                        MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2},metabfile{ii*2-1}, waterfile{ii});
                 end
                 MRS_struct.p.Nwateravg = 1;
             else
                 MRS_struct.p.Reference_compound = 'Cr';
                 switch MRS_struct.p.ONOFForder
                     case 'offfirst'
-                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2-1},gabafile{ii*2});
+                        MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2-1},metabfile{ii*2});
                     case 'onfirst'
-                        MRS_struct = SiemensRead(MRS_struct, gabafile{ii*2},gabafile{ii*2-1});
+                        MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2},metabfile{ii*2-1});
                 end
             end
             FullData = MRS_struct.fids.data;
@@ -233,10 +233,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
             
         case 'Philips'
             if strcmpi(MRS_struct.p.Reference_compound,'H2O')
-                MRS_struct = PhilipsRead(MRS_struct, gabafile{ii}, waterfile{ii});
+                MRS_struct = PhilipsRead(MRS_struct, metabfile{ii}, waterfile{ii});
                 WaterData = MRS_struct.fids.data_water;
             else
-                MRS_struct = PhilipsRead(MRS_struct, gabafile{ii});
+                MRS_struct = PhilipsRead(MRS_struct, metabfile{ii});
             end
             % Need to set Water_Positive based on water signal
             if MRS_struct.p.Water_Positive == 0
@@ -275,10 +275,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
         case 'Philips_data'
             if exist('waterfile','var')
                 MRS_struct.p.Reference_compound = 'H2O';
-                MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii}, waterfile{ii});
+                MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii}, waterfile{ii});
             else
                 MRS_struct.p.Reference_compound = 'Cr';
-                MRS_struct = PhilipsRead_data(MRS_struct, gabafile{ii});
+                MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii});
             end
             if strcmpi(MRS_struct.p.Reference_compound,'H2O')
                 WaterData = MRS_struct.fids.data_water;
@@ -584,9 +584,9 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     
     % MM (170703): Cleaner text alignment
     if strcmp(MRS_struct.p.vendor,'Siemens')
-        tmp = [': ' MRS_struct.gabafile{ii*2-1}];
+        tmp = [': ' MRS_struct.metabfile{ii*2-1}];
     else
-        tmp = [': ' MRS_struct.gabafile{ii}];
+        tmp = [': ' MRS_struct.metabfile{ii}];
     end
     tmp = regexprep(tmp,'_','-');
     % GO (170905): Backslash in filenames interferes with TeX
@@ -617,7 +617,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     text(0, 0.4, 'Rejects', 'FontName', 'Helvetica', 'FontSize', 13);
     text(0.275, 0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
-    tmp = [': ' MRS_struct.versionload];
+    tmp = [': ' MRS_struct.version.load];
     text(0,0.3, 'LoadVer', 'FontName', 'Helvetica', 'FontSize', 13);
     text(0.275, 0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
@@ -628,14 +628,14 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     image(A2); axis off; axis square;
     
     if strcmp(MRS_struct.p.vendor,'Siemens')
-        pfil_nopath = MRS_struct.gabafile{ii*2-1};
+        pfil_nopath = MRS_struct.metabfile{ii*2-1};
     else
-        pfil_nopath = MRS_struct.gabafile{ii};
+        pfil_nopath = MRS_struct.metabfile{ii};
     end
     
     % For Philips .data
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
-        fullpath = MRS_struct.gabafile{ii};
+        fullpath = MRS_struct.metabfile{ii};
         fullpath = regexprep(fullpath, '.data', '_data'); % NP see below
         fullpath = regexprep(fullpath, '\', '_');
         fullpath = regexprep(fullpath, '/', '_');
@@ -719,8 +719,8 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
                 sdat_G_name=['MRSload_output/' pfil_nopath  '_G.sdat'];
                 spar_G_name=['MRSload_output/' pfil_nopath  '_G.spar'];
                 %make file copies for sdat output
-                copyfile(gabafile{ii},sdat_G_name);
-                sparname=gabafile{ii};
+                copyfile(metabfile{ii},sdat_G_name);
+                sparname=metabfile{ii};
                 sparname = [sparname(1:(end-4)) MRS_struct.p.spar_string];
                 copyfile(sparname,spar_G_name);
                 %write into the sdat file
@@ -744,10 +744,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from gabafile)
     
     % 140116: ADH reorder structure
     if(isfield(MRS_struct, 'waterfile') == 1)
-        structorder = {'versionload', 'ii', 'gabafile', ...
+        structorder = {'version', 'ii', 'metabfile', ...
             'waterfile', 'p', 'fids', 'spec', 'out'};
     else
-        structorder = {'versionload', 'ii', 'gabafile', ...
+        structorder = {'version', 'ii', 'metabfile', ...
             'p', 'fids', 'spec', 'out'};
     end
     MRS_struct = orderfields(MRS_struct, structorder);
