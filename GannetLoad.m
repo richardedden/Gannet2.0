@@ -529,7 +529,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if ishandle(101)
-        clf(101) % MM (170629)
+        clf(101); % MM (170629)
     end
     h = figure(101);
     % MM (170629): Open figure in center of screen
@@ -582,6 +582,8 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     subplot(2,2,4);
     axis off;
     
+    text_pos = 0.9;
+    
     % MM (170703): Cleaner text alignment
     if strcmp(MRS_struct.p.vendor,'Siemens')
         tmp = [': ' MRS_struct.metabfile{ii*2-1}];
@@ -592,34 +594,34 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     % GO (170905): Backslash in filenames interferes with TeX
     % interpreter during PDF output production, replace:
     tmp = strrep(tmp, '\','\\');
-    text(0, 0.9, 'Filename', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, 0.9, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0, text_pos, 'Filename', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': ' num2str(MRS_struct.p.Navg(ii)) ' averages'];
-    text(0, 0.8, 'Navg', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, 0.8, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0, text_pos - 0.1, 'Navg', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos - 0.1, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     if isfield(MRS_struct.p,'voxdim')
         tmp = [': '  num2str(MRS_struct.p.voxdim(ii,1)*MRS_struct.p.voxdim(ii,2)*MRS_struct.p.voxdim(ii,3)/1e3) ' mL'];
-        text(0, 0.7, 'Volume', 'FontName', 'Helvetica', 'FontSize', 13);
-        text(0.275, 0.7, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+        text(0, text_pos - 0.2, 'Volume', 'FontName', 'Helvetica', 'FontSize', 13);
+        text(0.275, text_pos - 0.2, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     end
     
     tmp = [': '  MRS_struct.p.AlignTo];
-    text(0, 0.6, 'Alignment', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, 0.6, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0, text_pos - 0.3, 'Alignment', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos - 0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': ' num2str(MRS_struct.p.LB,2) ' Hz'];
-    text(0, 0.5, 'LB', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, 0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0, text_pos - 0.4, 'LB', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos - 0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': '  num2str(sum(MRS_struct.out.reject(:,ii),1)) ];
-    text(0, 0.4, 'Rejects', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, 0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0, text_pos - 0.5, 'Rejects', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos - 0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     tmp = [': ' MRS_struct.version.load];
-    text(0,0.3, 'LoadVer', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, 0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0, text_pos - 0.6, 'LoadVer', 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos - 0.6, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
     script_path=which('GannetLoad');
     Gannet_logo=[script_path(1:(end-13)) '/Gannet3_logo.png'];

@@ -1,19 +1,19 @@
-function GannetPlotPrePostAlign(MRS_struct, reg, specno)
+function GannetPlotPrePostAlign(MRS_struct, vox, ii)
 % Plots pre and post alignment spectra in MRSLoadPfiles
 % 110214:  Scale spectra by the peak _height_ of water
 %          Plot multiple spectra as a stack - baselines offset
 %            by mean height of GABA
 % Updates by MGSaleh 2016, MM 2017
 
-for kk = 1:length(reg)
+for kk = 1:length(vox)
     
     if MRS_struct.p.HERMES
         
         numspec = 4;        
-        SpectraToPlot = [MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(specno,:); ...
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(specno,:); ...
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(specno,:); ...
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(specno,:)];
+        SpectraToPlot = [MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:); ...
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:); ...
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:); ...
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)];
         
         % Estimate baseline from between GABAGlx or Lac and GSH. The values might be changed depending on the future choice of metabolites
         % MM (170705)
@@ -30,8 +30,8 @@ for kk = 1:length(reg)
     else
         
         numspec = 2;
-        SpectraToPlot = [MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff(specno,:); ...
-            MRS_struct.spec.(reg{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(specno,:)];
+        SpectraToPlot = [MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:); ...
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)];
         
         % Estimate baseline from between Glx and GABA
         % MM (170705)
@@ -61,7 +61,7 @@ for kk = 1:length(reg)
         plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(2,:)), 'Color', 'r');
         plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(1,:)), 'Color', 'b');
         shift = repmat(plotstackoffset, [1 length(SpectraToPlot(1,:))]);
-        SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shift,[],1); max(shift,[],1)] ;
+        SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + [max(shift,[],1); max(shift,[],1)];
         plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(4,:)), 'Color', 'r');
         plot(MRS_struct.spec.freq, aa*real(SpectraToPlot(3,:)), 'Color', 'b');
         hold off;

@@ -1,6 +1,6 @@
 function MRS_struct = GannetQuantify(MRS_struct)
 
-MRS_struct.version.quantify = '170831';
+MRS_struct.version.quantify = '170915';
 
 cWM = 1; % concentration of GABA in pure WM
 cGM = 2; % concentration of GABA in pure GM
@@ -8,12 +8,12 @@ cGM = 2; % concentration of GABA in pure GM
 alpha = cWM/cGM;
 
 % Constants
-% From Wansapura 1999  JMRI; 9:531 (1999)
+% From Wansapura et al. 1999 (JMRI)
 %        T1          T2
 % WM   832 +/- 10  79.2 +/- 0.6
 % GM  1331 +/- 13  110 +/- 2
 %
-% From Lu, JMRI; 2005; 22: 13
+% From Lu et al. 2005 (JMRI)
 % CSF T1 = 3817 +/- 424msec - but state may underestimated and that 4300ms
 % is likely more accurate - but the reference is to an ISMRM 2001 abstract
 % MacKay (last author) 2006 ISMRM abstract has T1 CSF = 3300 ms
@@ -34,7 +34,8 @@ T2w_CSF   = 0.503;
 N_H_Water = 2;
 
 % Determine concentration of water in GM, WM and CSF
-% Gasparovic et al, MRM 2006; 55:1219 uses relative densities, ref to Ernst
+% Gasparovic et al. 2006 (MRM) uses relative densities, ref to
+% Ernst et al. 1993 (JMR)
 % fGM = 0.78
 % fWM = 0.65
 % fCSH = 0.97
@@ -54,30 +55,30 @@ else
     vox = {MRS_struct.p.Vox{1}};
 end
 
-if MRS_struct.p.HERMES
-    target = {MRS_struct.p.target, MRS_struct.p.target2};
-else
-    target = {MRS_struct.p.target};
-end
-
-tmp = strcmp(target,'GABAGlx');
-if any(tmp)
-    if MRS_struct.p.HERMES
-        target = {'GABA','Glx',target{~tmp}};
-    else
-        target = {'GABA','Glx'};
-    end
-end
-
 for ii = 1:length(MRS_struct.metabfile)
+    
+    if MRS_struct.p.HERMES
+        target = {MRS_struct.p.target, MRS_struct.p.target2};
+    else
+        target = {MRS_struct.p.target};
+    end
+    
+    tmp = strcmp(target,'GABAGlx');
+    if any(tmp)
+        if MRS_struct.p.HERMES
+            target = {'GABA','Glx',target{~tmp}};
+        else
+            target = {'GABA','Glx'};
+        end
+    end
     
     TR = MRS_struct.p.TR(ii)/1000;
     TE = MRS_struct.p.TE(ii)/1000;
     
     for kk = 1:length(vox)
         
-        meanGMfra = mean(MRS_struct.out.(vox{kk}).tissue.GMfra); % fraction of voxel that is GM for voxel fraction normalization - move to preinitialize
-        meanWMfra = mean(MRS_struct.out.(vox{kk}).tissue.WMfra);
+        meanGMfra = mean(MRS_struct.out.(vox{kk}).tissue.GMfra); % average GM fraction across subjects
+        meanWMfra = mean(MRS_struct.out.(vox{kk}).tissue.WMfra); % average WM fraction across subjects
         
         fracGM  = MRS_struct.out.(vox{kk}).tissue.GMfra(ii);
         fracWM  = MRS_struct.out.(vox{kk}).tissue.WMfra(ii);
@@ -125,22 +126,19 @@ for ii = 1:length(MRS_struct.metabfile)
                     MM = 1;
             end
             
-            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_Quant(ii) = (MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) ./ MRS_struct.out.(vox{kk}).water.Area(ii)) * ...
+            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii) = ...
+                (MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) ./ MRS_struct.out.(vox{kk}).water.Area(ii)) * ...
                 (N_H_Water/N_H_Metab) * MM / EditingEfficiency * ...
                 (fracGM * concw_GM * (1-exp(-TR/T1w_GM)) * (exp(-TE/T2w_GM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
                 fracWM * concw_WM * (1-exp(-TR/T1w_WM)) * (exp(-TE/T2w_WM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
                 fracCSF * concw_CSF * (1-exp(-TR/T1w_CSF)) * (exp(-TE/T2w_CSF)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))));
-            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_QuantCorr(ii)         = MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_Quant(ii) / (fracGM + alpha*fracWM);
-            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_QuantNormTissCorr(ii) = MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_Quant(ii) * CorrFactor;
+            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_AlphaTissCorr(ii) = MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii) / (fracGM + alpha*fracWM);
+            MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_AlphaTissCorr_GrpNorm(ii) = MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii) * CorrFactor;
             
         end
     end
     
-    % MRS_struct.Quantify.tissalpha = MRS_struct.out.GABAconciu * CorrFactor;
-    % probably make a new output - combination of GannetSeg and what did
-    % here...
-    
-    % save .mat
+    % Build output
     
     pdfdirname = './GannetQuantify_output';
     if ~exist(pdfdirname,'dir')
@@ -152,10 +150,8 @@ for ii = 1:length(MRS_struct.metabfile)
         save(matname,'MRS_struct');
     end
     
-    % build output pdf summary
-    
     if ishandle(105)
-        clf(105) % MM (170831)
+        clf(105); % MM (170831)
     end
     h = figure(105);
     % MM (170831): Open figure in center of screen
@@ -167,89 +163,87 @@ for ii = 1:length(MRS_struct.metabfile)
     figTitle = 'GannetQuantify Output';
     set(gcf,'Name',figTitle,'Tag',figTitle,'NumberTitle','off');
     
-    % GABA plot
-    % a subplot of the voxel on the brain
-    % replot of GABA fit spec
-    
-    % OUTPUTS:
-    % data files - .data and .mask
-    % GABA CSF corr
-    % GABA reln cnsts
-    % GABA alpha corr
-    % GABA normalize voxel alpha corr
-    
-    subplot(2,2,4);
+    % Voxel co-registration
+    subplot(2,2,1);
     imagesc(squeeze(MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
     colormap('gray');
-    caxis([0 0.5])
+    caxis([0 0.5]);
     axis equal;
     axis tight;
     axis off;
     
-    subplot(2,2,1);
-    z=abs(MRS_struct.spec.freq-4.1);
-    lowerbound=find(min(z)==z);
-    z=abs(MRS_struct.spec.freq-2.79);
-    upperbound=find(min(z)==z);
-    freqbounds=lowerbound:upperbound;
-    freq=MRS_struct.spec.freq(freqbounds);
-    plot(MRS_struct.spec.freq, real(MRS_struct.spec.(vox{kk}).GABAGlx.diff(ii,:)), ...
-                'k', freq, GABAGlxModel(MRS_struct.out.(vox{kk}).GABA.ModelParam(ii,:),freq), 'r');
-    
-    zz=abs(MRS_struct.spec.freq-3.6);
-    Glx_right=find(min(zz)==zz);
-    %zz=abs(MRS_struct.spec.freq-3.3);
-    %GABA_left=find(min(zz)==zz);
-    zz=abs(MRS_struct.spec.freq-2.8);
-    GABA_right=find(min(zz)==zz);
-    %specbaseline = mean(real(SpectraToPlot(1,GABA_right:GABA_left)),2);
-    gabaheight = max(abs(real(MRS_struct.spec.(vox{kk}).GABAGlx.diff(ii,Glx_right:GABA_right))),[],2);
-    gabaheight = mean(gabaheight);
-    
-    yaxismax = 2 *gabaheight; % top spec + 2* height of gaba
-    yaxismin = -2* gabaheight; % extend 2* gaba heights below zero
-    if yaxismax < yaxismin
-        dummy=yaxismin;
-        yaxismin=yaxismax;
-        yaxismax=dummy;
-    end
-    axis([0 5  yaxismin yaxismax]);
+    % Post-alignment spectra + model fits
+    subplot(2,2,3);
+    GannetPlotPrePostAlign2(MRS_struct, vox, ii);
+    title({'Edited Spectrum (post-align)'});
     set(gca,'YTick',[]);
-    set(gca,'XLim',[0 4.5]);
-    set(gca,'XDir','reverse');
     
-    subplot(2,2,2);  % output results
+    % Output results
+    subplot(2,2,2);
     axis off;
     
-    % tmp = ['GABAconc(iu) tissue corr (CSF corrected):  ' num2str(MRS_struct.out.GABAconciuTissCorr(ii))];
-    %     text(0, 0.87, tmp, 'HorizontalAlignment', 'left', ...
-    %             'VerticalAlignment', 'top',...
-    %             'FontName', 'Helvetica','FontSize',13);
+    if MRS_struct.p.HERMES
+        target = {MRS_struct.p.target, MRS_struct.p.target2};
+    else
+        target = {MRS_struct.p.target};
+    end
     
-    tmp = ['GABAconc(iu) with tissue relaxation and vis:  ' num2str(MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_Quant(ii))];
-    text(0, 0.77, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
-    
-    tmp = ['GABAconc(iu) alpha-corrected:  ' num2str(MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_QuantCorr(ii))];
-    text(0, 0.67, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
-    
-    tmp = '    (uses tissue specific relaxation and visibility constants)';
-    text(0, 0.6, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
-    
-    tmp = ['GABAconc(iu) alpha-corrected, average voxel-normalized:  ' num2str(MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_QuantNormTissCorr(ii))];
-    text(0, 0.5, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
-    
-    tmp = '    (uses tissue specific relaxation and visibility constants)' ;
-    text(0, 0.43, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
+    for trg = 1:length(target)
+        
+        switch target{trg}
+            case 'GABA'
+                tmp2 = 'GABA+';
+            case {'Glx','GSH','Lac'}
+                tmp2 = target{trg};
+            case 'GABAGlx'
+                tmp2 = 'GABA+/Glx';
+        end
+        
+        shift = 0;
+        
+        for jj = 1:3
+            
+            text_pos = 0.9;
+            
+            if jj == 1
+                tmp1 = 'Relaxation-, tissue-corrected:';
+                if strcmp(target{trg},'GABAGlx')
+                    tmp3 = sprintf(': %.3g/%.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_TissCorr(ii), ...
+                        MRS_struct.out.(vox{kk}).Glx.ConcIU_TissCorr(ii));
+                else
+                    tmp3 = sprintf(': %.3g i.u.', MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii));
+                end
+            elseif jj == 2
+                text_pos = text_pos - 0.2 - shift;
+                tmp1 = 'Relaxation-, tissue-, alpha-corrected:';
+                if strcmp(target{trg},'GABAGlx')
+                    tmp3 = sprintf(': %.3g/%.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_AlphaTissCorr(ii), ...
+                        MRS_struct.out.(vox{kk}).Glx.ConcIU_AlphaTissCorr(ii));
+                else
+                    tmp3 = sprintf(': %.3g i.u.', MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_AlphaTissCorr(ii));
+                end
+            elseif jj == 3
+                text_pos = text_pos - 0.4 - shift;
+                tmp1 = 'Relaxation-, tissue-, alpha-corrected (average-voxel-normalized):';
+                if strcmp(target{trg},'GABAGlx')
+                    tmp3 = sprintf(': %.3g/%.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_AlphaTissCorr_GrpNorm(ii), ...
+                        MRS_struct.out.(vox{kk}).Glx.ConcIU_AlphaTissCorr_GrpNorm(ii));
+                else
+                    tmp3 = sprintf(': %.3g i.u.', MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_AlphaTissCorr_GrpNorm(ii));
+                end
+            end
+            
+            text(0, text_pos, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+            text_pos = text_pos - 0.1*trg;
+            text(0, text_pos, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
+            text(0.375, text_pos, tmp3, 'FontName', 'Helvetica', 'FontSize', 10);
+            
+            if MRS_struct.p.HERMES
+                shift = shift + 0.1*(numel(target)-1);
+            end
+            
+        end
+    end
     
     C = MRS_struct.metabfile{ii};
     if size(C,2) > 30
@@ -257,38 +251,28 @@ for ii = 1:length(MRS_struct.metabfile)
     else
         y = C;
     end
-    tmp = ['MRS data:  ' y];
-    tmp = regexprep(tmp, '_','-');
-    text(0,0.25, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
+    tmp1 = 'Filename';
+    tmp2 = regexprep([': ' y], '_','-');
+    text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+    text(0.375, text_pos-0.1, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
     
     D = MRS_struct.mask.T1image{ii} ;
-    if size(D,2) >30
+    if size(D,2) > 30
         [~,y] = fileparts(D);
     else
         y = D;
     end
-    tmp = ['Anatomical image:  ' y];
-    tmp = regexprep(tmp, '_','-');
-    text(0,0.15, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
+    tmp1 = 'Anatomical image';
+    tmp2 = regexprep([': ' y], '_','-');
+    text(0, text_pos-0.2, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+    text(0.375, text_pos-0.2, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
     
-    tmp = ['QuantifyVer:  ' MRS_struct.version.quantify];
-    text(0,0.0, tmp, 'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'top',...
-        'FontName', 'Helvetica','FontSize',13);
+    tmp1 = 'QuantifyVer';
+    tmp2 = [': ' MRS_struct.version.quantify];
+    text(0, text_pos-0.3, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+    text(0.375, text_pos-0.3, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
     
-    subplot(2,2,3);
-    rejectframesplot = (1./MRS_struct.out.reject(:,ii).') .*  MRS_struct.fids.waterfreq(ii,:);
-    plot(1:size(MRS_struct.fids.data,2), ...
-        MRS_struct.fids.waterfreq(ii,:)', '-', ...
-        1:size(MRS_struct.fids.data,2), rejectframesplot, 'ro');
-    set(gca,'XLim',[0 size(MRS_struct.fids.data,2)]);
-    xlabel('time'); ylabel('\omega_0');
-    title('Water Frequency, ppm');
-    
+    % Gannet logo
     subplot(2,2,4);
     axis off;
     script_path=which('GannetFit');
@@ -355,3 +339,4 @@ for ii = 1:length(MRS_struct.metabfile)
     saveas(gcf, pdfname);
     
 end
+

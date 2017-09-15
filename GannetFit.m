@@ -323,7 +323,7 @@ for kk = 1:length(vox)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             if ishandle(102)
-                clf(102) % MM (170629)
+                clf(102); % MM (170629)
             end
             h = figure(102);
             % MM (170629): Open figure in center of screen
@@ -335,7 +335,7 @@ for kk = 1:length(vox)
             figTitle = 'GannetFit Output';
             set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
             
-            % GABA plot
+            % Spectra plot
             ha = subplot(2,2,1);
             metabmin = min(real(DIFF(ii,plotbounds)));
             metabmax = max(real(DIFF(ii,plotbounds)));
@@ -815,20 +815,6 @@ for kk = 1:length(vox)
             text(0, text_pos, 'Filename', 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
             
-            %if isfield(MRS_struct.p,'voxdim')
-            %    tmp = [num2str(MRS_struct.p.Navg(ii)) ' averages of a ' num2str(MRS_struct.p.voxdim(ii,1)*MRS_struct.p.voxdim(ii,2)*MRS_struct.p.voxdim(ii,3)*.001) '-mL voxel'];
-            %else
-            %    tmp = [num2str(MRS_struct.p.Navg(ii)) ' averages'];
-            %end
-            %text(0, text_pos-0.1, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
-            
-            %if isfield(MRS_struct.p,'voxdim')
-            %    SNRfactor = round(sqrt(MRS_struct.p.Navg(ii))*MRS_struct.p.voxdim(ii,1)*MRS_struct.p.voxdim(ii,2)*MRS_struct.p.voxdim(ii,3)/1e3);
-            %    tmp = [': ' num2str(SNRfactor)];
-            %    text(0, text_pos-0.2, 'SNR factor', 'FontName', 'Helvetica', 'FontSize', 10);
-            %    text(0.375, text_pos-0.2, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
-            %end
-            
             % Some changes to accomodate multiplexed fitting output
             switch target{trg}
                 case 'GABA'
@@ -851,23 +837,24 @@ for kk = 1:length(vox)
                     tmp1 = 'Lac Area';
                     tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).(target{trg}).Area(ii));
             end
-            text(0, text_pos-0.3, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-            text(0.375, text_pos-0.3, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
+            text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+            text(0.375, text_pos-0.1, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
             
             % MGSaleh 2016, MM (170703): Some changes to accomodate multiplexed fitting output
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
                 
                 tmp = sprintf(': %.3g/%.3g', MRS_struct.out.(vox{kk}).water.Area(ii), MRS_struct.out.(vox{kk}).Cr.Area(ii));
-                text(0, text_pos-0.4, 'Water/Cr Area', 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.2, 'Water/Cr Area', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.2, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
                 
                 tmp = sprintf(': %.1f/%.1f Hz', MRS_struct.out.(vox{kk}).water.FWHM(ii), MRS_struct.out.(vox{kk}).Cr.FWHM(ii));
-                text(0, text_pos-0.5, 'FWHM (Water/Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
+                text(0, text_pos-0.3, 'FWHM (Water/Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
                 switch target{trg}
                     case {'GABA','Glx','GSH','Lac'}
-                        tmp1 = sprintf(': %.1f/%.1f%%', MRS_struct.out.(vox{kk}).(target{trg}).FitError_W(ii), MRS_struct.out.(vox{kk}).(target{trg}).FitError_Cr(ii));
+                        tmp1 = sprintf(': %.1f/%.1f%%', MRS_struct.out.(vox{kk}).(target{trg}).FitError_W(ii), ...
+                            MRS_struct.out.(vox{kk}).(target{trg}).FitError_Cr(ii));
                         tmp2 = [target{trg} ' (Water)'];
                         tmp4 = [target{trg} ' (Cr)'];
                         if strcmpi(target{trg},'GABA')
@@ -881,29 +868,30 @@ for kk = 1:length(vox)
                         end
                         
                     case 'GABAGlx'
-                        tmp1 = sprintf(': GABA: %.1f/%.1f%% / Glx: %.1f/%.1f%%', MRS_struct.out.(vox{kk}).GABA.FitError_W(ii), MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii), ...
+                        tmp1 = sprintf(': GABA: %.1f/%.1f%% / Glx: %.1f/%.1f%%', MRS_struct.out.(vox{kk}).GABA.FitError_W(ii), ...
+                            MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii), ...
                             MRS_struct.out.(vox{kk}).Glx.FitError_W(ii), MRS_struct.out.(vox{kk}).Glx.FitError_Cr(ii));
                         tmp2 = 'GABA+/Glx (Water)';
                         tmp3 = sprintf(': %.3f/%.3f i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU(ii), MRS_struct.out.(vox{kk}).Glx.ConcIU(ii));
                         tmp4 = 'GABA+/Glx (Cr)';
                         tmp5 = sprintf(': %.3f/%.3f', MRS_struct.out.(vox{kk}).GABA.ConcCr(ii), MRS_struct.out.(vox{kk}).Glx.ConcCr(ii));
                 end
-                text(0, text_pos-0.6, 'FitErr (Water/Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.6, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0, text_pos-0.7, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.7, tmp3, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0, text_pos-0.8, tmp4, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.8, tmp5, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.4, 'FitErr (Water/Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.4, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.5, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.5, tmp3, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.6, tmp4, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.6, tmp5, 'FontName', 'Helvetica', 'FontSize', 10);
                 
             else
                 
                 tmp = sprintf(' : %.3g ', MRS_struct.out.(vox{kk}).Cr.Area(ii));
-                text(0, text_pos-0.4, 'Cr Area', 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.4, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.2, 'Cr Area', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.2, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
                 
                 tmp = sprintf(': %.1f Hz', MRS_struct.out.(vox{kk}).Cr.FWHM(ii));
-                text(0, text_pos-0.5, 'FWHM (Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.5, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
+                text(0, text_pos-0.3, 'FWHM (Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 10);                
                 
                 switch target{trg}
                     case {'GABA','Glx','GSH','Lac'}
@@ -917,20 +905,21 @@ for kk = 1:length(vox)
                         end
                         
                     case 'GABAGlx'
-                        tmp1 = sprintf(': GABA: %.1f%% / Glx: %.1f%%', MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii), MRS_struct.out.(vox{kk}).Glx.FitError_Cr(ii));
+                        tmp1 = sprintf(': GABA: %.1f%% / Glx: %.1f%%', MRS_struct.out.(vox{kk}).GABA.FitError_Cr(ii), ...
+                            MRS_struct.out.(vox{kk}).Glx.FitError_Cr(ii));
                         tmp2 = 'GABA+/Glx (Cr)';
                         tmp3 = sprintf(': %.3f/%.3f', MRS_struct.out.(vox{kk}).GABA.ConcCr(ii), MRS_struct.out.(vox{kk}).Glx.ConcCr(ii));
                 end
-                text(0, text_pos-0.6, 'FitErr (Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.6, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0, text_pos-0.8, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.375, text_pos-0.8, tmp3, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.4, 'FitErr (Cr)', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.4, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0, text_pos-0.5, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.5, tmp3, 'FontName', 'Helvetica', 'FontSize', 10);
                 
             end
             
             tmp = [': ' MRS_struct.version.fit];
-            text(0, text_pos-0.9, 'FitVer', 'FontName', 'Helvetica', 'FontSize', 10);
-            text(0.375, text_pos-0.9, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
+            text(0, text_pos-0.7, 'FitVer', 'FontName', 'Helvetica', 'FontSize', 10);
+            text(0.375, text_pos-0.7, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
             
             % Add Gannet logo
             if any(strcmp('mask',fieldnames(MRS_struct))) == 1
