@@ -260,10 +260,11 @@ for kk = 1:length(vox)
                 lb = [-4000*maxinGABA -800 3.725-0.02 -4000*maxinGABA -800 3.775-0.02 -4000*maxinGABA -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA];
                 ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
                 
-                % Down-weight Cho subtraction artifact and signals
-                % downfield of Glx (if HERMES) by including observation
-                % weights in nonlinear regression; improves accuracy of
-                % peak fittings (MM: 170701)
+                % Down-weight Cho subtraction artifact and (if HERMES)
+                % signals downfield of Glx by including observation weights
+                % in nonlinear regression; improves accuracy of peak
+                % fittings (MM: 170701 - thanks to Alex Craven of
+                % University of Bergen for this idea)
                 w = ones(size(DIFF(ii,freqbounds)));
                 residfreq = freq(freqbounds);
                 ChoRange = residfreq >= 3.16 & residfreq <= 3.285;
