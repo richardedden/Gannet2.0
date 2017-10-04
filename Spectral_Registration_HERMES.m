@@ -277,17 +277,8 @@ while SpecRegLoop > -1
         % Apply zero-order phase correction
         AllFramesFTrealign = AllFramesFTrealign * exp(1i*phi);        
         
-        % Reject transients that are greater than +/-3 st. devs. of MSEs
+        % Reject transients that are greater than +/-3 st. devs. of MSEs (MM: 171004)
         MRS_struct.out.reject(:,ii) = zMSE > 3 | zMSE < -3;
-        %rejectFrames = zMSE > 3 | zMSE < -3;
-        %if MRS_struct.p.HERMES
-        %    rejectFrames = reshape(rejectFrames, [4 size(MRS_struct.fids.data,2)/4])';
-        %else
-        %    rejectFrames = reshape(rejectFrames, [2 size(MRS_struct.fids.data,2)/2])';
-        %end
-        %ind = any(rejectFrames,2);
-        %rejectFrames(ind,:) = 1;
-        %MRS_struct.out.reject(:,ii) = reshape(rejectFrames', [1 size(MRS_struct.fids.data,2)]);
         
     end
     
