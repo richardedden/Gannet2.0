@@ -49,13 +49,13 @@ else
 end
 
 freq = MRS_struct.spec.freq;
-MRS_struct.version.fit = '170705';
+MRS_struct.version.fit = '171013';
 pdfdirname = './GannetFit_output'; % MM (170121)
 
 lsqopts = optimset('lsqcurvefit');
-lsqopts = optimset(lsqopts,'TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
+lsqopts = optimset(lsqopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10,'Display','off');
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts,'MaxIter',1e5);
+nlinopts = statset(nlinopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10);
 
 % Loop over voxels if PRIAM
 for kk = 1:length(vox)
@@ -251,14 +251,22 @@ for kk = 1:length(vox)
                 % Hard code it to fit from 2.79 ppm to 4.1 ppm
                 freqbounds = find(freq <= 4.1 & freq >= 2.79); % MM (170705)
                 plotbounds = find(freq <= 4.2 & freq >= 2.7);
-
-                maxinGABA = max(real(DIFF(ii,freqbounds)));
+                
+                GABAbounds = freq <= 3.2 & freq >= 2.79; % MM (171013)
+                Glxbounds  = freq <= 4.1 & freq >= 3.4;
+                
+                maxinGABA = max(real(DIFF(ii,GABAbounds)));
+                maxinGlx = max(real(DIFF(ii,Glxbounds)));
                 grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
                 LinearInit = grad_points ./ abs(freq(1) - freq(2));
                 
-                GaussModelInit = [maxinGABA -400 3.725 maxinGABA -400 3.775 maxinGABA -90 3.02 -LinearInit 0 0];
-                lb = [-4000*maxinGABA -800 3.725-0.02 -4000*maxinGABA -800 3.775-0.02 -4000*maxinGABA -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA];
-                ub = [4000*maxinGABA -40 3.725+0.02 4000*maxinGABA -40 3.775+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
+                GaussModelInit = [maxinGlx -700 3.71 maxinGlx -700 3.79 maxinGABA -90 3.02 -LinearInit 0 0];
+                GaussModelInit([1 4 7 10]) = GaussModelInit([1 4 7 10]) / maxinGlx; % MM (171013): Scale initial conditions to avoid warnings about numerical underflow
+                
+                lb = [-4000*maxinGlx -1000 3.71-0.02 -4000*maxinGlx -1000 3.79-0.02 -4000*maxinGABA -200 3.02-0.05 -40*maxinGABA -2000*maxinGABA -2000*maxinGABA];
+                ub = [4000*maxinGlx -40 3.71+0.02 4000*maxinGlx -40 3.79+0.02 4000*maxinGABA -40 3.02+0.05 40*maxinGABA 1000*maxinGABA 1000*maxinGABA];
+                lb([1 4 7 10]) = lb([1 4 7 10]) / maxinGlx; % MM (171013)
+                ub([1 4 7 10]) = ub([1 4 7 10]) / maxinGlx; % MM (171013)
                 
                 % Down-weight Cho subtraction artifact and (if HERMES)
                 % signals downfield of Glx by including observation weights
@@ -277,10 +285,16 @@ for kk = 1:length(vox)
                 w(weightRange) = 0.001;
 
                 % Least-squares model fitting
-                GaussModelInit = lsqcurvefit(@GABAGlxModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
+                % MM (171013): Scale data to avoid warnings about numerical underflow
+                GaussModelInit = lsqcurvefit(@GABAGlxModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGlx, lb, ub, lsqopts);
                 modelFun_w = @(x,freq) sqrt(w) .* GABAGlxModel(x,freq); % add weights to the model
-                [GaussModelParam, resid] = nlinfit(freq(freqbounds), sqrt(w) .* real(DIFF(ii,freqbounds)), modelFun_w, GaussModelInit, nlinopts); % add weights to the data
-                [~, residPlot] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @GABAGlxModel, GaussModelInit, nlinopts); % re-run for residuals for output figure
+                [GaussModelParam, resid] = nlinfit(freq(freqbounds), sqrt(w) .* real(DIFF(ii,freqbounds)) / maxinGlx, modelFun_w, GaussModelInit, nlinopts); % add weights to the data
+                [~, residPlot] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGlx, @GABAGlxModel, GaussModelInit, nlinopts); % re-run for residuals for output figure
+                
+                % MM (171013): Rescale fit parameters and residuals
+                GaussModelParam([1 4 7 10 11 12]) = GaussModelParam([1 4 7 10 11 12]) * maxinGlx;
+                resid = resid * maxinGlx;
+                residPlot = residPlot * maxinGlx;
                 
                 % Range to determine residuals for GABA and Glx (MM: 170705)
                 residGABA = resid(residfreq <= 3.55 & residfreq >= 2.79);
@@ -456,7 +470,7 @@ for kk = 1:length(vox)
                 
                 % Estimate height and baseline from data
                 [maxinWater, watermaxindex] = max(real(WaterData(ii,:)),[],2);
-                waterbase = mean(real(WaterData(ii,1:500)));
+                waterbase = mean(real(WaterData(ii,freq <= 4 & freq >= 3.8)));
                 
                 % Philips data do not phase well based on first point, so do a preliminary
                 % fit, then adjust phase of WaterData accordingly
@@ -585,17 +599,18 @@ for kk = 1:length(vox)
                     water_OFF = OFF(ii,:);
                     freqWaterOFF = freq <= 4.68+0.4 & freq >= 4.68-0.4;
                     water_OFF = water_OFF(freqWaterOFF);
+                    freqWaterOFF = freq(freqWaterOFF);
                     
                     [maxResidWater, maxInd] = max(abs(real(water_OFF)));
                     s = sign(real(water_OFF(maxInd)));
                     maxResidWater = s * maxResidWater;
                     waterbase = mean(real(OFF(ii,1:500)));
-                    LGPModelInit = [maxResidWater 20 4.68 0 waterbase -50 0];
-                    lb = [maxResidWater-abs(2*maxResidWater) 1 4.6 0 0 -200 -pi];
-                    ub = [maxResidWater+abs(2*maxResidWater) 100 4.8 0.000001 1 0 pi];
+                    LGPModelInit = [maxResidWater 25 freqWaterOFF(maxInd) 0 waterbase -30 0];
+                    lb = [maxResidWater-abs(2*maxResidWater) 1 freqWaterOFF(maxInd)-0.2 0 0 -200 -pi];
+                    ub = [maxResidWater+abs(2*maxResidWater) 100 freqWaterOFF(maxInd)+0.2 0.000001 1 0 pi];
                     
-                    LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freq(freqWaterOFF), real(water_OFF), lb, ub, lsqopts);
-                    [MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,:), residRW] = nlinfit(freq(freqWaterOFF), real(water_OFF), @LorentzGaussModelP, LGPModelInit, nlinopts);
+                    LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freqWaterOFF, real(water_OFF), lb, ub, lsqopts);
+                    [MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,:), residRW] = nlinfit(freqWaterOFF, real(water_OFF), @LorentzGaussModelP, LGPModelInit, nlinopts);
                     MRS_struct.out.(vox{kk}).ResidWater.FitError(ii) = 100*std(residRW)/MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1);
                     
                     MRS_struct.out.(vox{kk}).ResidWater.SuppressionFactor(ii) = ...
@@ -1239,7 +1254,7 @@ switch metab
         EditingEfficiency = 0.74;  % At 3T based on Quantification of Glutathione in the Human Brain by MR Spectroscopy at 3 Tesla:
         % Comparison of PRESS and MEGA-PRESS
         % Faezeh Sanaei Nezhad etal. DOI 10.1002/mrm.26532, 2016 -- MGSaleh
-        T1_Metab = 0.40 ; % At 3T based on Doubly selective multiple quantum chemical shift imaging and
+        T1_Metab = 0.40; % At 3T based on Doubly selective multiple quantum chemical shift imaging and
         % T1 relaxation time measurement of glutathione (GSH) in the human brain in vivo
         % In-Young Choi et al. NMR Biomed. 2013; 26: 28?34 -- MGSaleh
         T2_Metab = 0.12; % At 3T based on the ISMRM abstract

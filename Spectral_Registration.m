@@ -5,7 +5,7 @@ function [AllFramesFTrealign, MRS_struct] = Spectral_Registration(MRS_struct, On
 % MM: updates to improve speed and robustness (Jun 2017)
 
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts,'MaxIter',1e5);
+nlinopts = statset(nlinopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10);
 
 %Dual-channel option only applies registration separately to ONs and OFFs
 SpecRegLoop=0;

@@ -38,10 +38,10 @@ ub = [Inf Inf];
 
 % Optimization options
 lsqopts = optimset('lsqcurvefit');
-lsqopts = optimset(lsqopts, 'MaxIter', 1e5, 'MaxFunEvals', 1e5, 'TolX', 1e-10, 'TolFun', 1e-10);
+lsqopts = optimset(lsqopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10,'Display','off');
 nlinopts = statset('nlinfit');
-nlinopts = statset(nlinopts, 'MaxIter', 1e5, 'MaxFunEvals', 1e5, 'TolX', 1e-10, 'TolFun', 1e-10);
-mleopts  = statset('MaxIter', 1e5, 'MaxFunEvals', 1e5, 'TolX', 1e-10, 'TolFun', 1e-10);
+nlinopts = statset(nlinopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10);
+mleopts  = statset('MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10);
 
 % Set dimensions of figures of histograms
 if strcmpi(showPlots,'y')
@@ -235,7 +235,7 @@ while SpecRegLoop > -1
         end
         
         % Use ChoCr signals of SUM spectrum for final phasing
-        SUM = mean(AllFramesFTrealign,2);        
+        SUM = mean(AllFramesFTrealign,2);
         freqrange = MRS_struct.spec.freq >= 2.9 & MRS_struct.spec.freq <= 3.3;
         freq = MRS_struct.spec.freq(freqrange);
         
@@ -271,11 +271,11 @@ while SpecRegLoop > -1
         offsetneg = -pi*gt(phi,pi/2);
         phi = phi + offsetpos + offsetneg;
         if phi > 0
-            phi = -phi;
+           phi = -phi;
         end
         
         % Apply zero-order phase correction
-        AllFramesFTrealign = AllFramesFTrealign * exp(1i*phi);        
+        AllFramesFTrealign = AllFramesFTrealign * exp(1i*phi);
         
         % Reject transients that are greater than +/-3 st. devs. of MSEs (MM: 171004)
         MRS_struct.out.reject(:,ii) = zMSE > 3 | zMSE < -3;

@@ -5,7 +5,7 @@ conv = [1 2*LarmorFreq LarmorFreq 180/pi 1 1]; % MM (170131)
 initx = initx./conv;
 
 lsqopts = optimset('lsqcurvefit');
-lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5);
+lsqopts = optimset(lsqopts,'Display','off','TolFun',1e-10,'Tolx',1e-10,'MaxIter',1e5,'Display','off');
 nlinopts = statset('nlinfit');
 nlinopts = statset(nlinopts,'MaxIter',1e5,'Display','off');
 
