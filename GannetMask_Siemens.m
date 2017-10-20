@@ -21,11 +21,11 @@ head_start_text = '>>> Begin of header <<<';
 head_end_text   = '>>> End of header <<<';
 tline = fgets(fid);
 
-while (~contains(tline, head_end_text))
+while (isempty(strfind(tline, head_end_text)))
     
     tline = fgets(fid);
     
-    if ( ~contains(tline, head_start_text) + ~contains(tline, head_end_text) == 2)
+    if ( isempty(strfind(tline, head_start_text)) + isempty(strfind(tline, head_end_text)) == 2)
                 
         % Store this data in the appropriate format
         occurence_of_colon = strfind(':',tline);
