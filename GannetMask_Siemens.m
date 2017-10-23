@@ -28,7 +28,7 @@ while (isempty(strfind(tline, head_end_text)))
     if ( isempty(strfind(tline, head_start_text)) + isempty(strfind(tline, head_end_text)) == 2)
                 
         % Store this data in the appropriate format
-        occurence_of_colon = strfind(':',tline);
+        occurence_of_colon = strfind(tline,':');
         variable = tline(1:occurence_of_colon-1);
         value    = tline(occurence_of_colon+1 : length(tline)); 
         

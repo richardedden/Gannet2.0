@@ -26,7 +26,7 @@ while (isempty(strfind(tline , head_end_text)))
         
         % Store this data in the appropriate format
         
-        occurence_of_colon = findstr(':',tline);
+        occurence_of_colon = strfind(tline,':');
         variable = tline(1:occurence_of_colon-1) ;
         value    = tline(occurence_of_colon+1 : length(tline)) ;
         
@@ -142,7 +142,7 @@ while (isempty(strfind(tline , head_end_text)))
         
         % Store this data in the appropriate format
         
-        occurence_of_colon = findstr(':',tline);
+        occurence_of_colon = strfind(tline,':');
         variable = tline(1:occurence_of_colon-1) ;
         value    = tline(occurence_of_colon+1 : length(tline)) ;
         
