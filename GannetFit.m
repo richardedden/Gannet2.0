@@ -138,7 +138,6 @@ for kk = 1:length(vox)
                 FiveGaussModelInit = lsqcurvefit(@FiveGaussModel, FiveGaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
                 [FiveGaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @FiveGaussModel, FiveGaussModelInit, nlinopts);
                 
-                MRS_struct.out.(vox{kk}).GSH.FiveGaussModel(ii,:)=FiveGaussModelParam;
                 GSHGaussModelParam=FiveGaussModelParam;
                 GSHGaussModelParam(4:3:13)=0;
                 %NAAGaussModelParam=FiveGaussModelParam;
