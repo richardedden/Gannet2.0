@@ -521,7 +521,7 @@ for kk = 1:length(vox)
                 ind = find(LG >= 0.5);
                 f = freq(freqbounds);
                 w = abs(f(ind(1)) - f(ind(end)));
-                MRS_struct.out.(vox{kk}).water.FWHM(ii) = w * MRS_struct.p.LarmorFreq;
+                MRS_struct.out.(vox{kk}).water.FWHM(ii) = w * MRS_struct.p.LarmorFreq(ii);
                 MRS_struct.out.(vox{kk}).water.ModelParam(ii,:) = LGPModelParam;
                 MRS_struct.out.(vox{kk}).water.Resid(ii,:) = residw; % MM (160913)
                 
