@@ -1,8 +1,8 @@
 function MRS_struct = GannetMask_GE(Pname, dcm_dir, MRS_struct, dcm_dir2,ii)
 
-if(nargin ==3)
+if nargin == 3
     if isstruct(MRS_struct)
-        dcm_dir2={dcm_dir};
+        %dcm_dir2={dcm_dir};
         dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
         ii =1;
     else
@@ -14,7 +14,7 @@ if(nargin ==3)
     
 end
 
-if(nargin == 4)
+if nargin == 4
     if isnumeric(dcm_dir2)
         ii = dcm_dir2;
         dcm_dir2 = dcm_dir;
@@ -23,54 +23,64 @@ if(nargin == 4)
     end
 end
 
-
-if(nargin <3)
+if nargin < 3
     MRS_struct.ii=1;
     ii = 1;
-    dcm_dir2={dcm_dir};
+    %dcm_dir2={dcm_dir};
     dcm_dir2=dcm_dir; %ADH - don't think should have {} but might break Gannet batching for GABA
 end
 
-% this relies on SPM and anatomical images as dicoms
+% This relies on SPM and anatomical images as dicoms
 
+% Parse P-file to extract voxel dimensions and offsets (MM: 171110)
+if MRS_struct.p.GE.rdbm_rev_num >= 11.0
+    % In 11.0 and later the header and data are stored as little-endian
+    fid = fopen(Pname,'r', 'ieee-le');
+else
+    fid = fopen(Pname, 'r', 'ieee-be');
+end
+fseek(fid, 1468, 'bof');
+p_hdr_value = fread(fid, 12, 'integer*4'); % byte offsets to start of sub-header structures
+fseek(fid, p_hdr_value(8), 'bof'); % set position to start of rdb_hdr_exam
+o_hdr_value = fread(fid, p_hdr_value(9)-p_hdr_value(8), 'real*4');
+if MRS_struct.p.GE.rdbm_rev_num == 16
+    MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
+    MRS_struct.p.voxoff(ii,:) = o_hdr_value(825:827)';
+elseif MRS_struct.p.GE.rdbm_rev_num == 24
+    MRS_struct.p.voxdim(ii,:) = o_hdr_value(1228:1230)';
+    MRS_struct.p.voxoff(ii,:) = o_hdr_value(1231:1233)';
+end
+MRS_struct.p.voxoff(ii,:) = MRS_struct.p.voxoff(ii,:) .* [-1 -1 1];
 
-[pathspar,namespar,ext] = fileparts(Pname);
+% ptr = fopen([Pname '.hdr']);
+% MRSHead = fscanf(ptr,'%c');
+% fclose(ptr);
 
-fidoutmask = fullfile(dcm_dir,[namespar '_mask.nii']);
+% k = findstr(' user11:', MRSHead);
+% b = str2double(MRSHead(k+11:k+18));
+% k = findstr(' user12:', MRSHead);
+% c = str2double(MRSHead(k+11:k+18));
+% k = findstr(' user13:', MRSHead);
+% a = str2double(MRSHead(k+11:k+18));
+% MRS_struct.p.voxoff(ii,:) = [-b -c a];
 
-% [Pname '.hdr' ]
-ptr=fopen([Pname '.hdr' ]);
-MRSHead=fscanf(ptr,'%c');
-
-[m, n]=size(MRSHead);
-fclose(ptr);
-
-k = findstr(' user11:', MRSHead);
-b=str2num(MRSHead(k+11:k+18));
-k = findstr(' user12:', MRSHead);
-c=str2num(MRSHead(k+11:k+18));
-k = findstr(' user13:', MRSHead);
-a=str2num(MRSHead(k+11:k+18));
-MRS_struct.p.voxoff(ii,:)=[ -b -c a];
-
-k = findstr(' user8:', MRSHead);
-d=str2num(MRSHead(k+10:k+17));
-k = findstr(' user9:', MRSHead);
-e=str2num(MRSHead(k+10:k+17));
-%e = 0.5*e; %e is the anterior posterior direction
-k = findstr(' user10:', MRSHead);
-f=str2num(MRSHead(k+11:k+18));
-MRS_struct.p.voxsize(ii,:) = [d e f ]; % works for ob-axial rotator
+% k = findstr(' user8:', MRSHead);
+% d = str2double(MRSHead(k+10:k+17));
+% k = findstr(' user9:', MRSHead);
+% e = str2double(MRSHead(k+10:k+17));
+% %e = 0.5*e; %e is the anterior posterior direction
+% k = findstr(' user10:', MRSHead);
+% f = str2double(MRSHead(k+11:k+18));
+% MRS_struct.p.voxsize(ii,:) = [d e f]; % works for ob-axial rotator
 
 % MRS_struct.p.voxang is not contained in P-file header (really!)
 % The rotation is adopted from the image on which the voxel was placed
 % i.e. either the 3D T1 or a custom rotated localizer.
-MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
-currdir=pwd;
-
+MRS_struct.p.voxang(ii,:) = [NaN NaN NaN]; % put as NaN for now - for output page
+currdir = pwd;
 
 cd(dcm_dir2);
-dcm_list=dir;
+dcm_list = dir;
 
 for k = length(dcm_list):-1:1
     fname = dcm_list(k).name;
@@ -79,15 +89,13 @@ for k = length(dcm_list):-1:1
     end
 end
 
-
-dcm_list2 =dcm_list.name;
+dcm_list2 = dcm_list.name;
 if dcm_list2((end-2:end))=='nii'
-    dcm_list2 =dcm_list(4).name;
+    dcm_list2 = dcm_list(4).name;
 end
-%%
-% check to see if this works...
-%
-MRSRotHead=dicominfo(dcm_list2);
+
+% Load dicoms
+MRSRotHead = dicominfo(dcm_list2);
 
 cd(currdir);
 %Do some housekeeping on dicom series
@@ -100,12 +108,9 @@ spm_dicom_convert(hdr, 'all','flat','nii');
 nii_file_dir=dir('s*.nii');
 cd(currdir);
 
-
-
 nii_file=[dcm_dir '/' nii_file_dir(1).name];
 
 V=spm_vol(nii_file);
-%V.dim
 [T1,XYZ]=spm_read_vols(V);
 H=spm_read_hdr(nii_file);
 
@@ -115,43 +120,35 @@ halfpixshift = -H.dime.pixdim(1:3).'/2;
 %halfpixshift(3) = -halfpixshift(3);
 XYZ=XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
 
-ap_size = MRS_struct.p.voxsize(ii,2);
-lr_size = MRS_struct.p.voxsize(ii,1);
-cc_size = MRS_struct.p.voxsize(ii,3);
+ap_size = MRS_struct.p.voxdim(ii,2);
+lr_size = MRS_struct.p.voxdim(ii,1);
+cc_size = MRS_struct.p.voxdim(ii,3);
 ap_off = MRS_struct.p.voxoff(ii,2);
 lr_off = MRS_struct.p.voxoff(ii,1);
 cc_off = MRS_struct.p.voxoff(ii,3);
 %ap_ang = MRS_struct.p.voxang(2);
 %lr_ang = MRS_struct.p.voxang(1);
 %cc_ang = MRS_struct.p.voxang(3);
-%
-%
+
 %We need to flip ap and lr axes to match NIFTI convention
 ap_off = -ap_off;
 lr_off = -lr_off;
-
-
 
 % define the voxel - use x y z
 % x - left = positive
 % y - posterior = postive
 % z - superior = positive
-vox_ctr = ...
-    [lr_size/2 -ap_size/2 cc_size/2 ;
-    -lr_size/2 -ap_size/2 cc_size/2 ;
-    -lr_size/2 ap_size/2 cc_size/2 ;
-    lr_size/2 ap_size/2 cc_size/2 ;
-    -lr_size/2 ap_size/2 -cc_size/2 ;
-    lr_size/2 ap_size/2 -cc_size/2 ;
-    lr_size/2 -ap_size/2 -cc_size/2 ;
-    -lr_size/2 -ap_size/2 -cc_size/2 ];
+% vox_ctr = ...
+%     [lr_size/2 -ap_size/2 cc_size/2 ;
+%     -lr_size/2 -ap_size/2 cc_size/2 ;
+%     -lr_size/2 ap_size/2 cc_size/2 ;
+%     lr_size/2 ap_size/2 cc_size/2 ;
+%     -lr_size/2 ap_size/2 -cc_size/2 ;
+%     lr_size/2 ap_size/2 -cc_size/2 ;
+%     lr_size/2 -ap_size/2 -cc_size/2 ;
+%     -lr_size/2 -ap_size/2 -cc_size/2 ];
 
 %vox_rot=rotmat*vox_ctr.';
-
-
-
-
-
 
 % calculate corner coordinates relative to xyz origin
 vox_ctr_coor = [lr_off ap_off cc_off];
@@ -178,11 +175,10 @@ edge3(:,5:8)=-edge3(:,5:8);
 edge3(1:2,:)=-edge3(1:2,:);
 vox_corner=vox_ctr_coor+lr_size/2*edge1+ap_size/2*edge2+cc_size/2*edge3;
 
-
 mask = zeros(1,size(XYZ,2));
 sphere_radius = sqrt((lr_size/2)^2+(ap_size/2)^2+(cc_size/2)^2);
-distance2voxctr=sqrt(sum((XYZ-repmat([lr_off ap_off cc_off].',[1 size(XYZ, 2)])).^2,1));
-sphere_mask(distance2voxctr<=sphere_radius)=1;
+distance2voxctr = sqrt(sum((XYZ-repmat([lr_off ap_off cc_off].',[1 size(XYZ, 2)])).^2,1));
+sphere_mask(distance2voxctr <= sphere_radius) = 1;
 
 mask(sphere_mask==1) = 1;
 XYZ_sphere = XYZ(:,sphere_mask == 1);
@@ -194,24 +190,25 @@ mask(sphere_mask==1) = isinside;
 
 mask = reshape(mask, V.dim);
 
-V_mask.fname=[fidoutmask];
+[~,namespar] = fileparts(Pname);
+fidoutmask = fullfile(dcm_dir,[namespar '_mask.nii']);
+V_mask.fname=fidoutmask;
 V_mask.descrip='MRS_Voxel_Mask';
 V_mask.dim=V.dim;
 V_mask.dt=V.dt;
 V_mask.mat=V.mat;
 
-V_mask=spm_write_vol(V_mask,mask);
+spm_write_vol(V_mask,mask);
 
 T1img = T1/max(T1(:));
 T1img_mas = T1img + .2*mask;
 
 % construct output
-%
-voxel_ctr = [-lr_off -ap_off cc_off];
 
 fidoutmask = cellstr(fidoutmask);
-MRS_struct.mask.outfile(ii,:)=fidoutmask;
+MRS_struct.mask.outfile(ii,:) = fidoutmask;
 
+voxel_ctr = [-lr_off -ap_off cc_off];
 voxel_ctr(1:2)=-voxel_ctr(1:2);
 voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
 voxel_search=sqrt(sum(voxel_search,1));
@@ -241,8 +238,6 @@ MRS_struct.mask.T1image(ii,:) = {nii_file};
 % axis equal;
 % axis tight;
 % axis off;
-
-
 
 end
 
