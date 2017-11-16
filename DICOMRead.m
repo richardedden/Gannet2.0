@@ -26,11 +26,16 @@ function MRS_struct = DICOMRead(MRS_struct,folder,waterfolder)
 %   0.91: Added function for water data loading (2017-02-03)
 %   0.92: Improved header parsing (2017-03-27). Thanks to Maria Yanez Lopez
 %           and Ines Violante.
+%   0.93: Added batch processing function (2017-11-16). Thanks to Dieter
+%           Meyerhoff.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 %%% PREPARATION %%%
+% Loop over number of datasets
+ii = MRS_struct.ii;
+
 % Locate folder and find all files in it. Will usually all be either upper or
 % lower case, so concatenating the results of both should be fine and with
 % no overlap.
@@ -74,38 +79,38 @@ while (isempty(strfind(tline , head_end_text)))
         
         switch variable
             case {'alTR[0]'}
-                MRS_struct.p.TR = str2double(value) / 1000;
+                MRS_struct.p.TR(ii) = str2double(value) / 1000;
             case {'alTE[0]'}
-                MRS_struct.p.TE = str2double(value) / 1000;
+                MRS_struct.p.TE(ii) = str2double(value) / 1000;
             case {'sSpecPara.lVectorSize'}
-                MRS_struct.p.npoints = str2double(value);
+                MRS_struct.p.npoints(ii) = str2double(value);
             case {'lAverages'}
-                MRS_struct.p.Navg = 2*str2double(value); % might have to change that accordingly!
-                MRS_struct.p.nrows = 2*str2double(value); % might have to change that accordingly!
+                MRS_struct.p.Navg(ii) = 2*str2double(value); % might have to change that accordingly!
+                MRS_struct.p.nrows(ii) = 2*str2double(value); % might have to change that accordingly!
             case {'sRXSPEC.alDwellTime[0]'}
-                MRS_struct.p.sw = (1/str2double(value)) * 1E9 * 0.5; % check with oversampling? hence factor 0.5, need to figure out why <=> probably dataset with 512 points, oversampled is 1024
+                MRS_struct.p.sw(ii) = (1/str2double(value)) * 1E9 * 0.5; % check with oversampling? hence factor 0.5, need to figure out why <=> probably dataset with 512 points, oversampled is 1024
             case {'lFrequency','sTXSPEC.asNucleusInfo[0].lFrequency'}
-                MRS_struct.p.LarmorFreq = str2double(value) * 1E-6;
+                MRS_struct.p.LarmorFreq(ii) = str2double(value) * 1E-6;
             case {'sSpecPara.sVoI.dThickness'}
-                MRS_struct.p.VoIThickness = str2double(value);
+                MRS_struct.p.VoIThickness(ii) = str2double(value);
             case {'sSpecPara.sVoI.dPhaseFOV'}
-                MRS_struct.p.VoIPhaseFOV = str2double(value);
+                MRS_struct.p.VoIPhaseFOV(ii) = str2double(value);
             case {'sSpecPara.sVoI.dReadoutFOV'}
-                MRS_struct.p.VoIReadoutFOV = str2double(value);
+                MRS_struct.p.VoIReadoutFOV(ii) = str2double(value);
             case {'sSpecPara.sVoI.dInPlaneRot'}
-                MRS_struct.p.VoIInPlaneRot = str2double(value);
+                MRS_struct.p.VoIInPlaneRot(ii) = str2double(value);
             case {'sSpecPara.sVoI.sPosition.dSag'}
-                MRS_struct.p.VoIPositionSag = str2double(value);
+                MRS_struct.p.VoIPositionSag(ii) = str2double(value);
             case {'sSpecPara.sVoI.sPosition.dCor'}
-                MRS_struct.p.VoIPositionCor = str2double(value);
+                MRS_struct.p.VoIPositionCor(ii) = str2double(value);
             case {'sSpecPara.sVoI.sPosition.dTra'}
-                MRS_struct.p.VoIPositionTra = str2double(value);
+                MRS_struct.p.VoIPositionTra(ii) = str2double(value);
             case {'sSpecPara.sVoI.sNormal.dSag'}
-                MRS_struct.p.VoINormalSag = str2double(value);
+                MRS_struct.p.VoINormalSag(ii) = str2double(value);
             case {'sSpecPara.sVoI.sNormal.dCor'}
-                MRS_struct.p.VoINormalCor = str2double(value);
+                MRS_struct.p.VoINormalCor(ii) = str2double(value);
             case {'sSpecPara.sVoI.sNormal.dTra'}
-                MRS_struct.p.VoINormalTra = str2double(value);
+                MRS_struct.p.VoINormalTra(ii) = str2double(value);
             otherwise
                 % don't care, do nothing
         end
@@ -117,7 +122,7 @@ end
 
 %%% DATA LOADING %%%
 % Preallocate array in which the FIDs are to be extracted.
-MRS_struct.fids.data = zeros(MRS_struct.p.npoints,length(dcm_file_names));
+MRS_struct.fids.data = zeros(MRS_struct.p.npoints(ii),length(dcm_file_names));
 
 % Collect all FIDs and sort them into MRS_struct
 for kk = 1:length(dcm_file_names)
@@ -158,7 +163,7 @@ if nargin == 3
     water_file_names = strcat(waterfolder, filesep, water_file_names);
     
     % Load the actual water-unsuppressed data.
-    MRS_struct.fids.waterdata = zeros(MRS_struct.p.npoints,length(water_file_names));
+    MRS_struct.fids.waterdata = zeros(MRS_struct.p.npoints(ii),length(water_file_names));
 
     % Collect all FIDs and sort them into MRS_struct
     for kk = 1:length(water_file_names)

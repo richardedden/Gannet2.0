@@ -4,6 +4,7 @@ function [AllFramesFTrealign, MRS_struct] = Spectral_Registration(MRS_struct, On
 % OnWhat=0 for spectro data, OnWhat=1 for water data
 % MM: updates to improve speed and robustness (Jun 2017)
 
+ii = MRS_struct.ii;
 nlinopts = statset('nlinfit');
 nlinopts = statset(nlinopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10);
 
@@ -60,8 +61,8 @@ while SpecRegLoop > -1
     parsFit = zeros([size(flatdata,3) 2]);
     CorrPars = zeros([size(flatdata,3) 2]);
     MSE = zeros([1 size(flatdata,3)]);
-    input.dwelltime = 1/MRS_struct.p.sw;
-    time = (0:1:(MRS_struct.p.npoints-1)).'/MRS_struct.p.sw;
+    input.dwelltime = 1/MRS_struct.p.sw(ii);
+    time = (0:1:(MRS_struct.p.npoints-1)).'/MRS_struct.p.sw(ii);
     
     %Fitting to determine frequency and phase corrections
     target = flattarget(:);
@@ -140,36 +141,36 @@ while SpecRegLoop > -1
             Baseline_offset=real(ChoCrMeanSpec(1)+ChoCrMeanSpec(end))/2;
             Width_estimate=0.05;%ppm
             Area_estimate=(max(real(ChoCrMeanSpec))-min(real(ChoCrMeanSpec)))*Width_estimate*4;
-            ChoCr_initx = [Area_estimate Width_estimate 3.02 0 Baseline_offset 0 1] .* [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
+            ChoCr_initx = [Area_estimate Width_estimate 3.02 0 Baseline_offset 0 1] .* [1 2*MRS_struct.p.LarmorFreq(ii) MRS_struct.p.LarmorFreq(ii) 180/pi 1 1 1];
             
             if nargin == 3
                 if Dual == 1
                     %This bit is silly - we don't want to do OFF-to-ON based on the Cr signal
                     ChoCrMeanSpecON = mean(AllFramesFTrealign(freqbounds,(MRS_struct.fids.ON_OFF==1)),2);
                     ChoCrMeanSpecOFF = mean(AllFramesFTrealign(freqbounds,(MRS_struct.fids.ON_OFF==0)),2);
-                    ChoCrMeanSpecFitON = FitChoCr(freq, ChoCrMeanSpecON, ChoCr_initx,MRS_struct.p.LarmorFreq);
-                    ChoCrMeanSpecFitOFF = FitChoCr(freq, ChoCrMeanSpecOFF, ChoCr_initx,MRS_struct.p.LarmorFreq);
+                    ChoCrMeanSpecFitON = FitChoCr(freq, ChoCrMeanSpecON, ChoCr_initx,MRS_struct.p.LarmorFreq(ii));
+                    ChoCrMeanSpecFitOFF = FitChoCr(freq, ChoCrMeanSpecOFF, ChoCr_initx,MRS_struct.p.LarmorFreq(ii));
                     AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1))=AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1))*exp(1i*pi/180*(ChoCrMeanSpecFitON(4))); % phase
                     AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0))=AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0))*exp(1i*pi/180*(ChoCrMeanSpecFitOFF(4))); % phase
                     
                     ChoCrFreqShiftON = ChoCrMeanSpecFitON(3);
-                    ChoCrFreqShiftON = ChoCrFreqShiftON - 3.02*MRS_struct.p.LarmorFreq;
-                    ChoCrFreqShiftON = ChoCrFreqShiftON ./ (MRS_struct.p.LarmorFreq * abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
+                    ChoCrFreqShiftON = ChoCrFreqShiftON - 3.02*MRS_struct.p.LarmorFreq(ii);
+                    ChoCrFreqShiftON = ChoCrFreqShiftON ./ (MRS_struct.p.LarmorFreq(ii) * abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
                     ChoCrFreqShift_pointsON = round(ChoCrFreqShiftON);
                     AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)) = circshift(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)), ChoCrFreqShift_pointsON); % freq
                     ChoCrFreqShiftOFF = ChoCrMeanSpecFitOFF(3);
-                    ChoCrFreqShiftOFF = ChoCrFreqShiftOFF - 3.02*MRS_struct.p.LarmorFreq;
-                    ChoCrFreqShiftOFF = ChoCrFreqShiftOFF ./ (MRS_struct.p.LarmorFreq * abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
+                    ChoCrFreqShiftOFF = ChoCrFreqShiftOFF - 3.02*MRS_struct.p.LarmorFreq(ii);
+                    ChoCrFreqShiftOFF = ChoCrFreqShiftOFF ./ (MRS_struct.p.LarmorFreq(ii) * abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
                     ChoCrFreqShift_pointsOFF = round(ChoCrFreqShiftOFF);
                     AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)) = circshift(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)), ChoCrFreqShift_pointsOFF); % freq
                     
                 end
             else
-                ChoCrMeanSpecFit = FitChoCr(freq, ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
+                ChoCrMeanSpecFit = FitChoCr(freq, ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq(ii));
                 AllFramesFTrealign = AllFramesFTrealign*exp(1i*pi/180*(ChoCrMeanSpecFit(4))); % phase
                 ChoCrFreqShift = ChoCrMeanSpecFit(3);
-                ChoCrFreqShift = ChoCrFreqShift - 3.02*MRS_struct.p.LarmorFreq;
-                ChoCrFreqShift = ChoCrFreqShift ./ (MRS_struct.p.LarmorFreq * abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
+                ChoCrFreqShift = ChoCrFreqShift - 3.02*MRS_struct.p.LarmorFreq(ii);
+                ChoCrFreqShift = ChoCrFreqShift ./ (MRS_struct.p.LarmorFreq(ii) * abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
                 ChoCrFreqShift_points = round(ChoCrFreqShift);
                 AllFramesFTrealign = circshift(AllFramesFTrealign, ChoCrFreqShift_points); % freq
             end

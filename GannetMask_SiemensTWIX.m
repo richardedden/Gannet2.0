@@ -27,8 +27,17 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_Normal_Sag">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-NormSag = line(equals_index+4:equals_index+16);
-NormSag = str2double(NormSag);
+% GO 07/14/16: If a parameter is set to zero (e.g. if no voxel rotation is
+% performed), the respective field is left empty in the TWIX file. This
+% case needs to be intercepted. Same goes for all parameters below that are
+% extracted from the TWIX file. Setting it to 0 may throw up calculations
+% below, so set to the minimum possible.
+if strcmp(line(equals_index+4),'}')
+    NormSag = 0;
+else
+    NormSag = line(equals_index+4:equals_index+16);
+    NormSag = str2double(NormSag);
+end
 
 
 line = fgets(fid);
@@ -39,8 +48,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_Normal_Cor">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-NormCor = line(equals_index+4:equals_index+16);
-NormCor = str2double(NormCor);
+if strcmp(line(equals_index+4),'}')
+    NormCor = 0;
+else
+    NormCor = line(equals_index+4:equals_index+16);
+    NormCor = str2double(NormCor);
+end
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Normal_Tra">  { <Precision> ');
@@ -50,8 +63,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_Normal_Tra">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-NormTra = line(equals_index+4:equals_index+16);
-NormTra = str2double(NormTra);
+if strcmp(line(equals_index+4),'}')
+    NormTra = 0;
+else
+    NormTra = line(equals_index+4:equals_index+16);
+    NormTra = str2double(NormTra);
+end
 
 
 line = fgets(fid);
@@ -62,8 +79,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_Position_Sag">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-PosSag = line(equals_index+4:equals_index+16);
-PosSag = str2double(PosSag);
+if strcmp(line(equals_index+4),'}')
+    PosSag = realmin('double');
+else
+    PosSag = line(equals_index+4:equals_index+16);
+    PosSag = str2double(PosSag);
+end
 
 
 line = fgets(fid);
@@ -74,8 +95,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_Position_Cor">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-PosCor = line(equals_index+4:equals_index+16);
-PosCor = str2double(PosCor);
+if strcmp(line(equals_index+4),'}')
+    PosCor = realmin('double');
+else
+    PosCor = line(equals_index+4:equals_index+16);
+    PosCor = str2double(PosCor);
+end
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_Position_Tra">  { <Precision> ');
@@ -85,8 +110,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_Position_Tra">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-PosTra = line(equals_index+4:equals_index+16);
-PosTra = str2double(PosTra);
+if strcmp(line(equals_index+4),'}')
+    PosTra = realmin('double');
+else
+    PosTra = line(equals_index+4:equals_index+16);
+    PosTra = str2double(PosTra);
+end
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_SliceThickness">  { <Precision> ');
@@ -96,8 +125,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_SliceThickness">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-VOIThickness = line(equals_index+4:equals_index+16);
-VOIThickness = str2double(VOIThickness);
+if strcmp(line(equals_index+4),'}')
+    VOIThickness = realmin('double');
+else
+    VOIThickness = line(equals_index+4:equals_index+16);
+    VOIThickness = str2double(VOIThickness);
+end
 
 fclose(fid);
 fid=fopen(filename);
@@ -109,9 +142,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_InPlaneRotAngle">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-VoI_InPlaneRot = line(equals_index+4:equals_index+16);
-VoI_InPlaneRot = str2double(VoI_InPlaneRot);
-
+if strcmp(line(equals_index+4),'}')
+    VoI_InPlaneRot = realmin('double');
+else
+    VoI_InPlaneRot = line(equals_index+4:equals_index+16);
+    VoI_InPlaneRot = str2double(VoI_InPlaneRot);
+end
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_RoFOV">  { <Precision> ');
@@ -121,8 +157,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_RoFOV">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-VoI_RoFOV = line(equals_index+4:equals_index+16);
-VoI_RoFOV = str2double(VoI_RoFOV);
+if strcmp(line(equals_index+4),'}')
+    VoI_RoFOV = realmin('double');
+else
+    VoI_RoFOV = line(equals_index+4:equals_index+16);
+    VoI_RoFOV = str2double(VoI_RoFOV);
+end
 
 line = fgets(fid);
 index = strfind(line, '<ParamDouble."VoI_PeFOV">  { <Precision> ');
@@ -132,8 +172,12 @@ while isempty(index) || isempty(equals_index)
     index=strfind(line,'<ParamDouble."VoI_PeFOV">  { <Precision> ');
     equals_index=strfind(line,'16 ');
 end
-VoI_PeFOV = line(equals_index+4:equals_index+16);
-VoI_PeFOV = str2double(VoI_PeFOV);
+if strcmp(line(equals_index+4),'}')
+    VoI_PeFOV = realmin('double');
+else
+    VoI_PeFOV = line(equals_index+4:equals_index+16);
+    VoI_PeFOV = str2double(VoI_PeFOV);
+end
 
 
 fclose(fid);

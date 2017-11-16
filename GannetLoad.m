@@ -113,7 +113,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
         case 'GE'
             MRS_struct = GERead(MRS_struct, metabfile{ii});
             WaterData = MRS_struct.fids.data_water;
-            MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows/MRS_struct.p.Navg(ii);
+            MRS_struct.fids.data = MRS_struct.fids.data*MRS_struct.p.nrows(ii)/MRS_struct.p.Navg(ii);
             FullData = MRS_struct.fids.data;
             % Set up vector of which rows of data are ONs and OFFs
             switch MRS_struct.p.ONOFForder
@@ -164,10 +164,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             % fill up fields required for downstream processing % GO 11/01/2016
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
                     MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
                     MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
             end
             
@@ -193,10 +193,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             % fill up fields required for downstream processing % GO 11/30/2016
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
                     MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg/2]);
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
                     MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
             end
             
@@ -297,10 +297,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             FullData = MRS_struct.fids.data;
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF = repmat([1 0],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
+                    MRS_struct.fids.ON_OFF = repmat([1 0],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows(ii) MRS_struct.p.nrows(ii)/2]);
                     MRS_struct.fids.ON_OFF = MRS_struct.fids.ON_OFF(:).';
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF = repmat([0 1],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows MRS_struct.p.nrows/2]);
+                    MRS_struct.fids.ON_OFF = repmat([0 1],[MRS_struct.p.Navg(ii)/MRS_struct.p.nrows(ii) MRS_struct.p.nrows(ii)/2]);
                     MRS_struct.fids.ON_OFF = MRS_struct.fids.ON_OFF(:).';
             end
             
@@ -312,9 +312,9 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % MM (160919): Zero-fill to obtain nominal spectral resolution of 0.061 Hz/point
-    MRS_struct.p.ZeroFillTo = round(32768/2000*MRS_struct.p.sw); % MM (170727): round in case of non-integers
-    MRS_struct.p.zf = MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints;
-    time = (1:1:size(FullData,1))/MRS_struct.p.sw;
+    MRS_struct.p.ZeroFillTo = round(32768/2000*MRS_struct.p.sw(ii)); % MM (170727): round in case of non-integers
+    MRS_struct.p.zf = MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints(ii);
+    time = (1:1:size(FullData,1))/MRS_struct.p.sw(ii);
     
     % Finish processing water data
     if strcmpi(MRS_struct.p.Reference_compound,'H2O')

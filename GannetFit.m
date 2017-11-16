@@ -304,7 +304,7 @@ for kk = 1:length(vox)
                 GABAheight = GaussModelParam(7);
                 MRS_struct.out.(vox{kk}).GABA.FitError(ii) = 100*std(residGABA)/GABAheight;
                 sigma = sqrt(1/(2*(abs(GaussModelParam(8)))));
-                MRS_struct.out.(vox{kk}).GABA.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
+                MRS_struct.out.(vox{kk}).GABA.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq(ii))*sigma);
                 MRS_struct.out.(vox{kk}).GABA.ModelParam(ii,:) = GaussModelParam;
                 MRS_struct.out.(vox{kk}).GABA.Resid(ii,:) = residGABA;
                 
@@ -318,7 +318,7 @@ for kk = 1:length(vox)
                 Glxheight = max(GaussModelParam([1,4]));
                 MRS_struct.out.(vox{kk}).Glx.FitError(ii) = 100*std(residGABA)/Glxheight;
                 sigma = sqrt(1/(2*(abs(GaussModelParam(2))))) + sqrt(1/(2*(abs(GaussModelParam(5)))));
-                MRS_struct.out.(vox{kk}).Glx.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
+                MRS_struct.out.(vox{kk}).Glx.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq(ii))*sigma);
                 MRS_struct.out.(vox{kk}).Glx.ModelParam(ii,:) = GaussModelParam;
                 MRS_struct.out.(vox{kk}).Glx.Resid(ii,:) = residGlx;
                 
@@ -410,45 +410,45 @@ for kk = 1:length(vox)
             % From here on is cosmetic - adding labels etc.
             switch target{trg}
                 case 'GABA'
-                    h = text(3,metabmax/4,MRS_struct.p.target);
-                    set(h, 'horizontalAlignment', 'center');
+                    h1 = text(3,metabmax/4,MRS_struct.p.target);
+                    set(h1, 'horizontalAlignment', 'center');
                     labelbounds = freq <= 2.4 & freq >= 2; % MM (170705)
                     tailtop = max(real(DIFF(ii,labelbounds)));
                     tailbottom = min(real(DIFF(ii,labelbounds)));
-                    h = text(2.8, min(resid), 'residual');
-                    set(h, 'horizontalAlignment', 'left');
+                    h2 = text(2.8, min(resid), 'residual');
+                    set(h2, 'horizontalAlignment', 'left');
                     text(2.8, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
                     text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'GSH'
-                    h = text(2.95,metabmax,target{trg});
-                    set(h, 'horizontalAlignment', 'center');
+                    h1 = text(2.95,metabmax,target{trg});
+                    set(h1, 'horizontalAlignment', 'center');
                     labelbounds = freq <= 2.4 & freq >= 1.75; % MM (170705)
                     tailtop = max(real(DIFF(ii,labelbounds)));
                     tailbottom = min(real(DIFF(ii,labelbounds)));
-                    h = text(2.25, min(resid),'residual');
-                    set(h, 'horizontalAlignment', 'left');
+                    h2 = text(2.25, min(resid),'residual');
+                    set(h2, 'horizontalAlignment', 'left');
                     text(2.25, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
                     text(2.45, tailbottom-20*metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'Glx'
-                    h = text(3.8,metabmax/4,MRS_struct.p.target);
-                    set(h, 'horizontalAlignment', 'center');
+                    h1 = text(3.8,metabmax/4,MRS_struct.p.target);
+                    set(h1, 'horizontalAlignment', 'center');
                     labelbounds = freq <= 3.6 & freq >= 3.4; % MM (170705)
                     tailtop = max(real(DIFF(ii,labelbounds)));
                     tailbottom = min(real(DIFF(ii,labelbounds)));
-                    h = text(3.5, min(resid),'residual');
-                    set(h, 'horizontalAlignment', 'left');
+                    h2 = text(3.5, min(resid),'residual');
+                    set(h2, 'horizontalAlignment', 'left');
                     text(3.5, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
                     text(3.5, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'GABAGlx'
-                    h = text(3, metabmax/4, 'GABA');
+                    h1 = text(3, metabmax/4, 'GABA');
                     h2 = text(3.755, metabmax/4, 'Glx');
-                    set(h, 'horizontalAlignment', 'center');
+                    set(h1, 'horizontalAlignment', 'center');
                     set(h2, 'horizontalAlignment', 'center');
-                    h = text(2.8, min(resid), 'residual');
-                    set(h, 'horizontalAlignment', 'left');
+                    h3 = text(2.8, min(resid), 'residual');
+                    set(h3, 'horizontalAlignment', 'left');
                     labelbounds = freq <= 2.8 & freq >= 2.7; % MM (170705)
                     tailtop = max(real(DIFF(ii,labelbounds)));
                     tailbottom = min(real(DIFF(ii,labelbounds)));
@@ -637,9 +637,9 @@ for kk = 1:length(vox)
             Width_estimate = 0.05;
             Area_estimate = (max(real(ChoCrMeanSpec))-min(real(ChoCrMeanSpec)))*Width_estimate*4;
             ChoCr_initx = [Area_estimate Width_estimate 3.02 0 Baseline_offset 0 1] ...
-                .* [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
-            ChoCrModelParam = FitChoCr(freq(freqboundsChoCr), ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq);
-            MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:) = ChoCrModelParam ./ [1 2*MRS_struct.p.LarmorFreq MRS_struct.p.LarmorFreq 180/pi 1 1 1];
+                .* [1 2*MRS_struct.p.LarmorFreq(ii) MRS_struct.p.LarmorFreq(ii) 180/pi 1 1 1];
+            ChoCrModelParam = FitChoCr(freq(freqboundsChoCr), ChoCrMeanSpec, ChoCr_initx, MRS_struct.p.LarmorFreq(ii));
+            MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:) = ChoCrModelParam ./ [1 2*MRS_struct.p.LarmorFreq(ii) MRS_struct.p.LarmorFreq(ii) 180/pi 1 1 1];
             
             % Initialise fitting pars     
             freqboundsCr = freq <= 3.12 & freq >= 2.72; % MM (170705)
@@ -690,7 +690,7 @@ for kk = 1:length(vox)
             NAAModelParam = LorentzModelParam;
             NAAModelParam(4) = 0;
             MRS_struct.out.(vox{kk}).NAA.Area(ii) = sum(LorentzModel(NAAModelParam,freq(freqbounds)) - BaselineModel(NAAModelParam([3 6 5]),freq(freqbounds)), 2) * abs(freq(1)-freq(2));
-            MRS_struct.out.(vox{kk}).NAA.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq) * NAAModelParam(2));
+            MRS_struct.out.(vox{kk}).NAA.FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq(ii)) * NAAModelParam(2));
             MRS_struct.out.(vox{kk}).NAA.ModelParam(ii,:) = LorentzModelParam;
             MRS_struct.out.(vox{kk}).NAA.Resid(ii,:) = resid;
             
@@ -1012,7 +1012,9 @@ for kk = 1:length(vox)
             
             pfil_nopath = pfil_nopath(lastslash+1:dot7-1);
             if sum(strcmp(listfonts,'Helvetica')) > 0
-                set(findall(h,'type','text'),'FontName','Helvetica');
+                % GO 11/16/2017: Commented the following line out since it
+                % has caused problems on some Windows machines.
+                % set(findall(h,'type','text'),'FontName','Helvetica');
                 set(ha,'FontName','Helvetica');
                 set(hb,'FontName','Helvetica');
             end
