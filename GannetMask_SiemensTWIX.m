@@ -4,17 +4,13 @@ function MRS_struct = GannetMask_SiemensTWIX(filename, nii_file, MRS_struct, ii)
 % being testing on data from Univ of Florida - will need to extend
 % also may need to extend to change dicoms into nifti
 
-
-if(nargin == 2)
-    MRS_struct.ii=1;
-    ii = 1;
-end
 % some code to make ok wth 2 or 3  inputs
 % fix nifti inputs and writing output mask to directory of where the nifti
 % is.
 
-[path,name,ext] = fileparts(filename);
-[pathnii,namenii,extnii] = fileparts(nii_file);
+[path,name] = fileparts(filename);
+% [path,name,ext] = fileparts(filename);
+% [pathnii,namenii,extnii] = fileparts(nii_file);
 
 fidoutmask = fullfile(path,[name '_mask.nii']);
 
@@ -229,15 +225,15 @@ Row(3) = Col(1) * ZED(2) - Col(2) * ZED(1);
 
 
 %MRS_struct.p.voxoff=[ rda.position(1) rda.position(2) rda.position(3)];
-MRS_struct.p.voxoff=[PosSag PosCor PosTra];
-MRS_struct.p.voxsize = [VoI_RoFOV VoI_PeFOV VOIThickness];
+MRS_struct.p.voxoff(ii,:) = [PosSag PosCor PosTra];
+MRS_struct.p.voxdim(ii,:) = [VoI_RoFOV VoI_PeFOV VOIThickness];
 MRS_Rot(:,1) = Row';
 MRS_Rot(:,2) = Col';
 
-MRS_Rot(:,1)= MRS_Rot(:,1) .* [ -1 -1 1]';
-MRS_Rot(:,2)= MRS_Rot(:,2) .* [ -1 -1 1]';
+MRS_Rot(:,1) = MRS_Rot(:,1) .* [-1 -1 1]';
+MRS_Rot(:,2) = MRS_Rot(:,2) .* [-1 -1 1]';
 
-MRS_Rot(:,3)=cross(MRS_Rot(:,2),MRS_Rot(:,1));
+MRS_Rot(:,3) = cross(MRS_Rot(:,2),MRS_Rot(:,1));
 
 rotmat=MRS_Rot; % used to be rotmat = -MRS_rot but doesn't seem to do anything
 %- bc of corners defn in mat - the values just get reorded in the vox_corner mat
@@ -263,12 +259,12 @@ halfpixshift = -H.dime.pixdim(1:3).'/2;
 halfpixshift(3) = -halfpixshift(3);
 XYZ=XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
 
-ap_size = MRS_struct.p.voxsize(2);
-lr_size = MRS_struct.p.voxsize(1);
-cc_size = MRS_struct.p.voxsize(3);
-ap_off = MRS_struct.p.voxoff(2);
-lr_off = MRS_struct.p.voxoff(1);
-cc_off = MRS_struct.p.voxoff(3);
+ap_size = MRS_struct.p.voxdim(ii,2);
+lr_size = MRS_struct.p.voxdim(ii,1);
+cc_size = MRS_struct.p.voxdim(ii,3);
+ap_off = MRS_struct.p.voxoff(ii,2);
+lr_off = MRS_struct.p.voxoff(ii,1);
+cc_off = MRS_struct.p.voxoff(ii,3);
 %ap_ang = MRS_struct.p.voxang(2);
 %lr_ang = MRS_struct.p.voxang(1);
 %cc_ang = MRS_struct.p.voxang(3);
@@ -356,12 +352,12 @@ voxel_ctr = [-lr_off -ap_off cc_off];
 
 
 
-%MRS_struct.mask.dim(MRS_struct.ii,:)=V.dim;
-%MRS_struct.mask.img(MRS_struct.ii,:,:,:)=T1img_mas;
+%MRS_struct.mask.dim(ii,:)=V.dim;
+%MRS_struct.mask.img(ii,:,:,:)=T1img_mas;
 
 %FOR NOW NEED TO FIX
 fidoutmask = cellstr(fidoutmask);
-MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+MRS_struct.mask.outfile(ii,:)=fidoutmask;
 MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
 % this is similar to GE - don't have the angles directly - can fix later
 
@@ -384,7 +380,7 @@ three_plane_img(:,1:size_max) = image_center(im1, size_max);
 three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
 three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
 
-MRS_struct.mask.img(MRS_struct.ii,:,:)=three_plane_img;
+MRS_struct.mask.img(ii,:,:)=three_plane_img;
 MRS_struct.mask.T1image(ii,:) = {nii_file};
 
 

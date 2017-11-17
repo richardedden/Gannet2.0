@@ -25,11 +25,11 @@ ii = MRS_struct.ii;
 [MetabData, MetabHeader] = GetTwixData(fname);
 % Populate MRS_struct with relevant info.
 MRS_struct.p.pointsBeforeEcho       = MetabHeader.pointsBeforeEcho;
-MRS_struct.p.sw                     = 1/MetabHeader.dwellTime;
-MRS_struct.p.LarmorFreq             = MetabHeader.tx_freq;
+MRS_struct.p.sw(ii)                 = 1/MetabHeader.dwellTime;
+MRS_struct.p.LarmorFreq(ii)         = MetabHeader.tx_freq;
 MRS_struct.p.TR(ii)                 = MetabHeader.TR;
 MRS_struct.p.TE(ii)                 = MetabHeader.TE;
-MRS_struct.p.npoints                = size(MetabData,2);
+MRS_struct.p.npoints(ii)            = size(MetabData,2);
 MRS_struct.p.nrows                  = size(MetabData,3);
 MRS_struct.p.Navg(ii)               = size(MetabData,3);
 MRS_struct.p.voxdim(ii,:)           = [MetabHeader.VoI_RoFOV ...
@@ -48,18 +48,18 @@ end
 % If additional data points have been acquired before the echo starts,
 % remove these here.
 MetabData = MetabData(:,(MRS_struct.p.pointsBeforeEcho+1):end,:);
-MRS_struct.p.npoints = MRS_struct.p.npoints - MRS_struct.p.pointsBeforeEcho; % MM (160914)
+MRS_struct.p.npoints(ii) = MRS_struct.p.npoints(ii) - MRS_struct.p.pointsBeforeEcho; % MM (160914)
 
 % If water reference is provided, load this one as well, and populate
 % MRS_struct with water reference specific information.
 if nargin == 3
     [WaterData, WaterHeader] = GetTwixData(fname_water);
     MRS_struct.p.pointsBeforeEcho_water  = WaterHeader.pointsBeforeEcho;
-    MRS_struct.p.sw_water                = 1/WaterHeader.dwellTime;
+    MRS_struct.p.sw_water(ii)            = 1/WaterHeader.dwellTime;
     MRS_struct.p.TR_water(ii)            = WaterHeader.TR;
     MRS_struct.p.TE_water(ii)            = WaterHeader.TE;
-    MRS_struct.p.npoints_water           = size(WaterData,2);
-    MRS_struct.p.nrows_water             = size(WaterData,3);
+    MRS_struct.p.npoints_water(ii)       = size(WaterData,2);
+    MRS_struct.p.nrows_water(ii)         = size(WaterData,3);
     MRS_struct.p.Nwateravg(ii)           = size(WaterData,3);
     MRS_struct.p.seqtype_water           = WaterHeader.seqtype;
     if isfield(WaterHeader,'deltaFreq')
@@ -70,14 +70,14 @@ if nargin == 3
     % If additional data points have been acquired before the echo starts,
     % remove these here.
     WaterData = WaterData(:,(MRS_struct.p.pointsBeforeEcho_water+1):end,:);
-    MRS_struct.p.npoints_water = MRS_struct.p.npoints_water - MRS_struct.p.pointsBeforeEcho_water; % MM (160914)
+    MRS_struct.p.npoints_water(ii) = MRS_struct.p.npoints_water(ii) - MRS_struct.p.pointsBeforeEcho_water; % MM (160914)
     
     % Coil combination and prephasing
     firstpoint_water = conj(WaterData(:,1,:));
     channels_scale = squeeze(sqrt(sum(firstpoint_water .* conj(firstpoint_water),1)));
-    channels_scale = repmat(channels_scale, [1 size(WaterData,1) MRS_struct.p.npoints_water]);
+    channels_scale = repmat(channels_scale, [1 size(WaterData,1) MRS_struct.p.npoints_water(ii)]);
     channels_scale = permute(channels_scale, [2 3 1]);
-    firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints_water 1])./channels_scale;
+    firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints_water(ii) 1])./channels_scale;
     WaterData = WaterData .* firstpoint_water;
     WaterData = conj(squeeze(sum(WaterData,1)));
     WaterData = squeeze(mean(WaterData,2));
@@ -108,7 +108,7 @@ else
     % Coil combination and prephasing (mean over all averages)
     firstpoint=mean(conj(MetabData(:,1,:)),3);
     channels_scale=squeeze(sqrt(sum(firstpoint.*conj(firstpoint))));
-    firstpoint=repmat(firstpoint, [1 MRS_struct.p.npoints MRS_struct.p.nrows])/channels_scale;
+    firstpoint=repmat(firstpoint, [1 MRS_struct.p.npoints(ii) MRS_struct.p.nrows(ii)])/channels_scale;
     % Multiply the Multichannel data by the firstpointvector
     % zeroth order phasing of spectra
     MetabData = MetabData .* firstpoint;

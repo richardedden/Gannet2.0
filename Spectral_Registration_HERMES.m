@@ -28,7 +28,7 @@ parsGuess = [0 0];
 
 % Inputs
 DataToAlign = MRS_struct.fids.data;
-time = (0:1:(MRS_struct.p.npoints-1)).'/MRS_struct.p.sw;
+time = (0:1:(MRS_struct.p.npoints(ii)-1)).'/MRS_struct.p.sw;
 input.dwelltime = 1/MRS_struct.p.sw;
 
 % Probability density function and parameter bounds
@@ -217,7 +217,7 @@ while SpecRegLoop > -1
         
         % Line-broadening, zero-filling and FFT
         FullData = DataToAlign .* repmat((exp(-time*MRS_struct.p.LB*pi)), [1 size(MRS_struct.fids.data,2)]);
-        AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
+        AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo(ii),1),1);
         
         % In frequency domain, shift Cr signals to 3.02 and get frequency 'right' as opposed to 'consistent'
         freqrange = MRS_struct.spec.freq >= 2.925 & MRS_struct.spec.freq <= 3.125;

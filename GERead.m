@@ -68,7 +68,7 @@ nex = hdr_value(37);
 MRS_struct.p.GE.NEX = nex;
 nframes = hdr_value(38);
 point_size = hdr_value(42);
-MRS_struct.p.npoints = hdr_value(52);
+MRS_struct.p.npoints(ii) = hdr_value(52);
 MRS_struct.p.nrows = hdr_value(53);
 start_recv = hdr_value(101);
 stop_recv = hdr_value(102);
@@ -105,12 +105,12 @@ elseif MRS_struct.p.GE.rdbm_rev_num == 24
 end
 
 % Spectro prescan pfiles
-if (MRS_struct.p.npoints == 1) && (MRS_struct.p.nrows == 1)
-    MRS_struct.p.npoints = 2048;
+if (MRS_struct.p.npoints(ii) == 1) && (MRS_struct.p.nrows == 1)
+    MRS_struct.p.npoints(ii) = 2048;
 end
 
 % Compute size (in bytes) of each frame, echo and slice
-data_elements = MRS_struct.p.npoints*2;
+data_elements = MRS_struct.p.npoints(ii)*2;
 frame_size = data_elements*point_size;
 my_frame = 1;
 
@@ -141,7 +141,7 @@ fclose(fid);
 if nechoes == 1
     MRS_struct.p.Navg(ii) = (nframes-8)*2;
     MRS_struct.p.Nwateravg = 8;
-    ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints totalframes nreceivers]);
+    ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
     WaterData = ShapeData(:,:,2:9,:);
     FullData = ShapeData(:,:,10:end,:);
     
@@ -172,13 +172,13 @@ else
     if totalframes ~= ((dataframes+refframes+1)*2)
         error('# of totalframes not same as (dataframes+refframes+1)*2');
     end
-    ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints totalframes nreceivers]);
-    WaterData = zeros([2 MRS_struct.p.npoints refframes*2 nreceivers]);
+    ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
+    WaterData = zeros([2 MRS_struct.p.npoints(ii) refframes*2 nreceivers]);
     for loop = 1:refframes
         WaterData(:,:,2*loop,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,1+loop,:) * multw; % RTN 2016
         WaterData(:,:,2*loop-1,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,totalframes/2+1+loop,:) * multw; % RTN 2016
     end
-    FullData = zeros([2 MRS_struct.p.npoints dataframes*2 nreceivers]);
+    FullData = zeros([2 MRS_struct.p.npoints(ii) dataframes*2 nreceivers]);
     for loop = 1:dataframes
         FullData(:,:,2*loop,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,1+refframes+loop,:) * mult; % RTN 2016
         FullData(:,:,2*loop-1,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,totalframes/2+refframes+1+loop,:) * mult; % RTN 2016
@@ -188,10 +188,10 @@ else
     Frames_for_Water = refframes * 2;
 end
 
-FullData = FullData.*repmat([1;1i], [1 MRS_struct.p.npoints totalframes nreceivers]);
+FullData = FullData.*repmat([1;1i], [1 MRS_struct.p.npoints(ii) totalframes nreceivers]);
 FullData = squeeze(sum(FullData,1));
 FullData = permute(FullData,[3 1 2]);
-WaterData = WaterData.*repmat([1;1i], [1 MRS_struct.p.npoints Frames_for_Water nreceivers]);
+WaterData = WaterData.*repmat([1;1i], [1 MRS_struct.p.npoints(ii) Frames_for_Water nreceivers]);
 WaterData = squeeze(sum(WaterData,1));
 WaterData = permute(WaterData,[3 1 2]);
 % At this point, FullData(rx_channel, point, average)
@@ -199,9 +199,9 @@ WaterData = permute(WaterData,[3 1 2]);
 % MM (170505)
 firstpoint_water = conj(WaterData(:,1,:));
 channels_scale = squeeze(sqrt(sum(firstpoint_water .* conj(firstpoint_water),1)));
-channels_scale = repmat(channels_scale, [1 nreceivers MRS_struct.p.npoints]);
+channels_scale = repmat(channels_scale, [1 nreceivers MRS_struct.p.npoints(ii)]);
 channels_scale = permute(channels_scale, [2 3 1]);
-firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints 1])./channels_scale;
+firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints(ii) 1])./channels_scale;
 
 WaterData = WaterData .* firstpoint_water;
 WaterData = squeeze(sum(WaterData,1));

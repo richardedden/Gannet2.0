@@ -96,7 +96,7 @@ end
 
 %%RE 110726 Take the used bits of the header info
 MRS_struct.p.LarmorFreq = rda.MRFrequency;
-MRS_struct.p.npoints = rda.VectorSize;
+MRS_struct.p.npoints(ii) = rda.VectorSize;
 MRS_struct.p.sw = 1/rda.DwellTime*1E6;
 MRS_struct.p.TR=rda.TR;
 MRS_struct.p.TE=rda.TE; % GO (17/09/08)
@@ -212,7 +212,7 @@ end
 
 %%RE 110726 Take the used bits of the header info
 MRS_struct.p.LarmorFreq = rda.MRFrequency;
-MRS_struct.p.npoints = rda.VectorSize;
+MRS_struct.p.npoints(ii) = rda.VectorSize;
 MRS_struct.p.Navg(MRS_struct.ii) = rda.NumberOfAverages;
 % So now we should have got to the point after the header text
 % 
@@ -333,7 +333,7 @@ end
 
 %%RE 110726 Take the used bits of the header info
 MRS_struct.p.LarmorFreq = rda.MRFrequency;
-MRS_struct.p.npoints = rda.VectorSize;
+MRS_struct.p.npoints(ii) = rda.VectorSize;
 %
 % So now we should have got to the point after the header text
 % 

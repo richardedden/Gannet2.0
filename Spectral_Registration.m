@@ -62,7 +62,7 @@ while SpecRegLoop > -1
     CorrPars = zeros([size(flatdata,3) 2]);
     MSE = zeros([1 size(flatdata,3)]);
     input.dwelltime = 1/MRS_struct.p.sw(ii);
-    time = (0:1:(MRS_struct.p.npoints-1)).'/MRS_struct.p.sw(ii);
+    time = (0:1:(MRS_struct.p.npoints(ii)-1)).'/MRS_struct.p.sw(ii);
     
     %Fitting to determine frequency and phase corrections
     target = flattarget(:);
@@ -87,7 +87,7 @@ while SpecRegLoop > -1
         end
         FullData = MRS_struct.fids.data_water;
         FullData = FullData.* repmat( (exp(-(time)*MRS_struct.p.LB*pi)), [1 size(MRS_struct.fids.data_water,2)]);
-        AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
+        AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo(ii),1),1);
         
     else
         
@@ -131,7 +131,7 @@ while SpecRegLoop > -1
         if SpecRegLoop == 0
             FullData = MRS_struct.fids.data_align;
             FullData = FullData.* repmat( (exp(-(time)*MRS_struct.p.LB*pi)), [1 size(MRS_struct.fids.data,2)]);
-            AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
+            AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo(ii),1),1);
             
             % In frequency domain, move Cr to 3.02 and get phase 'right' as opposed to 'consistent'
             freqbounds = MRS_struct.spec.freq <= 3.6 & MRS_struct.spec.freq >= 2.6; % MM (170227)

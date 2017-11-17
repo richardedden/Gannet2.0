@@ -312,8 +312,8 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % MM (160919): Zero-fill to obtain nominal spectral resolution of 0.061 Hz/point
-    MRS_struct.p.ZeroFillTo = round(32768/2000*MRS_struct.p.sw(ii)); % MM (170727): round in case of non-integers
-    MRS_struct.p.zf = MRS_struct.p.ZeroFillTo/MRS_struct.p.npoints(ii);
+    MRS_struct.p.ZeroFillTo(ii) = round(32768/2000*MRS_struct.p.sw(ii)); % MM (170727): round in case of non-integers
+    MRS_struct.p.zf = MRS_struct.p.ZeroFillTo(ii)/MRS_struct.p.npoints(ii);
     time = (1:1:size(FullData,1))/MRS_struct.p.sw(ii);
     
     % Finish processing water data
@@ -362,23 +362,23 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             
             % Line-broadening, zero-filling and FFT
             ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
-            MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo,1))';
+            MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo(ii),1))';
         end
     end % end of H2O reference loop
     
     % Line-broadening, zero-filling and FFT
     FullData = FullData .* repmat((exp(-time'*MRS_struct.p.LB*pi)), [1 size(FullData,2)]);
     MRS_struct.fids.FullData = FullData;
-    AllFramesFT = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo,1),1);
+    AllFramesFT = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo(ii),1),1);
     
     % Work out frequency scale
-    freqrange = MRS_struct.p.sw/MRS_struct.p.LarmorFreq;
-    MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo+1-(1:1:MRS_struct.p.ZeroFillTo))/MRS_struct.p.ZeroFillTo*freqrange+4.68-freqrange/2.0;
+    freqrange = MRS_struct.p.sw(ii)/MRS_struct.p.LarmorFreq(ii);
+    MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo(ii)+1-(1:1:MRS_struct.p.ZeroFillTo(ii)))/MRS_struct.p.ZeroFillTo(ii)*freqrange+4.68-freqrange/2.0;
     % MM (170119)
-    MRS_struct.p.df = abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2));
-    MRS_struct.p.SpecRes = MRS_struct.p.sw/MRS_struct.p.npoints;
-    MRS_struct.p.SpecResNominal = MRS_struct.p.sw/MRS_struct.p.ZeroFillTo;
-    MRS_struct.p.Tacq = 1/MRS_struct.p.SpecRes;
+    MRS_struct.p.df(ii) = abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2));
+    MRS_struct.p.SpecRes(ii) = MRS_struct.p.sw(ii)/MRS_struct.p.npoints(ii);
+    MRS_struct.p.SpecResNominal(ii) = MRS_struct.p.sw(ii)/MRS_struct.p.ZeroFillTo(ii);
+    MRS_struct.p.Tacq(ii) = 1/MRS_struct.p.SpecRes(ii);
     
     % Frame-by-frame determination of frequency of residual water (MM: 170201)
     water_range = MRS_struct.spec.freq-4.68 >= -0.2 & MRS_struct.spec.freq-4.68 <= 0.2;
@@ -477,19 +477,19 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 
                 % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints);
+                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)));
                 
                 % MM (170703): Need to perform baseline correction on filtered data
@@ -739,16 +739,16 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 %write into the sdat file
                 %What do we write
                 sdat_diff_out=conj(ifft(fftshift(MRS_struct.spec.diff(ii,:),2),[],2));
-                sdat_diff_out=sdat_diff_out(1:MRS_struct.p.npoints);
+                sdat_diff_out=sdat_diff_out(1:MRS_struct.p.npoints(ii));
                 %Also write out OFF
                 sdat_off_out=conj(ifft(fftshift(MRS_struct.spec.GABA.off(ii,:),2),[],2));
-                sdat_off_out=sdat_off_out(1:MRS_struct.p.npoints);
+                sdat_off_out=sdat_off_out(1:MRS_struct.p.npoints(ii));
                 %How do we write it out?
                 fileid  = fopen(sdat_G_name,'w','ieee-le');
-                ff(:,1:2:2*MRS_struct.p.npoints) = real(sdat_diff_out);
-                ff(:,2:2:2*MRS_struct.p.npoints) = imag(sdat_diff_out);
-                gg(:,1:2:2*MRS_struct.p.npoints) = real(sdat_off_out);
-                gg(:,2:2:2*MRS_struct.p.npoints) = imag(sdat_off_out);
+                ff(:,1:2:2*MRS_struct.p.npoints(ii)) = real(sdat_diff_out);
+                ff(:,2:2:2*MRS_struct.p.npoints(ii)) = imag(sdat_diff_out);
+                gg(:,1:2:2*MRS_struct.p.npoints(ii)) = real(sdat_off_out);
+                gg(:,2:2:2*MRS_struct.p.npoints(ii)) = imag(sdat_off_out);
                 fwriteVAXD(fileid,[ff.' gg.'],'float');
                 fclose(fileid);
             end
