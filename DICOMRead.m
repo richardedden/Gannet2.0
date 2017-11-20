@@ -28,6 +28,9 @@ function MRS_struct = DICOMRead(MRS_struct,folder,waterfolder)
 %           and Ines Violante.
 %   0.93: Added batch processing function (2017-11-16). Thanks to Dieter
 %           Meyerhoff.
+%   0.94: Added support for CMRR sequence (Eddie Auerbach, CMRR, University
+%           of Minnesota) (2017-11-20). Thanks to Jim Lagopoulos.
+%   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -78,6 +81,8 @@ while (isempty(strfind(tline , head_end_text)))
         value    = strtrim(tline(findequal+1 : length(tline))) ;
         
         switch variable
+            case {'tSequenceFileName'}
+                MRS_struct.p.seq = value;
             case {'alTR[0]'}
                 MRS_struct.p.TR(ii) = str2double(value) / 1000;
             case {'alTE[0]'}
@@ -85,8 +90,23 @@ while (isempty(strfind(tline , head_end_text)))
             case {'sSpecPara.lVectorSize'}
                 MRS_struct.p.npoints(ii) = str2double(value);
             case {'lAverages'}
-                MRS_struct.p.Navg(ii) = 2*str2double(value); % might have to change that accordingly!
-                MRS_struct.p.nrows(ii) = 2*str2double(value); % might have to change that accordingly!
+                % Minnesota sequence (CMRR, Eddy Auerbach) stores numbers of averages in a
+                % different field. GO 112017.
+                if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
+                    % Don't bother
+                else
+                    MRS_struct.p.Navg(ii) = 2*str2double(value);
+                    MRS_struct.p.nrows(ii) = 2*str2double(value);
+                end
+            case {'sWipMemBlock.alFree[2]'}
+                % Minnesota sequence (CMRR, Eddy Auerbach) stores numbers of averages in a
+                % different field. GO 112017.
+                if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
+                    MRS_struct.p.Navg(ii) = 2*str2double(value);
+                    MRS_struct.p.nrows(ii) = 2*str2double(value);
+                else
+                    % Don't bother
+                end
             case {'sRXSPEC.alDwellTime[0]'}
                 MRS_struct.p.sw(ii) = (1/str2double(value)) * 1E9 * 0.5; % check with oversampling? hence factor 0.5, need to figure out why <=> probably dataset with 512 points, oversampled is 1024
             case {'lFrequency','sTXSPEC.asNucleusInfo[0].lFrequency'}
@@ -118,6 +138,8 @@ while (isempty(strfind(tline , head_end_text)))
         % don't care about the rest, do nothing
     end
 end
+
+    
 %%% /HEADER INFO PARSING %%%
 
 %%% DATA LOADING %%%
