@@ -3,7 +3,7 @@ function [AllFramesFTrealign, MRS_struct] = Spectral_Registration_HERMES(MRS_str
 % routine as per Near et al. (2015). Incorporates a multiplexed,
 % probabilistic approach for aligning HERMES data (MM: 170609)
 
-showPlots = 'y';
+showPlots = 'n';
 
 % Looping parameters
 if MRS_struct.p.HERMES % run registration four times - once for each HERMES experiment
