@@ -285,7 +285,7 @@ for ii = 1:length(MRS_struct.metabfile)
     pfil_nopath = MRS_struct.metabfile{ii};
     fullpath = MRS_struct.metabfile{ii};
     
-    if(strcmp(fullpath(1:2) , '..'))
+    if strcmp(fullpath(1:2) , '..')
         fullpath = fullpath(4:end);
     end
     
@@ -301,34 +301,37 @@ for ii = 1:length(MRS_struct.metabfile)
     
     tmp = strfind(pfil_nopath,'/');
     tmp2 = strfind(pfil_nopath,'\');
-    if(tmp)
+    if tmp
         lastslash=tmp(end);
-    elseif (tmp2)
+    elseif tmp2
         %maybe it's Windows...
         lastslash=tmp2(end);
     else
         % it's in the current dir...
         lastslash=0;
     end
-    if(strcmpi(MRS_struct.p.vendor,'Philips'))
+    if strcmpi(MRS_struct.p.vendor,'Philips')
         tmp = strfind(pfil_nopath, '.sdat');
         tmp1= strfind(pfil_nopath, '.SDAT');
-        if size(tmp,1)>size(tmp1,1)
+        if size(tmp,1) > size(tmp1,1)
             dot7 = tmp(end); % just in case there's another .sdat somewhere else...
         else
             dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
         end
-    elseif(strcmpi(MRS_struct.p.vendor,'GE'))
-        tmp = strfind(pfil_nopath, '.7');
+    elseif strcmpi(MRS_struct.p.vendor,'GE')
+        tmp = strfind(pfil_nopath,'.7');
         dot7 = tmp(end); % just in case there's another .7 somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Philips_data'))  % make this be sdat
-        tmp = strfind(pfil_nopath, '.data');
+    elseif strcmpi(MRS_struct.p.vendor,'Philips_data')
+        tmp = strfind(pfil_nopath,'.data');
         dot7 = tmp(end); % just in case there's another .data somewhere else...
+    elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
+        tmp = strfind(pfil_nopath,'.dat');
+        dot7 = tmp(end); % just in case there's another .dat somewhere else...
     end
     pfil_nopath = pfil_nopath(lastslash+1:dot7-1);
     
     % Save PDF output
-    set(gcf, 'PaperUnits', 'inches');
+    set(gcf,'PaperUnits','inches');
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
     if(strcmpi(MRS_struct.p.vendor,'Philips_data'))

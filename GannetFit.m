@@ -108,7 +108,7 @@ for kk = 1:length(vox)
                 MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(resid)/GABAheight;
                 MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = GaussModelParam(1)./sqrt(-GaussModelParam(2))*sqrt(pi);
                 sigma = sqrt(1/(2*(abs(GaussModelParam(2)))));
-                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = abs((2* MRS_struct.p.LarmorFreq) * sigma);
+                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = abs((2* MRS_struct.p.LarmorFreq(ii)) * sigma);
                 MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GaussModelParam;
                 MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = resid;
                 
@@ -158,7 +158,7 @@ for kk = 1:length(vox)
                 % GSH fitting output -- MGSaleh
                 MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(residGSH)/GSHheight;
                 sigma = sqrt(1/(2*(abs(GSHGaussModelParam(2)))));
-                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) =  abs((2*MRS_struct.p.LarmorFreq)*sigma);
+                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) =  abs((2*MRS_struct.p.LarmorFreq(ii))*sigma);
                 MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GSHGaussModelParam;
                 MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = residGSH;
                 
@@ -233,7 +233,7 @@ for kk = 1:length(vox)
                 MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = (GaussModelParam(1)./sqrt(-GaussModelParam(2))*sqrt(pi)) + ...
                     (GaussModelParam(4)./sqrt(-GaussModelParam(5))*sqrt(pi));
                 sigma = ((1/(2*(abs(GaussModelParam(2))))).^(1/2)) + ((1/(2*(abs(GaussModelParam(5))))).^(1/2));
-                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq)*sigma);
+                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = abs((2*MRS_struct.p.LarmorFreq(ii))*sigma);
                 MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GaussModelParam;
                 MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = resid;
                 

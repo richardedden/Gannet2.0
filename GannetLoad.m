@@ -41,7 +41,7 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.version.load = '170713'; % set to date when final updates have been made
+MRS_struct.version.load = '171120'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.metabfile = metabfile;
 MRS_struct = GannetPreInitialise(MRS_struct);
@@ -118,9 +118,31 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             % Set up vector of which rows of data are ONs and OFFs
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF = repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
+                    if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH (MM: 171120)
+                        if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                            % 1=ExpA, 2=ExpB, 3=ExpC, 4=ExpD (MM: 171120)
+                            MRS_struct.fids.ON_OFF  = repmat([1 1 0 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                            MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
+                            MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                            MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % Lac
+                        end
+                    else
+                        MRS_struct.fids.ON_OFF = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]);
+                    end
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
+                    if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH (MM: 171120)
+                        if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                            % 1=?, 2=?, 3=?, 4=? (MM: 171120)
+                            MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                            MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
+                            MRS_struct.fids.ON_OFF  = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                            MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % Lac
+                        end
+                    else
+                        MRS_struct.fids.ON_OFF = repmat([0 1], [1 size(MRS_struct.fids.data,2)/2]);
+                    end
             end
             
         case 'Siemens_twix'
@@ -477,19 +499,19 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 
                 % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)));
                 
                 % MM (170703): Need to perform baseline correction on filtered data

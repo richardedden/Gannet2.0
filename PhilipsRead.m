@@ -13,18 +13,18 @@ sparheader = sparheader{1};
 sparidx=find(ismember(sparheader, 'samples')==1);
 MRS_struct.p.npoints(MRS_struct.ii) = str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'rows')==1);
-MRS_struct.p.nrows = str2double(sparheader{sparidx+2});
+MRS_struct.p.nrows(MRS_struct.ii) = str2double(sparheader{sparidx+2});
 
 sparidx=find(ismember(sparheader, 'averages')==1);
-MRS_struct.p.Navg(MRS_struct.ii) = MRS_struct.p.nrows * str2double(sparheader{sparidx+2});
+MRS_struct.p.Navg(MRS_struct.ii) = MRS_struct.p.nrows(MRS_struct.ii) * str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'repetition_time')==1);
 MRS_struct.p.TR(MRS_struct.ii) = str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'echo_time')==1); % Added by MGSaleh 2016.
 MRS_struct.p.TE(MRS_struct.ii) = str2double(sparheader{sparidx+2}); % Added by MGSaleh 2016.
 sparidx=find(ismember(sparheader, 'synthesizer_frequency')==1); % Added by MGSaleh 2016.
-MRS_struct.p.LarmorFreq = str2double(sparheader{sparidx+2})/1e6; % Added by MGSaleh 2016.
+MRS_struct.p.LarmorFreq(MRS_struct.ii) = str2double(sparheader{sparidx+2})/1e6; % Added by MGSaleh 2016.
 sparidx=find(ismember(sparheader, 'sample_frequency')==1);
-MRS_struct.p.sw = str2double(sparheader{sparidx+2});
+MRS_struct.p.sw(MRS_struct.ii) = str2double(sparheader{sparidx+2});
 
 %Pull in geometry information for GannetCoRegister
 sparidx=find(ismember(sparheader, 'ap_size')==1);
@@ -48,7 +48,7 @@ MRS_struct.p.voxang(MRS_struct.ii,1) = str2double(sparheader{sparidx+2});
 sparidx=find(ismember(sparheader, 'cc_angulation')==1);
 MRS_struct.p.voxang(MRS_struct.ii,3) = str2double(sparheader{sparidx+2});
 
-MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints(MRS_struct.ii), MRS_struct.p.nrows);
+MRS_struct.fids.data = SDATreadMEGA(fname, MRS_struct.p.npoints(MRS_struct.ii), MRS_struct.p.nrows(MRS_struct.ii));
 
 % Undo phase cycling
 corrph = repmat([-1 1], [1 size(MRS_struct.fids.data,2)/2]); % MM (170703)
@@ -65,7 +65,7 @@ end
 % Philips data appear to be phased already (ideal case)
 
 MRS_struct.fids.data = conj(MRS_struct.fids.data);
-if nargin>2
+if nargin > 2
     % Load water data
     MRS_struct.p.Nwateravg = 1; % water SDAT is average not sum
     MRS_struct.fids.data_water = SDATread(fname_water, MRS_struct.p.npoints(MRS_struct.ii));

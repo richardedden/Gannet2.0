@@ -53,14 +53,12 @@ hdr_value = fread(fid, 102, 'integer*2');
 % RTN - read rhuser
 fseek(fid, 0, 'bof');
 f_hdr_value = fread(fid, 74, 'real*4');
- % RTN (170118): Find center frequency
+% RTN (170118): Find center frequency
 fseek(fid, 0, 'bof');
 i_hdr_value = fread(fid, 102+9, 'integer*4');
-MRS_struct.p.LarmorFreq = i_hdr_value(102+5)/1e7;
-MRS_struct.p.sw = f_hdr_value(55); % MM (160916)
+MRS_struct.p.LarmorFreq(ii) = i_hdr_value(102+5)/1e7;
+MRS_struct.p.sw(ii) = f_hdr_value(55); % MM (160916)
 
-npasses = hdr_value(33);
-nslices = hdr_value(35);
 nechoes = hdr_value(36);
 MRS_struct.p.GE.nechoes = nechoes;
 % RTN - number of phase cycles
@@ -69,7 +67,7 @@ MRS_struct.p.GE.NEX = nex;
 nframes = hdr_value(38);
 point_size = hdr_value(42);
 MRS_struct.p.npoints(ii) = hdr_value(52);
-MRS_struct.p.nrows = hdr_value(53);
+MRS_struct.p.nrows(ii) = hdr_value(53);
 start_recv = hdr_value(101);
 stop_recv = hdr_value(102);
 nreceivers = (stop_recv - start_recv) + 1;
@@ -79,7 +77,7 @@ fseek(fid, 1468, 'bof');
 p_hdr_value = fread(fid, 12, 'integer*4'); % byte offsets to start of sub-header structures
 fseek(fid, p_hdr_value(10), 'bof'); % set position to start of rdb_hdr_image
 t_hdr_value = fread(fid, p_hdr_value(1)-p_hdr_value(10), 'integer*4');
-if MRS_struct.p.GE.rdbm_rev_num == 16   
+if MRS_struct.p.GE.rdbm_rev_num == 16
     MRS_struct.p.TE(ii) = t_hdr_value(193)/1e3;
     MRS_struct.p.TR(ii) = t_hdr_value(191)/1e3;
 elseif MRS_struct.p.GE.rdbm_rev_num == 24
@@ -94,18 +92,18 @@ if MRS_struct.p.GE.rdbm_rev_num == 16
     MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
     MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(833);
     MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(834:835)';
-    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq) + 4.68;
+    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
     MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(836)/1e3;
 elseif MRS_struct.p.GE.rdbm_rev_num == 24
     MRS_struct.p.voxdim(ii,:) = o_hdr_value(1228:1230)';
     MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(1239);
     MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(1240:1241)';
-    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq) + 4.68;
+    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
     MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(1242)/1e3;
 end
 
 % Spectro prescan pfiles
-if (MRS_struct.p.npoints(ii) == 1) && (MRS_struct.p.nrows == 1)
+if (MRS_struct.p.npoints(ii) == 1) && (MRS_struct.p.nrows(ii) == 1)
     MRS_struct.p.npoints(ii) = 2048;
 end
 
@@ -115,8 +113,8 @@ frame_size = data_elements*point_size;
 my_frame = 1;
 
 %Start to read data into Eightchannel structure.
-totalframes = (MRS_struct.p.nrows-my_frame+1)*nechoes; % RTN nechoes mulitply
-MRS_struct.p.nrows = totalframes;
+totalframes = (MRS_struct.p.nrows(ii)-my_frame+1)*nechoes; % RTN nechoes mulitply
+MRS_struct.p.nrows(ii) = totalframes;
 data_elements2 = data_elements * totalframes * nreceivers;
 
 % Compute offset in bytes to start of frame.
@@ -138,6 +136,8 @@ fclose(fid);
 % MM (160916): Incorporating more edits from RTN to handle dual-echo data
 %              acquired with one of four possible encoding schemes:
 %              NEX=2/noadd=0, NEX=2/noadd=1, NEX=8/noadd=0, NEX=8/noadd=1
+% MM (171120): RTN edits to accomodate HERMES aquisitions; better looping
+%              over phase cycles
 if nechoes == 1
     MRS_struct.p.Navg(ii) = (nframes-8)*2;
     MRS_struct.p.Nwateravg = 8;
@@ -146,46 +146,54 @@ if nechoes == 1
     FullData = ShapeData(:,:,10:end,:);
     
     totalframes = totalframes-9;
-    MRS_struct.p.nrows=totalframes;
+    MRS_struct.p.nrows(ii)=totalframes;
     
     Frames_for_Water = 8;
 else
     dataframes = f_hdr_value(59)/nex;
     refframes = f_hdr_value(74);
     
-    MRS_struct.p.Navg(ii) = dataframes * nex * 2; % RTN 2016
+    MRS_struct.p.Navg(ii) = dataframes * nex * nechoes; % RTN 2017
     
     if (dataframes+refframes) ~= nframes
         mult = nex/2; % RTN 2016
         multw = nex; % RTN 2016
+        %mult = 1; % RTN 2017
+        %multw = 1; % RTN 2017
         MRS_struct.p.GE.noadd = 1;
         dataframes = dataframes * nex;
         refframes = nframes - dataframes; % refframes*nex; 2015
     else
         mult = nex/2; % RTN 2016
         multw = 1; % RTN 2016
+        %mult = 1; % RTN 2017
+        %multw = 1/nex; % RTN 2017
         MRS_struct.p.GE.noadd = 0;
     end
     
-    MRS_struct.p.Nwateravg(ii) = refframes*2;
+    MRS_struct.p.Nwateravg(ii) = refframes * nechoes; % RTN 2017
     
-    if totalframes ~= ((dataframes+refframes+1)*2)
+    if totalframes ~= (dataframes+refframes+1)*nechoes % RTN 2017
         error('# of totalframes not same as (dataframes+refframes+1)*2');
     end
     ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
-    WaterData = zeros([2 MRS_struct.p.npoints(ii) refframes*2 nreceivers]);
+    WaterData = zeros([2 MRS_struct.p.npoints(ii) refframes*nechoes nreceivers]); % RTN 2017
     for loop = 1:refframes
-        WaterData(:,:,2*loop,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,1+loop,:) * multw; % RTN 2016
-        WaterData(:,:,2*loop-1,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,totalframes/2+1+loop,:) * multw; % RTN 2016
+        for echoloop = 1:nechoes
+            WaterData(:,:,nechoes*(loop-1)+echoloop,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1)) * ...
+                ShapeData(:,:,1+(totalframes/nechoes)*(echoloop-1)+loop,:) * multw; % RTN 2017
+        end
     end
     FullData = zeros([2 MRS_struct.p.npoints(ii) dataframes*2 nreceivers]);
     for loop = 1:dataframes
-        FullData(:,:,2*loop,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,1+refframes+loop,:) * mult; % RTN 2016
-        FullData(:,:,2*loop-1,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1))*ShapeData(:,:,totalframes/2+refframes+1+loop,:) * mult; % RTN 2016
+        for echoloop = 1:nechoes
+            FullData(:,:,nechoes*(loop-1)+echoloop,:)=(-1)^(MRS_struct.p.GE.noadd*(loop-1)) * ...
+                ShapeData(:,:,1+refframes+(totalframes/nechoes)*(echoloop-1)+loop,:) * mult; % RTN 2017
+        end
     end
-    totalframes = totalframes - refframes * 2 - 2;
-    MRS_struct.p.nrows = totalframes;
-    Frames_for_Water = refframes * 2;
+    totalframes = totalframes - (refframes+1) * nechoes; % RTN 2017
+    MRS_struct.p.nrows(ii) = totalframes;
+    Frames_for_Water = refframes * nechoes; % RTN 2017
 end
 
 FullData = FullData.*repmat([1;1i], [1 MRS_struct.p.npoints(ii) totalframes nreceivers]);

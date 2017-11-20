@@ -3,7 +3,7 @@ function [AllFramesFTrealign, MRS_struct] = Spectral_Registration_HERMES(MRS_str
 % routine as per Near et al. (2015). Incorporates a multiplexed,
 % probabilistic approach for aligning HERMES data (MM: 170609)
 
-showPlots = 'n';
+showPlots = 'y';
 
 % Looping parameters
 if MRS_struct.p.HERMES % run registration four times - once for each HERMES experiment
@@ -28,8 +28,8 @@ parsGuess = [0 0];
 
 % Inputs
 DataToAlign = MRS_struct.fids.data;
-time = (0:1:(MRS_struct.p.npoints(ii)-1)).'/MRS_struct.p.sw;
-input.dwelltime = 1/MRS_struct.p.sw;
+time = (0:1:(MRS_struct.p.npoints(ii)-1)).'/MRS_struct.p.sw(ii);
+input.dwelltime = 1/MRS_struct.p.sw(ii);
 
 % Probability density function and parameter bounds
 Cauchy = @(x,s,l) s./(pi.*(s.^2+(x-l).^2));
@@ -125,7 +125,7 @@ while SpecRegLoop > -1
         plot(MRS_struct.out.MLalign.f.fx(count,:,ii), MRS_struct.out.MLalign.f.pdf(count,:,ii), 'Color', [1 0 0], 'LineWidth', 1.2);
         hold off;
         xlabel('\Deltaf (Hz)', 'FontSize', 15);
-        ylabel('P(\theta)', 'FontSize', 15);
+        ylabel('P(x)', 'FontSize', 15);
         set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off');
         
         % Histogram of phase offsets
@@ -138,6 +138,7 @@ while SpecRegLoop > -1
         plot(MRS_struct.out.MLalign.ph.fx(count,:,ii), MRS_struct.out.MLalign.ph.pdf(count,:,ii), 'Color', [1 0 0], 'LineWidth', 1.2)
         hold off
         xlabel('\Delta\phi (deg)', 'FontSize', 15);
+        ylabel('P(x)', 'FontSize', 15);
         set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off');
         
         drawnow;
@@ -236,7 +237,7 @@ while SpecRegLoop > -1
         
         % Use ChoCr signals of SUM spectrum for final phasing
         SUM = mean(AllFramesFTrealign,2);
-        freqrange = MRS_struct.spec.freq >= 2.9 & MRS_struct.spec.freq <= 3.3;
+        freqrange = MRS_struct.spec.freq >= 2.9 & MRS_struct.spec.freq <= 3.35;
         freq = MRS_struct.spec.freq(freqrange);
         
         SUM_ChoCr = SUM(freqrange);
