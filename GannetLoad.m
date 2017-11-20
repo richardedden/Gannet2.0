@@ -214,12 +214,25 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             
             % fill up fields required for downstream processing % GO 11/30/2016
             switch MRS_struct.p.ONOFForder
+                % Not sure whether this is always the case, but the CMRR
+                % sequence appears to go OFF-OFF-ON-ON in the DICOM
+                % sorting?! Fixing this hard for now. GO 112017
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
+                        MRS_struct.fids.ON_OFF=repmat([1 1 0 0],[1 MRS_struct.p.Navg(ii)/4]);
+                        MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    else
+                        MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
+                        MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    end
                 case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
+                        MRS_struct.fids.ON_OFF=repmat([0 0 1 1],[1 MRS_struct.p.Navg(ii)/4]);
+                        MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    else
+                        MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
+                        MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                    end
             end
             
         case 'Siemens'
