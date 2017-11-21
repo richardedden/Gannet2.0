@@ -625,7 +625,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     end
     
     % Bottom right
-    subplot(2,2,4);
+    hd = subplot(2,2,4);
     axis off;
     
     text_pos = 0.9;
@@ -739,10 +739,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
     % fix pdf output, where default is cm
     if sum(strcmp(listfonts,'Helvetica')) > 0
-        set(findall(h,'type','text'),'FontName','Helvetica');
-        set(ha,'FontName','Helvetica');
-        set(hb,'FontName','Helvetica');
-        set(hc,'FontName','Helvetica');
+        % GO 11/16/2017: Commented the following line out since it
+        % has caused problems on some Windows machines.
+        % set(findall(h,'type','text'),'FontName','Helvetica');
+        set([ha,hb,hc,hd],'FontName','Helvetica'); % MM: 171120
     end
     
     % Save PDF

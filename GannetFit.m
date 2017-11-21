@@ -754,7 +754,7 @@ for kk = 1:length(vox)
             resmaxCr = max(residCr);
             residCr = residCr + Crmin - resmaxCr;
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
-                h = subplot(2,2,4);
+                hd = subplot(2,2,4);
                 plot(freq, real(Cr_OFF), 'b', ...
                     freq(freqboundsChoCr), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundsChoCr))), 'r', ...
                     freq(freqboundsChoCr), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundsChoCr))), 'r', ...                    
@@ -767,16 +767,16 @@ for kk = 1:length(vox)
                 set(hcr,'horizontalAlignment', 'left')
                 %Transfer Cr plot into insert
                 subplot(2,2,3)
-                [h_m, h_i]=inset(hb,h);
-                set(h_i,'fontsize',6);
-                insert=get(h_i,'pos');
+                [hm, hi]=inset(hb,hd);
+                set(hi,'fontsize',6);
+                insert=get(hi,'pos');
                 axi=get(hb,'pos');
-                set(h_i,'pos',[axi(1)+axi(3)-insert(3) insert(2:4)]);
+                set(hi,'pos',[axi(1)+axi(3)-insert(3) insert(2:4)]);
                 %Add labels
                 hwat=text(4.8,watmax/2,'Water');
                 set(hwat,'horizontalAlignment', 'right')
-                set(h_m,'YTickLabel',[]);
-                set(h_m,'XTickLabel',[]);
+                set(hm,'YTickLabel',[]);
+                set(hm,'XTickLabel',[]);
                 set(gca,'Box','off');
                 set(gca,'YColor','white');
             else
@@ -800,9 +800,9 @@ for kk = 1:length(vox)
             
             % And running the plot
             if any(strcmp('mask',fieldnames(MRS_struct))) == 1
-                h=subplot(2,2,2);
-                get(h,'pos'); % get position of axes
-                set(h,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
+                hc=subplot(2,2,2);
+                get(hc,'pos'); % get position of axes
+                set(hc,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
                 imagesc(squeeze(MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
                 colormap('gray');
                 caxis([0 1])
@@ -1015,8 +1015,7 @@ for kk = 1:length(vox)
                 % GO 11/16/2017: Commented the following line out since it
                 % has caused problems on some Windows machines.
                 % set(findall(h,'type','text'),'FontName','Helvetica');
-                set(ha,'FontName','Helvetica');
-                set(hb,'FontName','Helvetica');
+                set([ha,hb,hm,hi],'FontName','Helvetica'); % MM: 171120
             end
             
             % Save PDF output
