@@ -502,7 +502,7 @@ for kk = 1:length(vox)
                     text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'GSH'
-                    h1 = text(2.95,metabmax,target{trg});
+                    h1 = text(2.95,maxinGSH/2,target{trg});
                     set(h1, 'horizontalAlignment', 'center');
                     labelbounds = freq <= 2.4 & freq >= 1.75; % MM (170705)
                     tailtop = max(real(DIFF(ii,labelbounds)));
