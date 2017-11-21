@@ -684,22 +684,30 @@ for kk = 1:length(vox)
                     [maxResidWater, maxInd] = max(abs(real(water_OFF)));
                     s = sign(real(water_OFF(maxInd)));
                     maxResidWater = s * maxResidWater;
-                    waterbase = mean(real(OFF(ii,1:500)));
-                    LGPModelInit = [maxResidWater 25 freqWaterOFF(maxInd) 0 waterbase -30 0];
-                    lb = [maxResidWater-abs(2*maxResidWater) 1 freqWaterOFF(maxInd)-0.2 0 0 -200 -pi];
-                    ub = [maxResidWater+abs(2*maxResidWater) 100 freqWaterOFF(maxInd)+0.2 0.000001 1 0 pi];
+                    offset = real(water_OFF(1)); % MM (171121)
                     
-                    LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freqWaterOFF, real(water_OFF), lb, ub, lsqopts);
-                    [MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,:), residRW] = nlinfit(freqWaterOFF, real(water_OFF), @LorentzGaussModelP, LGPModelInit, nlinopts);
+                    LGPModelInit = [maxResidWater 25 freqWaterOFF(maxInd) 0 offset 0.001 0]; % MM (171121)
+                    LGPModelInit([1 5]) = LGPModelInit([1 5]) / maxResidWater; % MM (171121): Scale initial conditions to avoid warnings about numerical underflow
+                    
+                    %lb = [maxResidWater-abs(2*maxResidWater) 1 freqWaterOFF(maxInd)-0.2 0 0 -200 -pi];
+                    %ub = [maxResidWater+abs(2*maxResidWater) 100 freqWaterOFF(maxInd)+0.2 0.000001 1 0 pi];
+                    %lb([1 4 5]) = lb([1 4 5]) / maxResidWater;
+                    %ub([1 4 5]) = ub([1 4 5]) / maxResidWater;
+                    
+                    % Least-squares model fitting
+                    % MM (171121): Scale data to avoid warnings about numerical underflow
+                    %LGPModelInit = lsqcurvefit(@LorentzGaussModelP, LGPModelInit, freqWaterOFF, real(water_OFF) / maxResidWater, lb, ub, lsqopts);
+                    [MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,:), residRW] = nlinfit(freqWaterOFF, real(water_OFF) / maxResidWater, @LorentzGaussModelP, LGPModelInit, nlinopts);
+                    
+                    % MM (171121): Rescale fit parameters and residuals
+                    MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,[1 4 5]) = MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,[1 4 5]) * maxResidWater;
+                    residRW = residRW * maxResidWater;
+                    
                     MRS_struct.out.(vox{kk}).ResidWater.FitError(ii) = 100*std(residRW)/MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1);
                     
                     MRS_struct.out.(vox{kk}).ResidWater.SuppressionFactor(ii) = ...
                         (MRS_struct.out.(vox{kk}).water.ModelParam(ii,1) - abs(MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,1))) ...
                         / MRS_struct.out.(vox{kk}).water.ModelParam(ii,1);
-                    
-                    %figure(22);
-                    %plot(freq(freqWaterOFF), real(water_OFF), 'b', ...
-                    %    freq(freqWaterOFF), LorentzGaussModelP(MRS_struct.out.(vox{kk}).ResidWater.ModelParam(ii,:),freq(freqWaterOFF)), 'r');
                     
                 end
                 
