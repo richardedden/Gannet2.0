@@ -148,7 +148,7 @@ for kk = 1:length(vox)
                 
                 if strcmp(MRS_struct.p.GSH_model,'FiveGauss')
                     
-                    modelFun = @FiveGaussModel;
+                    GSHgaussModel = @FiveGaussModel;
                     
                     GaussModelInit = [maxinGSH*0.7        -300  2.95 ...
                                       s*maxinAspartyl*0.8 -500  2.73 ...
@@ -175,7 +175,7 @@ for kk = 1:length(vox)
                     
                 elseif strcmp(MRS_struct.p.GSH_model,'SixGauss')
                     
-                    modelFun = @SixGaussModel;
+                    GSHgaussModel = @SixGaussModel;
                     
                     GaussModelInit = [maxinGSH*0.7        -300  2.95 ...
                                       s*maxinAspartyl     -500  2.73 ...
@@ -207,8 +207,8 @@ for kk = 1:length(vox)
                 
                 % Least-squares model fitting
                 % MM (171121): Scale data to avoid warnings about numerical underflow
-                GaussModelInit = lsqcurvefit(modelFun, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGSH, lb, ub, lsqopts);
-                [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGSH, modelFun, GaussModelInit, nlinopts);
+                GaussModelInit = lsqcurvefit(GSHgaussModel, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGSH, lb, ub, lsqopts);
+                [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGSH, GSHgaussModel, GaussModelInit, nlinopts);
                 
                 % MM (171121): Rescale fit parameters and residuals
                 if strcmp(MRS_struct.p.GSH_model,'FiveGauss')
@@ -444,7 +444,7 @@ for kk = 1:length(vox)
                 set(gca,'XLim',[2.6 3.6]);
             elseif strcmp(target{trg},'GSH')
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b' ,...
-                    freq(freqbounds), modelFun(GaussModelParam,freq(freqbounds)), 'r', ...
+                    freq(freqbounds), GSHgaussModel(GaussModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds),resid, 'k');
                 set(gca,'XLim',[1.8 4.2]);
             elseif strcmp(target{trg},'Lac')
