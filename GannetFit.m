@@ -123,28 +123,110 @@ for kk = 1:length(vox)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 % Hard code it to fit from 2.35 ppm to 3.3 ppm
-                freqbounds = find(freq <= 3.3 & freq >= 2.35); % MM (170705)
+                freqbounds = find(freq <= 3.3 & freq >= 2.25); % MM (170705)
                 plotbounds = find(freq <= 4.2 & freq >= 1.75);
                 
-                %offset = real(mean(DIFF(ii, freqbounds(1:10)),2) + mean(DIFF(ii, freqbounds((end-9):end)),2))/2;
-                %slope = real(mean(DIFF(ii, freqbounds(1:10)),2) - mean(DIFF(ii, freqbounds((end-9):end)),2))/real(MRS_struct.spec.freq(freqbounds(1)) - MRS_struct.spec.freq(freqbounds(end)));
-                peak_amp = 0.03; %Presumably this won't work for some data... for now it seems to work.
+                GSHbounds = freq <= 3.3 & freq >= 2.85; % MM (171121)
+                Aspartylbounds = freq <= 2.85 & freq >= 2.25;
                 
-                FiveGaussModelInit = [peak_amp*0.7 -300 2.95 peak_amp*0.8 -500 2.73 -peak_amp*2.5 -1000 2.61 -peak_amp*2.5 -1000 2.55 peak_amp*0.5 -600 2.42  0 0 0.02];
-                lb = [0 -5000   2.9 0 -5000  2.68 -0.3 -5000    2.57 -0.3 -5000   2.48 0 -5000    2.3 -0.1 -0.01 -0.01];
-                ub = [0.1 -50   3.0 0.1 -50   2.8   0 -50    2.68      0 -50   2.57 0.1 0     2.43 0.1 0.01 0.03];
+                maxinGSH = max(abs(real(DIFF(ii,GSHbounds)))); % MM (171121)
+                [maxinAspartyl, maxInd] = max(abs(real(DIFF(ii,Aspartylbounds))));
+                
+                offset = real(DIFF(ii,freqbounds(end)));
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
+                LinearInit = grad_points ./ abs(freq(1) - freq(2));
+                
+                tmp = DIFF(ii,Aspartylbounds); % MM (171121)
+                s = sign(real(tmp(maxInd)));
+                maxinAspartyl = s * maxinAspartyl;                
+                
+                if MRS_struct.p.HERMES % MM (171121)
+                    s = -1;
+                else
+                    s = 1;
+                end
+                
+                if strcmp(MRS_struct.p.GSH_model,'FiveGauss')
+                    
+                    modelFun = @FiveGaussModel;
+                    
+                    GaussModelInit = [maxinGSH*0.7        -300  2.95 ...
+                                      s*maxinAspartyl*0.8 -500  2.73 ...
+                                      maxinAspartyl       -1000 2.61 ...
+                                      maxinAspartyl       -1000 2.55 ...
+                                      s*maxinAspartyl*0.5 -600  2.45 ...
+                                      offset -LinearInit -LinearInit];
+                    GaussModelInit([1 4 7 10 13 16 17 18]) = GaussModelInit([1 4 7 10 13 16 17 18]) / maxinGSH; % MM (171121): Scale initial conditions to avoid warnings about numerical underflow
+                    
+                    lb = [-4000*maxinGSH*0.7        -1000 2.95-0.02 ...
+                          -4000*s*maxinAspartyl*0.8 -1000 2.73-0.02 ...
+                          -4000*maxinAspartyl       -1000 2.61-0.02 ...
+                          -4000*maxinAspartyl       -1000 2.55-0.02 ...
+                          -4000*s*maxinAspartyl*0.5 -1000 2.45-0.02 ...
+                          -2000*offset -2000*maxinAspartyl -2000*maxinAspartyl];
+                    ub = [4000*maxinGSH*0.7        -40 2.95+0.02 ...
+                          4000*s*maxinAspartyl*0.8 -40 2.73+0.02 ...
+                          4000*maxinAspartyl       -40 2.61+0.02 ...
+                          4000*maxinAspartyl       -40 2.55+0.02 ...
+                          4000*s*maxinAspartyl*0.5 -40 2.45+0.02 ...
+                          1000*offset 1000*maxinAspartyl 1000*maxinAspartyl];
+                    lb([1 4 7 10 13 16 17 18]) = lb([1 4 7 10 13 16 17 18]) / maxinGSH;
+                    ub([1 4 7 10 13 16 17 18]) = ub([1 4 7 10 13 16 17 18]) / maxinGSH;
+                    
+                elseif strcmp(MRS_struct.p.GSH_model,'SixGauss')
+                    
+                    modelFun = @SixGaussModel;
+                    
+                    GaussModelInit = [maxinGSH*0.7        -300  2.95 ...
+                                      s*maxinAspartyl     -500  2.73 ...
+                                      maxinAspartyl       -1000 2.63 ...
+                                      maxinAspartyl       -1000 2.58 ...
+                                      s*maxinAspartyl*0.5 -600  2.46 ...
+                                      s*maxinAspartyl*0.5 -600  2.37 ...
+                                      offset -LinearInit -LinearInit];
+                    GaussModelInit([1 4 7 10 13 16 19 20 21]) = GaussModelInit([1 4 7 10 13 16 19 20 21]) / maxinGSH; % MM (171121): Scale initial conditions to avoid warnings about numerical underflow
+                    
+                    lb = [-4000*maxinGSH*0.7        -1000 2.95-0.02 ...
+                          -4000*s*maxinAspartyl*0.8 -1000 2.73-0.02 ...
+                          -4000*maxinAspartyl       -1000 2.63-0.02 ...
+                          -4000*maxinAspartyl       -1000 2.58-0.02 ...
+                          -4000*s*maxinAspartyl*0.5 -1000 2.46-0.02 ...
+                          -4000*s*maxinAspartyl*0.5 -1000 2.37-0.02 ...
+                          -2000*offset -2000*maxinAspartyl -2000*maxinAspartyl];
+                    ub = [4000*maxinGSH*0.7        -40 2.95+0.02 ...
+                          4000*s*maxinAspartyl*0.8 -40 2.73+0.02 ...
+                          4000*maxinAspartyl       -40 2.63+0.02 ...
+                          4000*maxinAspartyl       -40 2.58+0.02 ...
+                          4000*s*maxinAspartyl*0.5 -40 2.46+0.02 ...
+                          4000*s*maxinAspartyl*0.5 -40 2.37+0.02 ...
+                          1000*offset 1000*maxinAspartyl 1000*maxinAspartyl];
+                    lb([1 4 7 10 13 16 19 20 21]) = lb([1 4 7 10 13 16 19 20 21]) / maxinGSH;
+                    ub([1 4 7 10 13 16 19 20 21]) = ub([1 4 7 10 13 16 19 20 21]) / maxinGSH;
+                    
+                end
                 
                 % Least-squares model fitting
-                FiveGaussModelInit = lsqcurvefit(@FiveGaussModel, FiveGaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
-                [FiveGaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @FiveGaussModel, FiveGaussModelInit, nlinopts);
+                % MM (171121): Scale data to avoid warnings about numerical underflow
+                GaussModelInit = lsqcurvefit(modelFun, GaussModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGSH, lb, ub, lsqopts);
+                [GaussModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)) / maxinGSH, modelFun, GaussModelInit, nlinopts);
                 
-                GSHGaussModelParam=FiveGaussModelParam;
-                GSHGaussModelParam(4:3:13)=0;
-                %NAAGaussModelParam=FiveGaussModelParam;
-                %NAAGaussModelParam(1)=0;
+                % MM (171121): Rescale fit parameters and residuals
+                if strcmp(MRS_struct.p.GSH_model,'FiveGauss')
+                    GaussModelParam([1 4 7 10 13 16 17 18]) = GaussModelParam([1 4 7 10 13 16 17 18]) * maxinGSH;
+                elseif strcmp(MRS_struct.p.GSH_model,'SixGauss')
+                    GaussModelParam([1 4 7 10 13 16 19 20 21]) = GaussModelParam([1 4 7 10 13 16 19 20 21]) * maxinGSH;
+                end
+                resid = resid * maxinGSH;
                 
-                BaselineModelParam=GSHGaussModelParam;
-                BaselineModelParam(1)=0;                
+                GSHGaussModelParam = GaussModelParam;
+                if strcmp(MRS_struct.p.GSH_model,'FiveGauss')
+                    GSHGaussModelParam(4:3:13) = 0;
+                elseif strcmp(MRS_struct.p.GSH_model,'SixGauss')
+                    GSHGaussModelParam(4:3:16) = 0;
+                end
+                
+                BaselineModelParam = GSHGaussModelParam;
+                BaselineModelParam(1) = 0;
                 
                 % GSH fitting output -- MGSaleh
                 MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = real(sum(FiveGaussModel(GSHGaussModelParam, freq(freqbounds)) - FiveGaussModel(BaselineModelParam, freq(freqbounds)))) ...
@@ -153,7 +235,7 @@ for kk = 1:length(vox)
                 
                 % Range to determine residuals for GSH (MM: 170705)
                 residfreq = freq(freqbounds);
-                residGSH = resid(residfreq <= 3.3 & residfreq >= 2.77);
+                residGSH = resid(residfreq <= 3.3 & residfreq >= 2.82);
                 
                 % GSH fitting output -- MGSaleh
                 MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(residGSH)/GSHheight;
@@ -362,8 +444,7 @@ for kk = 1:length(vox)
                 set(gca,'XLim',[2.6 3.6]);
             elseif strcmp(target{trg},'GSH')
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b' ,...
-                    freq(freqbounds), FiveGaussModel(FiveGaussModelParam,freq(freqbounds)), 'r', ...
-                    freq(freqbounds), FiveGaussModel(GSHGaussModelParam,freq(freqbounds)), 'g', ...
+                    freq(freqbounds), modelFun(GaussModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds),resid, 'k');
                 set(gca,'XLim',[1.8 4.2]);
             elseif strcmp(target{trg},'Lac')

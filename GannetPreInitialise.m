@@ -22,6 +22,8 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
     MRS_struct.p.water_removal = 1; % remove residual water in HERMES data using HSVD; 1 = YES
     MRS_struct.p.AlignTo = 'SpecReg'; % options are 'SpecReg' (recommended for MEGA-PRESS), 'SpecRegHERMES' (recommended for HERMES), 'Cr', 'Cho', 'NAA', 'H2O', 'CrOFF'
     MRS_struct.p.Vox = {'vox1','vox2'}; % for naming voxels acquired by PRIAM, e.g: 'anterior' and 'posterior', 'right' and 'left', etc.
+    MRS_struct.p.GSH_model = 'FiveGauss'; % choice of model for fitting GSH;
+                                          % options are 'FiveGauss' (recommended for medium-TE HERMES) or 'SixGauss' (recommended for long-TE MEGA-PRESS)
     
 % Flags
     MRS_struct.p.HERMES = 0; % 1 = YES, 0 = NO (MEGA-PRESS)

@@ -512,19 +512,19 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 
                 % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
-                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048); % MM (171121)
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:).')), ...
-                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
                 
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:).')), ...
-                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, MRS_struct.p.npoints(ii));
+                    MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:)));
                 
                 % MM (170703): Need to perform baseline correction on filtered data
