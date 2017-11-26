@@ -71,9 +71,8 @@ end
 fclose(fid);
 
 % Create voxel coordinates
-%MRS_struct.p.voxoff=[ rda.position(1) rda.position(2) rda.position(3)];
-MRS_struct.p.voxoff=[ rda.VOIPositionSag rda.VOIPositionCor rda.VOIPositionTra];
-MRS_struct.p.voxsize = [rda.VOIThickness rda.VOIReadoutFOV rda.VOIPhaseFOV ]; 
+MRS_struct.p.voxoff(ii) =[ rda.VOIPositionSag rda.VOIPositionCor rda.VOIPositionTra];
+MRS_struct.p.voxdim(ii) = [rda.VOIThickness rda.VOIReadoutFOV rda.VOIPhaseFOV ]; 
 MRS_Rot(:,1)=rda.row.'.* [-1 -1 1]' ;
 MRS_Rot(:,2)=rda.column.' ;
 MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2));
