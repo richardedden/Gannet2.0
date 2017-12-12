@@ -107,7 +107,7 @@ for ii = 1:length(MRS_struct.metabfile)
         % Correction of institutional units only feasible if water-scaling is
         % performed, skip otherwise (GO 07/13/2017)
         % MM (170831): Loop over voxels and metabolites
-        if isfield(MRS_struct,'waterfile')
+        if strcmp(MRS_struct.p.Reference_compound,'H2O')
             if MRS_struct.p.HERMES
                 target = {MRS_struct.p.target, MRS_struct.p.target2};
             else
@@ -165,7 +165,7 @@ for ii = 1:length(MRS_struct.metabfile)
         
         % Print correction of institutional units only feasible if water-scaling is
         % performed, skip otherwise (GO 07/13/2017)
-        if isfield(MRS_struct,'waterfile')
+        if strcmp(MRS_struct.p.Reference_compound,'H2O')
             for trg = 1:length(target)
                 
                 text_pos = text_pos - 0.1;
