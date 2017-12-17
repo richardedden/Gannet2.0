@@ -253,7 +253,12 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
         dims.averages=find(strcmp(TwixHeader.sqzDims,'Set'));
     else
         if strcmp(TwixHeader.seqorig,'CMRR')
-            dims.averages=find(strcmp(TwixHeader.sqzDims,'Set'));
+            % Averages can be in dimension 'Set' or 'Rep'
+            if ~isempty(find(strcmp(TwixHeader.sqzDims,'Set')))
+                dims.averages=find(strcmp(TwixHeader.sqzDims,'Set'));
+            elseif ~isempty(find(strcmp(TwixHeader.sqzDims,'Rep')))
+                dims.averages=find(strcmp(TwixHeader.sqzDims,'Rep'));
+            end
         else
             dims.averages=find(strcmp(TwixHeader.sqzDims,'Ave'));
         end
