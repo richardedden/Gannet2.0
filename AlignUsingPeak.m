@@ -86,7 +86,7 @@ cub=find(min(z)==z);
 freqrange=MRS_struct.spec.freq(clb:cub);
 %Cr_initx = [ Area_estimate Width_estimate 3.02 0 Baseline_offset 0 ].*[1 (2*MRS_struct.p.LarmorFreq) (MRS_struct.p.LarmorFreq) (180/pi) 1 1 ];
 CrMeanSpec = mean(AllFramesFTrealign(clb:cub,:),2);
-CrMeanSpecFit = FitCr(freqrange, CrMeanSpec, Init);
+CrMeanSpecFit = FitCr(freqrange, CrMeanSpec, Init, MRS_struct.p.LarmorFreq);
 
 %Some Output
 MRS_struct.out.CrFWHMHz(MRS_struct.ii)=CrMeanSpecFit(2);

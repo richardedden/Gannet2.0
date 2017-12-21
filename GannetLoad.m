@@ -503,13 +503,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             
             % Remove residual water from diff and diff_noalign spectra using HSVD -- GO & MGSaleh 2016
             if MRS_struct.p.water_removal
-                % Save DIFF spectra before water filtering
-                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_unfilt_h2o(ii,:)  = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
-                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_unfilt_h2o(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:);
-                
-                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign_unfilt_h2o(ii,:)  = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:);
-                %MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign_unfilt_h2o(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:);
-                
+
                 % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
                     MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048); % MM (171121)
@@ -543,6 +537,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
         else
             
             if strcmp(MRS_struct.p.target, 'GSH')
+                
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==0)'&(MRS_struct.out.reject(:,ii)==0))),2);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) = mean(AllFramesFTrealign(:,((MRS_struct.fids.ON_OFF==1)'&(MRS_struct.out.reject(:,ii)==0))),2);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)-MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2;
@@ -558,12 +553,33 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 if MRS_struct.p.Water_Positive == 0
                     MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = -MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
                 end
+                
+                if MRS_struct.p.water_removal
+                    % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
+                    MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...
+                        MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048); % MM (171121)
+                    MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:)));
+                    
+                    MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:).')), ...
+                        MRS_struct.p.sw(ii)/1e3, 8, -0.08, 0.08, 0, 2048);
+                    MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = fftshift(fft(MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:)));
+                    
+                    % MM (170703): Need to perform baseline correction on filtered data
+                    freqbounds = MRS_struct.spec.freq <= 10 & MRS_struct.spec.freq >= 9;
+                    baseMean_diff1 = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,freqbounds)));
+                    baseMean_diffnoalign1 = mean(real(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,freqbounds)));
+                    
+                    MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) - baseMean_diff1;
+                    MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) - baseMean_diffnoalign1;
+                    
+                end
             else
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:) = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)' & MRS_struct.out.reject(:,ii)==0), 2);
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:)  = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)' & MRS_struct.out.reject(:,ii)==0), 2);
                 
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).on(ii,:) - MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:))/2;
                 MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff_noalign(ii,:) = (mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==1)),2) - mean(AllFramesFT(:,(MRS_struct.fids.ON_OFF==0)),2))/2;
+                
             end
             
         end

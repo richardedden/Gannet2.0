@@ -311,22 +311,40 @@ for ii = 1:length(MRS_struct.metabfile)
         lastslash=0;
     end
     if strcmpi(MRS_struct.p.vendor,'Philips')
-        tmp = strfind(pfil_nopath, '.sdat');
-        tmp1= strfind(pfil_nopath, '.SDAT');
+        tmp = strfind(pfil_nopath,'.sdat');
+        tmp1 = strfind(pfil_nopath,'.SDAT');
         if size(tmp,1) > size(tmp1,1)
             dot7 = tmp(end); % just in case there's another .sdat somewhere else...
         else
             dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
         end
     elseif strcmpi(MRS_struct.p.vendor,'GE')
-        tmp = strfind(pfil_nopath,'.7');
+        tmp = strfind(pfil_nopath, '.7');
         dot7 = tmp(end); % just in case there's another .7 somewhere else...
     elseif strcmpi(MRS_struct.p.vendor,'Philips_data')
-        tmp = strfind(pfil_nopath,'.data');
+        tmp = strfind(pfil_nopath, '.data');
         dot7 = tmp(end); % just in case there's another .data somewhere else...
+    elseif strcmpi(MRS_struct.p.vendor,'Siemens')
+        tmp = strfind(pfil_nopath, '.rda');
+        dot7 = tmp(end); % just in case there's another .rda somewhere else...
     elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
-        tmp = strfind(pfil_nopath,'.dat');
+        tmp = strfind(pfil_nopath, '.dat');
         dot7 = tmp(end); % just in case there's another .dat somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 11/11/2016
+        tmp = strfind(pfil_nopath, '.IMA');
+        if isempty(tmp)
+            tmp = strfind(pfil_nopath, '.ima');
+        end
+        dot7 = tmp(end); % just in case there's another .IMA somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'dicom')) % GO 11/30/2016
+        tmp = strfind(pfil_nopath, '.DCM');
+        if isempty(tmp)
+            tmp = strfind(pfil_nopath, '.dcm');
+        end
+        dot7 = tmp(end); % just in case there's another .DCM somewhere else...
+    elseif(strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 11/04/2016
+        tmp = strfind(pfil_nopath, '.raw');
+        dot7 = tmp(end); % just in case there's another .raw somewhere else...
     end
     pfil_nopath = pfil_nopath(lastslash+1:dot7-1);
     
