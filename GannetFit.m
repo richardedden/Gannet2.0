@@ -241,7 +241,7 @@ for kk = 1:length(vox)
                 MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(residGSH)/GSHheight;
                 sigma = sqrt(1/(2*(abs(GSHGaussModelParam(2)))));
                 MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) =  abs((2*MRS_struct.p.LarmorFreq(ii))*sigma);
-                MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GSHGaussModelParam;
+                MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = GaussModelParam;
                 MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = residGSH;
                 
                 % Calculate SNR of GSH signal (MM: 170502)
