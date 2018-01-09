@@ -547,8 +547,10 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 %helpful for an additional phasing step... and messes up fitting
                 %otherwise. MGSaleh 2016 moved it to this place for
                 %completeness
-                residual_phase = pi-atan2(imag(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))),real(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))));
-                MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))*exp(1i*residual_phase);
+                if ~strcmp(MRS_struct.p.AlignTo, 'SpecRegHERMES') % Don't apply residual phasing if SpecRegHERMES is used (MM: 180108)
+                    residual_phase = pi-atan2(imag(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))),real(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))));
+                    MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))*exp(1i*residual_phase);
+                end
                 
                 if MRS_struct.p.Water_Positive == 0
                     MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = -MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:);
