@@ -35,7 +35,7 @@ end
 % Parse P-file to extract voxel dimensions and offsets (MM: 171110)
 if MRS_struct.p.GE.rdbm_rev_num >= 11.0
     % In 11.0 and later the header and data are stored as little-endian
-    fid = fopen(Pname,'r', 'ieee-le');
+    fid = fopen(Pname, 'r', 'ieee-le');
 else
     fid = fopen(Pname, 'r', 'ieee-be');
 end
@@ -98,14 +98,15 @@ end
 MRSRotHead = dicominfo(dcm_list2);
 
 cd(currdir);
-%Do some housekeeping on dicom series
-currdir=pwd;
+currdir = pwd;
 cd(dcm_dir);
-dcm_list=dir;
-dcm_list=dcm_list(3:end);
-hdr = spm_dicom_headers(char(dcm_list.name));
-spm_dicom_convert(hdr, 'all','flat','nii');
-nii_file_dir=dir('s*.nii');
+dcm_list = dir;
+dcm_list = dcm_list(~ismember({dcm_list.name}, {'.','..'}));
+dcm_list = cellstr(char(dcm_list.name));
+dcm_list = dcm_list(cellfun(@isempty, strfind(dcm_list, 'nii'))); %#ok<STRCLFH>
+hdr = spm_dicom_headers(char(dcm_list));
+spm_dicom_convert(hdr, 'all', 'flat', 'nii');
+nii_file_dir = dir('s*.nii');
 cd(currdir);
 
 nii_file=[dcm_dir '/' nii_file_dir(1).name];

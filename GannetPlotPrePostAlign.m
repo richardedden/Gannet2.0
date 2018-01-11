@@ -24,7 +24,7 @@ for kk = 1:length(vox)
         end
         
         specbaseline = mean(real(SpectraToPlot(:,baserange)),2);
-        SpectraToPlot = SpectraToPlot - specbaseline;
+        SpectraToPlot = SpectraToPlot - repmat(specbaseline, [1 length(SpectraToPlot)]);
         
         % Stack spectra (MM: 180108)
         peakheight = abs(min(real(SpectraToPlot(3,peakrange))));
@@ -58,7 +58,7 @@ for kk = 1:length(vox)
         end
         
         specbaseline = mean(real(SpectraToPlot(:,baserange)),2);
-        SpectraToPlot = SpectraToPlot - specbaseline;
+        SpectraToPlot = SpectraToPlot - repmat(specbaseline, [1 length(SpectraToPlot)]);
         
         % Stack spectra (MM: 180108)
         peakheight = abs(max(real(SpectraToPlot(1,peakrange))));
