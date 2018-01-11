@@ -1107,7 +1107,7 @@ for kk = 1:length(vox)
                 if strcmp(MRS_struct.p.Reference_compound,'H2O')
                     set([ha,hb,hm,hi],'FontName','Helvetica'); % MM: 171120
                 else
-                    set([ha,hb,hi],'FontName','Helvetica'); % MM: 180111
+                    set([ha,hb],'FontName','Helvetica'); % MM: 180111
                 end
             end
             
