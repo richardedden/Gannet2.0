@@ -1104,7 +1104,11 @@ for kk = 1:length(vox)
                 % GO 11/16/2017: Commented the following line out since it
                 % has caused problems on some Windows machines.
                 % set(findall(h,'type','text'),'FontName','Helvetica');
-                set([ha,hb,hm,hi],'FontName','Helvetica'); % MM: 171120
+                if strcmp(MRS_struct.p.Reference_compound,'H2O')
+                    set([ha,hb,hm,hi],'FontName','Helvetica'); % MM: 171120
+                else
+                    set([ha,hb,hi],'FontName','Helvetica'); % MM: 180111
+                end
             end
             
             % Save PDF output
