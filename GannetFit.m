@@ -50,7 +50,6 @@ end
 
 freq = MRS_struct.spec.freq;
 MRS_struct.version.fit = '171013';
-pdfdirname = './GannetFit_output'; % MM (170121)
 
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10,'Display','off');
@@ -426,10 +425,10 @@ for kk = 1:length(vox)
             scr_sz = get(0, 'ScreenSize');
             fig_w = 1000;
             fig_h = 707;
-            set(h, 'Position', [(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
+            set(h,'Position',[(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
             set(h,'Color',[1 1 1]);
             figTitle = 'GannetFit Output';
-            set(gcf,'Name',figTitle,'Tag',figTitle, 'NumberTitle','off');
+            set(gcf,'Name',figTitle,'Tag',figTitle,'NumberTitle','off');
             
             % Spectra plot
             ha = subplot(2,2,1);
@@ -477,15 +476,8 @@ for kk = 1:length(vox)
                 hold off;
                 set(gca,'XLim',[2.7 4.2]);
             end
-            if strcmpi(MRS_struct.p.vendor,'Siemens')
-                legendtxt = regexprep(MRS_struct.metabfile{ii*2-1}, '_','-');
-            else
-                legendtxt = regexprep(MRS_struct.metabfile{ii}, '_','-');
-            end
-            % GO (170905): Backslash in filenames interferes with TeX
-            % interpreter during PDF output production, replace:
-            legendtxt = strrep(legendtxt, '\','\\');
-            title(legendtxt);
+                        
+            title('Edited Spectrum and Model Fit');
             set(gca,'XDir','reverse');
             
             % From here on is cosmetic - adding labels etc.
@@ -537,6 +529,7 @@ for kk = 1:length(vox)
                     text(2.8, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     text(3.2, min(residPlot)-0.5*abs(max(residPlot)), 'weighted', 'Color', [255 160 64]/255, 'horizontalAlignment', 'center');
             end
+            xlabel('ppm');
             set(gca,'YTick',[]);
             set(gca,'Box','off');
             set(gca,'YColor','white');
@@ -852,24 +845,27 @@ for kk = 1:length(vox)
                 set(gca,'YTick',[],'Box','off');
                 xlim([2.6 3.6]);
                 set(gca,'YColor','white');
-                hcr=text(2.94,Crmax*0.75,'Creatine');
-                set(hcr,'horizontalAlignment', 'left')
+                xlabel('ppm');
+                hcr = text(2.94,Crmax*0.75,'Creatine');
+                set(hcr,'horizontalAlignment','left');
                 %Transfer Cr plot into insert
                 subplot(2,2,3)
                 [hm, hi]=inset(hb,hd);
                 set(hi,'fontsize',6);
                 insert=get(hi,'pos');
-                axi=get(hb,'pos');
+                axi = get(hb,'pos');
                 set(hi,'pos',[axi(1)+axi(3)-insert(3) insert(2:4)]);
                 %Add labels
-                hwat=text(4.8,watmax/2,'Water');
-                set(hwat,'horizontalAlignment', 'right')
+                hwat = text(4.8,watmax/2,'Water');
+                set(hwat,'horizontalAlignment','right')
                 set(hm,'YTickLabel',[]);
                 set(hm,'XTickLabel',[]);
                 set(gca,'Box','off');
                 set(gca,'YColor','white');
+                xlabel('ppm');
+                title('Reference Signals');
             else
-                hb=subplot(2,2,3);
+                hb = subplot(2,2,3);
                 plot(freq, real(Cr_OFF), 'b', ...
                     freq(freqboundsChoCr), real(TwoLorentzModel(MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,:),freq(freqboundsChoCr))), 'r', ...
                     freq(freqboundsChoCr), real(TwoLorentzModel([MRS_struct.out.(vox{kk}).ChoCr.ModelParam(ii,1:(end-1)) 0],freq(freqboundsChoCr))), 'r', ...
@@ -878,18 +874,20 @@ for kk = 1:length(vox)
                 set(gca,'YTick',[]);
                 xlim([2.6 3.6]);
                 crlabelbounds = freq(freqboundsCr) <= 3.12 & freq(freqboundsCr) >= 2.72; % MM (170705)
-                hcres=text(3, max(residCr(crlabelbounds))+0.05*Crmax, 'residual');
+                hcres = text(3, max(residCr(crlabelbounds))+0.05*Crmax, 'residual');
                 set(hcres,'horizontalAlignment', 'center');
                 text(2.7,0.1*Crmax,'data','Color',[0 0 1]);
                 text(2.7,0.01*Crmax,'model','Color',[1 0 0]);
                 text(2.94,Crmax*0.75,'Creatine');
                 set(gca,'Box','off');
                 set(gca,'YColor','white');
+                xlabel('ppm');
+                title('Reference Signal');
             end
             
             % And running the plot
             if any(strcmp('mask',fieldnames(MRS_struct))) == 1
-                hc=subplot(2,2,2);
+                hc = subplot(2,2,2);
                 get(hc,'pos'); % get position of axes
                 set(hc,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
                 imagesc(squeeze(MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
@@ -906,18 +904,16 @@ for kk = 1:length(vox)
             
             % MM (170703): Cleaner text alignment
             text_pos = 0.9; % A variable to determine y-position of text on printout on figure -- Added by MGSaleh
-            
+                        
+            % MM (180112)
             if strcmp(MRS_struct.p.vendor,'Siemens')
-                tmp = [': ' MRS_struct.metabfile{ii*2-1}];
+                [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
             else
-                tmp = [': ' MRS_struct.metabfile{ii}];
+                [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
             end
-            tmp = regexprep(tmp, '_','-');
-            % GO (170905): Backslash in filenames interferes with TeX
-            % interpreter during PDF output production, replace:
-            tmp = strrep(tmp, '\','\\');
+            
             text(0, text_pos, 'Filename', 'FontName', 'Helvetica', 'FontSize', 10);
-            text(0.375, text_pos, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
+            text(0.375, text_pos, [': ' tmp tmp2], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
             
             % Some changes to accomodate multiplexed fitting output
             switch target{trg}
@@ -1026,24 +1022,20 @@ for kk = 1:length(vox)
             text(0.375, text_pos-0.7, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
             
             % Add Gannet logo
-            if any(strcmp('mask',fieldnames(MRS_struct))) == 1
+            if any(strcmp('mask',fieldnames(MRS_struct)))
                 subplot(2,2,4);
             else
                 subplot(2,2,4,'replace');
             end
             axis off;
-            script_path=which('GannetFit');
-            Gannet_logo=[script_path(1:(end-12)) '/Gannet3_logo.png'];
-            A2=imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
+            script_path = which('GannetFit');
+            Gannet_logo = [script_path(1:(end-12)) '/Gannet3_logo.png'];
+            A2 = imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
             axes('Position',[0.80, 0.05, 0.15, 0.15]);
-            image(A2); axis off; axis square;
-            
-            % Save PDF
-            if strcmp(MRS_struct.p.vendor,'Siemens')
-                pfil_nopath = MRS_struct.metabfile{ii*2-1};
-            else
-                pfil_nopath = MRS_struct.metabfile{ii};
-            end
+            image(A2);
+            axis off;
+            axis square;            
+
             % For Philips .data
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
                 fullpath = MRS_struct.metabfile{ii};
@@ -1051,61 +1043,17 @@ for kk = 1:length(vox)
                 fullpath = regexprep(fullpath, '\', '_');
                 fullpath = regexprep(fullpath, '/', '_');
             end
-            tmp = strfind(pfil_nopath,'/');
-            tmp2 = strfind(pfil_nopath,'\');
-            if tmp
-                lastslash=tmp(end);
-            elseif tmp2
-                % maybe it's Windows...
-                lastslash=tmp2(end);
-            else
-                % it's in the current dir...
-                lastslash=0;
-            end
-            if strcmpi(MRS_struct.p.vendor,'Philips')
-                tmp = strfind(pfil_nopath,'.sdat');
-                tmp1 = strfind(pfil_nopath,'.SDAT');
-                if size(tmp,1) > size(tmp1,1)
-                    dot7 = tmp(end); % just in case there's another .sdat somewhere else...
-                else
-                    dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
-                end
-            elseif strcmpi(MRS_struct.p.vendor,'GE')
-                tmp = strfind(pfil_nopath, '.7');
-                dot7 = tmp(end); % just in case there's another .7 somewhere else...
-            elseif strcmpi(MRS_struct.p.vendor,'Philips_data')
-                tmp = strfind(pfil_nopath, '.data');
-                dot7 = tmp(end); % just in case there's another .data somewhere else...
-            elseif strcmpi(MRS_struct.p.vendor,'Siemens')
-                tmp = strfind(pfil_nopath, '.rda');
-                dot7 = tmp(end); % just in case there's another .rda somewhere else...
-            elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
-                tmp = strfind(pfil_nopath, '.dat');
-                dot7 = tmp(end); % just in case there's another .dat somewhere else...
-            elseif(strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 11/11/2016
-                tmp = strfind(pfil_nopath, '.IMA');
-                if isempty(tmp)
-                    tmp = strfind(pfil_nopath, '.ima');
-                end
-                dot7 = tmp(end); % just in case there's another .IMA somewhere else...
-            elseif(strcmpi(MRS_struct.p.vendor,'dicom')) % GO 11/30/2016
-                tmp = strfind(pfil_nopath, '.DCM');
-                if isempty(tmp)
-                    tmp = strfind(pfil_nopath, '.dcm');
-                end
-                dot7 = tmp(end); % just in case there's another .DCM somewhere else...
-            elseif(strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 11/04/2016
-                tmp = strfind(pfil_nopath, '.raw');
-                dot7 = tmp(end); % just in case there's another .raw somewhere else...
-            end
             
-            pfil_nopath = pfil_nopath(lastslash+1:dot7-1);
+            % MM (180112)
+            if strcmp(MRS_struct.p.vendor,'Siemens')
+                [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii*2-1});
+            else
+                [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii});
+            end            
+            
             if sum(strcmp(listfonts,'Helvetica')) > 0
-                % GO 11/16/2017: Commented the following line out since it
-                % has caused problems on some Windows machines.
-                % set(findall(h,'type','text'),'FontName','Helvetica');
                 if strcmp(MRS_struct.p.Reference_compound,'H2O')
-                    set([ha,hb,hm,hi],'FontName','Helvetica'); % MM: 171120
+                    set([ha,hb,hm,hi],'FontName','Helvetica'); % GO 11/16/2017; MM: 171120
                 else
                     set([ha,hb],'FontName','Helvetica'); % MM: 180111
                 end
@@ -1115,27 +1063,26 @@ for kk = 1:length(vox)
             set(gcf,'PaperUnits','inches');
             set(gcf,'PaperSize',[11 8.5]);
             set(gcf,'PaperPosition',[0 0 11 8.5]);
+            
+            if ~exist('GannetFit_output','dir')
+                mkdir GannetFit_output;
+            end
+            
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                pdfname = [pdfdirname filesep fullpath '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
+                pdfname = fullfile('GannetFit_output', [fullpath '_' target{trg} '_fit.pdf']); % MM (180112)
             else
-                pdfname = [pdfdirname filesep pfil_nopath  '_' target{trg} '_fit.pdf']; % MGSaleh 2016, MM (170703)
-            end
-            if ~exist(pdfdirname,'dir')
-                mkdir(pdfdirname);
-            end
-            saveas(gcf, pdfname);
+                pdfname = fullfile('GannetFit_output', [metabfile_nopath '_' target{trg} '_fit.pdf']); % MM (180112)
+            end            
+            saveas(h, pdfname);
+            
             if ii == numscans && MRS_struct.p.mat == 1
-                if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                    matname = [pdfdirname filesep 'MRS_struct' '.mat'];
-                else
-                    matname = [pdfdirname filesep 'MRS_struct' '.mat'];
-                end
+                matname = fullfile('GannetFit_output','MRS_struct');
                 save(matname,'MRS_struct');
             end
             
             % 140116: ADH reorder structure
-            if isfield(MRS_struct, 'mask') == 1
-                if isfield(MRS_struct, 'waterfile') == 1
+            if isfield(MRS_struct, 'mask')
+                if isfield(MRS_struct, 'waterfile')
                     structorder = {'version', 'ii', ...
                         'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
                 else
@@ -1143,15 +1090,14 @@ for kk = 1:length(vox)
                         'metabfile', 'p', 'fids', 'spec', 'out', 'mask'};
                 end
             else
-                if isfield(MRS_struct, 'waterfile') == 1
+                if isfield(MRS_struct, 'waterfile')
                     structorder = {'version', 'ii', ...
                         'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out'};
                 else
                     structorder = {'version','ii', ...
                         'metabfile', 'p', 'fids', 'spec', 'out'};
                 end
-            end
-            
+            end            
             MRS_struct = orderfields(MRS_struct, structorder);
             
             % Dec 09: based on FitSeries.m:  Richard's GABA Fitting routine

@@ -138,18 +138,7 @@ for ii = 1:length(MRS_struct.metabfile)
         end
     end
     
-    % Build output
-    
-    pdfdirname = './GannetQuantify_output';
-    if ~exist(pdfdirname,'dir')
-        mkdir(pdfdirname)
-    end
-    
-    if MRS_struct.p.mat
-        matname = [pdfdirname '/' 'MRS_struct.mat'];
-        save(matname,'MRS_struct');
-    end
-    
+    % Build output figure    
     if ishandle(105)
         clf(105); % MM (170831)
     end
@@ -158,7 +147,7 @@ for ii = 1:length(MRS_struct.metabfile)
     scr_sz = get(0, 'ScreenSize');
     fig_w = 1000;
     fig_h = 707;
-    set(h, 'Position', [(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
+    set(h,'Position',[(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
     set(h,'Color',[1 1 1]);
     figTitle = 'GannetQuantify Output';
     set(gcf,'Name',figTitle,'Tag',figTitle,'NumberTitle','off');
@@ -172,10 +161,25 @@ for ii = 1:length(MRS_struct.metabfile)
     axis tight;
     axis off;
     
+    % MM (180112)
+    if strcmp(MRS_struct.p.vendor,'Siemens')
+        [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
+    else
+        [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
+    end
+    [~,tmp3,tmp4] = fileparts(MRS_struct.mask.T1image{ii});
+    t = ['Voxel from ' tmp tmp2 ' on ' tmp3 tmp4];
+    title(t, 'Interpreter', 'none');
+    
     % Post-alignment spectra + model fits
     subplot(2,2,3);
     GannetPlotPrePostAlign2(MRS_struct, vox, ii);
-    title({'Edited Spectrum (post-align)'});
+    if MRS_struct.p.HERMES
+        title('Edited Spectra and Model Fits');
+    else
+        title('Edited Spectrum and Model Fit');
+    end
+    xlabel('ppm');
     set(gca,'YTick',[]);
     
     % Output results
@@ -245,27 +249,20 @@ for ii = 1:length(MRS_struct.metabfile)
         end
     end
     
-    C = MRS_struct.metabfile{ii};
-    if size(C,2) > 30
-        [~,y] = fileparts(C);
-    else
-        y = C;
-    end
+    % MM (180112)
     tmp1 = 'Filename';
-    tmp2 = regexprep([': ' y], '_','-');
-    text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-    text(0.375, text_pos-0.1, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-    
-    D = MRS_struct.mask.T1image{ii} ;
-    if size(D,2) > 30
-        [~,y] = fileparts(D);
+    if strcmp(MRS_struct.p.vendor,'Siemens')
+        [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii*2-1});
     else
-        y = D;
+        [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii});
     end
+    text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
+    text(0.375, text_pos-0.1, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
+    
     tmp1 = 'Anatomical image';
-    tmp2 = regexprep([': ' y], '_','-');
+    [~,tmp2,tmp3] = fileparts(MRS_struct.mask.T1image{ii}); % MM (180112)
     text(0, text_pos-0.2, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-    text(0.375, text_pos-0.2, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
+    text(0.375, text_pos-0.2, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
     
     tmp1 = 'QuantifyVer';
     tmp2 = [': ' MRS_struct.version.quantify];
@@ -275,87 +272,47 @@ for ii = 1:length(MRS_struct.metabfile)
     % Gannet logo
     subplot(2,2,4);
     axis off;
-    script_path=which('GannetFit');
-    Gannet_logo=[script_path(1:(end-12)) '/Gannet3_logo.png'];
-    A2=imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
+    script_path = which('GannetFit');
+    Gannet_logo = [script_path(1:(end-12)) '/Gannet3_logo.png'];
+    A2 = imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
     axes('Position',[0.80, 0.05, 0.15, 0.15]);
-    image(A2); axis off; axis square;
+    image(A2);
+    axis off;
+    axis square;
     
-    %%%% Save PDF %%%%%
-    pfil_nopath = MRS_struct.metabfile{ii};
-    fullpath = MRS_struct.metabfile{ii};
-    
-    if strcmp(fullpath(1:2) , '..')
-        fullpath = fullpath(4:end);
+    % Create output folder
+    if ~exist('GannetQuantify_output','dir')
+        mkdir GannetQuantify_output;
     end
     
+    if MRS_struct.p.mat
+        matname = fullfile('GannetQuantify_output','MRS_struct.mat');
+        save(matname,'MRS_struct');
+    end
+    
+    % For Philips .data
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
         fullpath = MRS_struct.metabfile{ii};
-        if strcmp(fullpath(1:2) , '..')
-            fullpath = fullpath(4:end);
-        end
         fullpath = regexprep(fullpath, '.data', '_data');
         fullpath = regexprep(fullpath, '\', '_');
         fullpath = regexprep(fullpath, '/', '_');
     end
     
-    tmp = strfind(pfil_nopath,'/');
-    tmp2 = strfind(pfil_nopath,'\');
-    if tmp
-        lastslash=tmp(end);
-    elseif tmp2
-        %maybe it's Windows...
-        lastslash=tmp2(end);
+    % MM (180112)
+    if strcmp(MRS_struct.p.vendor,'Siemens')
+        [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii*2-1});
     else
-        % it's in the current dir...
-        lastslash=0;
+        [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii});
     end
-    if strcmpi(MRS_struct.p.vendor,'Philips')
-        tmp = strfind(pfil_nopath,'.sdat');
-        tmp1 = strfind(pfil_nopath,'.SDAT');
-        if size(tmp,1) > size(tmp1,1)
-            dot7 = tmp(end); % just in case there's another .sdat somewhere else...
-        else
-            dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
-        end
-    elseif strcmpi(MRS_struct.p.vendor,'GE')
-        tmp = strfind(pfil_nopath, '.7');
-        dot7 = tmp(end); % just in case there's another .7 somewhere else...
-    elseif strcmpi(MRS_struct.p.vendor,'Philips_data')
-        tmp = strfind(pfil_nopath, '.data');
-        dot7 = tmp(end); % just in case there's another .data somewhere else...
-    elseif strcmpi(MRS_struct.p.vendor,'Siemens')
-        tmp = strfind(pfil_nopath, '.rda');
-        dot7 = tmp(end); % just in case there's another .rda somewhere else...
-    elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
-        tmp = strfind(pfil_nopath, '.dat');
-        dot7 = tmp(end); % just in case there's another .dat somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 11/11/2016
-        tmp = strfind(pfil_nopath, '.IMA');
-        if isempty(tmp)
-            tmp = strfind(pfil_nopath, '.ima');
-        end
-        dot7 = tmp(end); % just in case there's another .IMA somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'dicom')) % GO 11/30/2016
-        tmp = strfind(pfil_nopath, '.DCM');
-        if isempty(tmp)
-            tmp = strfind(pfil_nopath, '.dcm');
-        end
-        dot7 = tmp(end); % just in case there's another .DCM somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 11/04/2016
-        tmp = strfind(pfil_nopath, '.raw');
-        dot7 = tmp(end); % just in case there's another .raw somewhere else...
-    end
-    pfil_nopath = pfil_nopath(lastslash+1:dot7-1);
     
     % Save PDF output
     set(gcf,'PaperUnits','inches');
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
-    if(strcmpi(MRS_struct.p.vendor,'Philips_data'))
-        pdfname = [pdfdirname '/' fullpath '_quantify.pdf'];
+    if strcmpi(MRS_struct.p.vendor,'Philips_data')
+        pdfname = fullfile('GannetQuantify_output', [fullpath '_quantify.pdf']); % MM (180112)
     else
-        pdfname = [pdfdirname '/' pfil_nopath  '_quantify.pdf'];
+        pdfname = fullfile('GannetQuantify_output', [metabfile_nopath '_quantify.pdf']); % MM (180112)
     end
     saveas(gcf, pdfname);
     

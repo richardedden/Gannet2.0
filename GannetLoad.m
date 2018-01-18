@@ -1,7 +1,7 @@
 function MRS_struct = GannetLoad(metabfile, waterfile)
 %Gannet 3.0 GannetLoad
 %Started by RAEE Nov 5, 2012
-%Updates by MGS, MM, GO 2016-2017
+%Updates by MGS, MM, GO 2016-2018
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Work flow summary
@@ -79,7 +79,7 @@ if iscell(metabfile) == 1 % it's a cell array, so work out the number of element
     numpfiles = numel(metabfile);
     pfiles = metabfile;
 else
-    numpfiles = 1;  % it's just one pfile
+    numpfiles = 1; % it's just one pfile
     pfiles{1} = metabfile;
 end
 
@@ -94,8 +94,8 @@ end
 %   3. Some housekeeping
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Create dir for output
-if ~exist('./GannetLoad_output','dir')
+% Create output folder
+if ~exist('GannetLoad_output','dir')
     mkdir GannetLoad_output;
 end
 
@@ -183,7 +183,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             end
             FullData = MRS_struct.fids.data;
             
-            % fill up fields required for downstream processing % GO 11/01/2016
+            % Fill up fields required for downstream processing % GO 11/01/2016
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
                     MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
@@ -600,7 +600,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     scr_sz = get(0, 'ScreenSize');
     fig_w = 1000;
     fig_h = 707;
-    set(h, 'Position', [(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
+    set(h,'Position',[(scr_sz(3)-fig_w)/2, (scr_sz(4)-fig_h)/2, fig_w, fig_h]);
     set(h,'Color',[1 1 1]);
     figTitle = 'GannetLoad Output';
     set(gcf,'Name',figTitle,'Tag',figTitle,'NumberTitle','off');
@@ -608,7 +608,12 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     % Top left
     ha = subplot(2,2,1);
     GannetPlotPrePostAlign(MRS_struct, vox, ii);
-    title({'Edited Spectrum';'(pre- and post-align)'});
+    if MRS_struct.p.HERMES
+        title({'Edited Spectra';'(pre- and post-alignment)'});
+    else
+        title({'Edited Spectrum';'(pre- and post-alignment)'});
+    end
+    xlabel('ppm');
     set(gca,'YTick',[]);
     
     % Top right
@@ -630,7 +635,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
         % Don't display rejects
         plotrealign(CrFitRange+1:end,(MRS_struct.out.reject(:,ii).'==1))=min(plotrealign(:));
         imagesc(plotrealign);
-        title('Cr Frequency, pre and post align');
+        title({'Cr Frequency','(pre- and post-alignment)'});
         xlabel('average');
         set(gca,'YTick', [1 CrFitRange CrFitRange+CrFitRange*(CrFitLimHigh-3.02)/(CrFitLimHigh-CrFitLimLow) CrFitRange*2]);
         set(gca,'YTickLabel', [CrFitLimHigh CrFitLimLow 3.02 CrFitLimLow]);
@@ -648,18 +653,15 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     
     text_pos = 0.9;
     
-    % MM (170703): Cleaner text alignment
+    % MM (180112)
     if strcmp(MRS_struct.p.vendor,'Siemens')
-        tmp = [': ' MRS_struct.metabfile{ii*2-1}];
+        [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
     else
-        tmp = [': ' MRS_struct.metabfile{ii}];
+        [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
     end
-    tmp = regexprep(tmp,'_','-');
-    % GO (170905): Backslash in filenames interferes with TeX
-    % interpreter during PDF output production, replace:
-    tmp = strrep(tmp, '\','\\');
+    
     text(0, text_pos, 'Filename', 'FontName', 'Helvetica', 'FontSize', 13);
-    text(0.275, text_pos, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
+    text(0.275, text_pos, [': ' tmp tmp2], 'FontName', 'Helvetica', 'FontSize', 13, 'Interpreter', 'none');
     
     tmp = [': ' num2str(MRS_struct.p.Navg(ii)) ' averages'];
     text(0, text_pos - 0.1, 'Navg', 'FontName', 'Helvetica', 'FontSize', 13);
@@ -687,90 +689,43 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     text(0, text_pos - 0.6, 'LoadVer', 'FontName', 'Helvetica', 'FontSize', 13);
     text(0.275, text_pos - 0.6, tmp, 'FontName', 'Helvetica', 'FontSize', 13);
     
-    script_path=which('GannetLoad');
-    Gannet_logo=[script_path(1:(end-13)) '/Gannet3_logo.png'];
-    A2=imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
+    % Add Gannet logo
+    Gannet_path = which('GannetLoad');
+    Gannet_logo = [Gannet_path(1:end-13) '/Gannet3_logo.png'];
+    A2 = imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
     axes('Position',[0.80, 0.05, 0.15, 0.15]);
-    image(A2); axis off; axis square;
-    
-    if strcmp(MRS_struct.p.vendor,'Siemens')
-        pfil_nopath = MRS_struct.metabfile{ii*2-1};
-    else
-        pfil_nopath = MRS_struct.metabfile{ii};
-    end
-    
+    image(A2);
+    axis off;
+    axis square;
+        
     % For Philips .data
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
         fullpath = MRS_struct.metabfile{ii};
-        fullpath = regexprep(fullpath, '.data', '_data'); % NP see below
+        fullpath = regexprep(fullpath, '.data', '_data');
         fullpath = regexprep(fullpath, '\', '_');
         fullpath = regexprep(fullpath, '/', '_');
     end
-    tmp = strfind(pfil_nopath,'/');
-    tmp2 = strfind(pfil_nopath,'\');
-    if tmp
-        lastslash=tmp(end);
-    elseif tmp2
-        %maybe it's Windows...
-        lastslash=tmp2(end);
+        
+    % MM (180112)
+    if strcmp(MRS_struct.p.vendor,'Siemens')
+        [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii*2-1});
     else
-        % it's in the current dir...
-        lastslash=0;
+        [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii});
     end
     
-    if strcmpi(MRS_struct.p.vendor,'Philips')
-        tmp = strfind(pfil_nopath,'.sdat');
-        tmp1 = strfind(pfil_nopath,'.SDAT');
-        if size(tmp,1) > size(tmp1,1)
-            dot7 = tmp(end); % just in case there's another .sdat somewhere else...
-        else
-            dot7 = tmp1(end); % just in case there's another .sdat somewhere else...
-        end
-    elseif strcmpi(MRS_struct.p.vendor,'GE')
-        tmp = strfind(pfil_nopath, '.7');
-        dot7 = tmp(end); % just in case there's another .7 somewhere else...
-    elseif strcmpi(MRS_struct.p.vendor,'Philips_data')
-        tmp = strfind(pfil_nopath, '.data');
-        dot7 = tmp(end); % just in case there's another .data somewhere else...
-    elseif strcmpi(MRS_struct.p.vendor,'Siemens')
-        tmp = strfind(pfil_nopath, '.rda');
-        dot7 = tmp(end); % just in case there's another .rda somewhere else...
-    elseif strcmpi(MRS_struct.p.vendor,'Siemens_twix')
-        tmp = strfind(pfil_nopath, '.dat');
-        dot7 = tmp(end); % just in case there's another .dat somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Siemens_dicom')) % GO 11/11/2016
-        tmp = strfind(pfil_nopath, '.IMA');
-        if isempty(tmp)
-            tmp = strfind(pfil_nopath, '.ima');
-        end
-        dot7 = tmp(end); % just in case there's another .IMA somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'dicom')) % GO 11/30/2016
-        tmp = strfind(pfil_nopath, '.DCM');
-        if isempty(tmp)
-            tmp = strfind(pfil_nopath, '.dcm');
-        end
-        dot7 = tmp(end); % just in case there's another .DCM somewhere else...
-    elseif(strcmpi(MRS_struct.p.vendor,'Philips_raw')) % GO 11/04/2016
-        tmp = strfind(pfil_nopath, '.raw');
-        dot7 = tmp(end); % just in case there's another .raw somewhere else...
-    end
-    pfil_nopath = pfil_nopath( (lastslash+1) : (dot7-1) );
-    % fix pdf output, where default is cm
     if sum(strcmp(listfonts,'Helvetica')) > 0
-        % GO 11/16/2017: Commented the following line out since it
-        % has caused problems on some Windows machines.
-        % set(findall(h,'type','text'),'FontName','Helvetica');
-        set([ha,hb,hc,hd],'FontName','Helvetica'); % MM: 171120
+        set([ha,hb,hc,hd],'FontName','Helvetica'); % GO 11/16/2017; MM: 171120
     end
     
     % Save PDF
     set(gcf,'PaperUnits','inches');
     set(gcf,'PaperSize',[11 8.5]);
     set(gcf,'PaperPosition',[0 0 11 8.5]);
+    
     if strcmpi(MRS_struct.p.vendor,'Philips_data')
-        pdfname = ['GannetLoad_output/' fullpath '_load.pdf']; % MM (170201)
+        pdfname = fullfile('GannetLoad_output', [fullpath '_load.pdf']); % MM (180112)
     else
-        pdfname = ['GannetLoad_output/' pfil_nopath  '_load.pdf']; % MM (170201)
+        pdfname = fullfile('GannetLoad_output', [metabfile_nopath '_load.pdf']); % MM (180112)
     end
     saveas(h, pdfname);
     
@@ -782,8 +737,8 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 %NOT SUPPORTED
             else
                 %set up filenames for sdat output
-                sdat_G_name=['MRSload_output/' pfil_nopath  '_G.sdat'];
-                spar_G_name=['MRSload_output/' pfil_nopath  '_G.spar'];
+                sdat_G_name=['GannetLoad_output/' metabfile_nopath  '_G.sdat'];
+                spar_G_name=['GannetLoad_output/' metabfile_nopath  '_G.spar'];
                 %make file copies for sdat output
                 copyfile(metabfile{ii},sdat_G_name);
                 sparname=metabfile{ii};

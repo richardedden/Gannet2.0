@@ -134,9 +134,9 @@ twix_obj=mapVBVD(fname);
 % struct - single-RAID
 % cell - multi-RAID, with info in the last cell element
 if isstruct(twix_obj)
-    disp('loading single-RAID file...')
+    disp('Loading single-RAID file...')
 elseif iscell(twix_obj)
-    disp('loading multi-RAID file...')
+    disp('Loading multi-RAID file...')
     twix_obj = twix_obj{end};
 end
 
