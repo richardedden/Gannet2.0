@@ -43,6 +43,8 @@ else
                 MRS_struct.p.target = 'GABAGlx';
             case 'GSH'
                 MRS_struct.p.target = 'GSH';
+            case 'Lac'
+                MRS_struct.p.target = 'Lac';
         end
     end
     target = {MRS_struct.p.target};
