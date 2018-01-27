@@ -271,9 +271,9 @@ while SpecRegLoop > -1
         offsetpos = pi*lt(phi,-pi/2);
         offsetneg = -pi*gt(phi,pi/2);
         phi = phi + offsetpos + offsetneg;
-        if phi > 0
-           phi = -phi;
-        end
+%         if phi > 0
+%            phi = -phi;
+%         end
         
         % Apply zero-order phase correction
         AllFramesFTrealign = AllFramesFTrealign * exp(1i*phi);
