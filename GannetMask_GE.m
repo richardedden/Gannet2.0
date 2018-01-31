@@ -83,11 +83,13 @@ nii_file = nii_file_dir.files{1};
 
 V = spm_vol(nii_file);
 [T1,XYZ] = spm_read_vols(V);
-H = spm_read_hdr(nii_file);
 
 % Shift imaging voxel coordinates by half an imaging voxel so that the XYZ matrix
 % tells us the x,y,z coordinates of the MIDDLE of that imaging voxel.
-halfpixshift = -H.dime.pixdim(1:3).'/2;
+voxdim = abs(V.mat(1:3,1:3));
+voxdim = voxdim(voxdim > 0.1);
+voxdim = round(voxdim/1e-2)*1e-2; % MM (180130)
+halfpixshift = -voxdim(1:3)/2;
 %halfpixshift(3) = -halfpixshift(3);
 XYZ = XYZ + repmat(halfpixshift, [1 size(XYZ,2)]);
 
@@ -189,8 +191,6 @@ voxel_search   = sqrt(sum(voxel_search,1));
 [~,index1]     = min(voxel_search);
 [slice(1), slice(2), slice(3)] = ind2sub(V.dim,index1);
 
-size_max = max(size(T1img_mas));
-three_plane_img = zeros([size_max 3*size_max]);
 im1 = squeeze(T1img_mas(:,:,slice(3)));
 im1 = im1(end:-1:1,end:-1:1)';
 im3 = squeeze(T1img_mas(:,slice(2),:));
@@ -198,6 +198,25 @@ im3 = im3(end:-1:1,end:-1:1)';
 im2 = squeeze(T1img_mas(slice(1),:,:));
 im2 = im2(end:-1:1,end:-1:1)';
 
+% MM (180130): Resize slices if voxel resolution in T1 image isn't
+% isometric
+if voxdim(1) ~= voxdim(2)
+    a = max(voxdim([1 2])) ./ min(voxdim([1 2]));
+    im1 = imresize(im1, [size(im1,1)*a size(im1,2)]);
+end
+
+if voxdim(1) ~= voxdim(3)
+    a = max(voxdim([1 3])) ./ min(voxdim([1 3]));
+    im3 = imresize(im3, [size(im3,1)*a size(im3,2)]);
+end
+
+if voxdim(2) ~= voxdim(3)
+    a = max(voxdim([2 3])) ./ min(voxdim([2 3]));
+    im2 = imresize(im2, [size(im2,1)*a size(im2,2)]);
+end
+
+size_max = max([max(size(im1)) max(size(im2)) max(size(im3))]);
+three_plane_img = zeros([size_max 3*size_max]);
 three_plane_img(:,1:size_max)              = image_center(im1, size_max);
 three_plane_img(:,size_max*2+(1:size_max)) = image_center(im3, size_max);
 three_plane_img(:,size_max+(1:size_max))   = image_center(im2, size_max);

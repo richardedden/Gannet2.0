@@ -1,4 +1,7 @@
-function [MRS_struct ] = GannetMask_Siemens(filename, nii_file, MRS_struct, ii)
+function MRS_struct = GannetMask_Siemens(filename, nii_file, MRS_struct, ii)
+
+warning('off','MATLAB:nearlySingularMatrix');
+warning('off','MATLAB:qhullmx:InternalWarning');
 
 % Still kind of beta with updates from GO 2017
 % this relies on SPM and a nifti file
@@ -21,7 +24,7 @@ head_start_text = '>>> Begin of header <<<';
 head_end_text   = '>>> End of header <<<';
 tline = fgets(fid);
 
-while (isempty(strfind(tline, head_end_text)))
+while (isempty(strfind(tline, head_end_text))) %#ok<*STREMP>
     
     tline = fgets(fid);
     
@@ -84,14 +87,15 @@ currdir=pwd;
 cd(currdir);
 
 % Open nifti file
-V=spm_vol(nii_file);
-V.dim;
-[T1,XYZ]=spm_read_vols(V);
-H=spm_read_hdr(nii_file);
+V = spm_vol(nii_file);
+[T1,XYZ] = spm_read_vols(V);
 
 %Shift imaging voxel coordinates by half an imaging voxel so that the XYZ matrix
 %tells us the x,y,z coordinates of the MIDDLE of that imaging voxel.
-halfpixshift = -H.dime.pixdim(1:3).'/2;
+voxdim = abs(V.mat(1:3,1:3));
+voxdim = voxdim(voxdim > 0.1);
+voxdim = round(voxdim/1e-2)*1e-2; % MM (180130)
+halfpixshift = -voxdim(1:3)/2;
 halfpixshift(3) = -halfpixshift(3);
 XYZ=XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
 
@@ -119,14 +123,14 @@ lr_off = -lr_off;
 % y - posterior = postive
 % z - superior = positive
 vox_ctr = ...
-      [lr_size/2 -ap_size/2 cc_size/2 ;
-       -lr_size/2 -ap_size/2 cc_size/2 ;
-       -lr_size/2 ap_size/2 cc_size/2 ;
-       lr_size/2 ap_size/2 cc_size/2 ;
-       -lr_size/2 ap_size/2 -cc_size/2 ;
-       lr_size/2 ap_size/2 -cc_size/2 ;
-       lr_size/2 -ap_size/2 -cc_size/2 ;
-       -lr_size/2 -ap_size/2 -cc_size/2 ];
+    [lr_size/2 -ap_size/2  cc_size/2;
+    -lr_size/2 -ap_size/2  cc_size/2;
+    -lr_size/2  ap_size/2  cc_size/2;
+     lr_size/2  ap_size/2  cc_size/2;
+    -lr_size/2  ap_size/2 -cc_size/2;
+     lr_size/2  ap_size/2 -cc_size/2;
+     lr_size/2 -ap_size/2 -cc_size/2;
+    -lr_size/2 -ap_size/2 -cc_size/2];
    
 vox_rot=rotmat*vox_ctr.';
 
@@ -150,57 +154,70 @@ mask = reshape(mask, V.dim);
 
 % Fill mask header
 V_mask.fname = fidoutmask;
-V_mask.descrip = 'MRS_Voxel_Mask';
+V_mask.descrip = 'MRS_voxel_mask';
 V_mask.dim = V.dim;
 V_mask.dt = V.dt;
 V_mask.mat = V.mat;
 
 % Write to file
-V_mask=spm_write_vol(V_mask,mask);
+spm_write_vol(V_mask,mask);
 
 % Create T1 with mask overlay
 T1img = T1/max(T1(:));
-T1img_mas = T1img + .2*mask;
+T1img_mas = T1img + 0.2*mask;
 
 % construct output 
 voxel_ctr = [-lr_off -ap_off cc_off];
 
 % Populate MRS_struct with mask information
 fidoutmask = cellstr(fidoutmask);
-MRS_struct.mask.outfile(MRS_struct.ii,:)=fidoutmask;
+MRS_struct.mask.outfile(MRS_struct.ii,:) = fidoutmask;
 MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
 
 % Determine T1 slices to be shown on output
-voxel_ctr(1:2)=-voxel_ctr(1:2);
-voxel_search=(XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
-voxel_search=sqrt(sum(voxel_search,1));
-[min2,index1]=min(voxel_search);
-[slice(1) slice(2) slice(3)]=ind2sub( V.dim,index1);
+voxel_ctr(1:2) = -voxel_ctr(1:2);
+voxel_search   = (XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
+voxel_search   = sqrt(sum(voxel_search,1));
+[~,index1]     = min(voxel_search);
+[slice(1), slice(2), slice(3)] = ind2sub(V.dim,index1);
 
-size_max=max(size(T1img_mas));
-three_plane_img=zeros([size_max 3*size_max]);
 im1 = squeeze(T1img_mas(:,:,slice(3)));
-im1 = im1(end:-1:1,end:-1:1)';  %not sure if need this '
+im1 = im1(end:-1:1,end:-1:1)';
 im3 = squeeze(T1img_mas(:,slice(2),:));
-im3 = im3(end:-1:1,end:-1:1)'; %may not need '
+im3 = im3(end:-1:1,end:-1:1)';
 im2 = squeeze(T1img_mas(slice(1),:,:));
 im2 = im2(end:-1:1,end:-1:1)';
 
-three_plane_img(:,1:size_max) = image_center(im1, size_max);
-three_plane_img(:,size_max*2+(1:size_max))=image_center(im3,size_max);
-three_plane_img(:,size_max+(1:size_max))=image_center(im2,size_max);
+% MM (180130): Resize slices if voxel resolution in T1 image isn't
+% isometric
+if voxdim(1) ~= voxdim(2)
+    a = max(voxdim([1 2])) ./ min(voxdim([1 2]));
+    im1 = imresize(im1, [size(im1,1)*a size(im1,2)]);
+end
 
-MRS_struct.mask.img(ii,:,:)=three_plane_img;
+if voxdim(1) ~= voxdim(3)
+    a = max(voxdim([1 3])) ./ min(voxdim([1 3]));
+    im3 = imresize(im3, [size(im3,1)*a size(im3,2)]);
+end
+
+if voxdim(2) ~= voxdim(3)
+    a = max(voxdim([2 3])) ./ min(voxdim([2 3]));
+    im2 = imresize(im2, [size(im2,1)*a size(im2,2)]);
+end
+
+size_max = max([max(size(im1)) max(size(im2)) max(size(im3))]);
+three_plane_img = zeros([size_max 3*size_max]);
+three_plane_img(:,1:size_max)              = image_center(im1, size_max);
+three_plane_img(:,size_max*2+(1:size_max)) = image_center(im3, size_max);
+three_plane_img(:,size_max+(1:size_max))   = image_center(im2, size_max);
+
+MRS_struct.mask.img(ii,:,:)   = three_plane_img;
 MRS_struct.mask.T1image(ii,:) = {nii_file};
 
-% Produce output figure
-% figure(198)
-% imagesc(three_plane_img);
-% colormap('gray');
-% caxis([0 1])
-% axis equal;
-% axis tight;
-% axis off;
+warning('on','MATLAB:nearlySingularMatrix');
+warning('on','MATLAB:qhullmx:InternalWarning');
 
 end
+
+
 
