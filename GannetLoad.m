@@ -278,7 +278,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 MRS_struct.fids.data = -MRS_struct.fids.data;
             end
             FullData = MRS_struct.fids.data;
-            if strcmpi(MRS_struct.p.seqtype,'JHU')
+            if strcmpi(MRS_struct.p.seqorig,'JHU')
                 switch MRS_struct.p.ONOFForder
                     case 'onfirst'
                         if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
@@ -307,7 +307,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                             MRS_struct.fids.ON_OFF = repmat([0 1], [1 size(MRS_struct.fids.data,2)/2]);
                         end
                 end
-            elseif strcmpi(MRS_struct.p.seqtype,'Philips')
+            elseif strcmpi(MRS_struct.p.seqorig,'Philips')
                 switch MRS_struct.p.ONOFForder
                     case 'onfirst'
                         MRS_struct.fids.ON_OFF = [ones(1,160) zeros(1,160)];

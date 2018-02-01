@@ -18,31 +18,46 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %                     only when the fields are actually present (may depend 
 %                     on vendor and sequence version). 
 %                   - Minor improvements.
+%       2018-01-06: Loading of voxel geometry parameters moved from
+%                   GannetMask_SiemensTWIX to SiemensTwixRead.
+%       2018-01-31: Minor fixes.
 
 ii = MRS_struct.ii;
 
 % Get the raw data and header info from the MEGA-PRESS files.
 [MetabData, MetabHeader] = GetTwixData(fname);
 % Populate MRS_struct with relevant info.
-MRS_struct.p.pointsBeforeEcho       = MetabHeader.pointsBeforeEcho;
-MRS_struct.p.sw(ii)                 = 1/MetabHeader.dwellTime;
-MRS_struct.p.LarmorFreq(ii)         = MetabHeader.tx_freq;
-MRS_struct.p.TR(ii)                 = MetabHeader.TR;
-MRS_struct.p.TE(ii)                 = MetabHeader.TE;
-MRS_struct.p.npoints(ii)            = size(MetabData,2);
-MRS_struct.p.nrows                  = size(MetabData,3);
-MRS_struct.p.Navg(ii)               = size(MetabData,3);
-MRS_struct.p.voxdim(ii,:)           = [MetabHeader.VoI_RoFOV ...
-                                       MetabHeader.VoI_PeFOV ...
-                                       MetabHeader.VoIThickness];
+MRS_struct.p.pointsBeforeEcho           = MetabHeader.pointsBeforeEcho;
+MRS_struct.p.sw(ii)                     = 1/MetabHeader.dwellTime;
+MRS_struct.p.LarmorFreq(ii)             = MetabHeader.tx_freq;
+MRS_struct.p.TR(ii)                     = MetabHeader.TR;
+MRS_struct.p.TE(ii)                     = MetabHeader.TE;
+MRS_struct.p.npoints(ii)                = size(MetabData,2);
+MRS_struct.p.nrows                      = size(MetabData,3);
+MRS_struct.p.Navg(ii)                   = size(MetabData,3);
+MRS_struct.p.Voxdims.VoI_InPlaneRot(ii) = MetabHeader.VoI_InPlaneRot;
+MRS_struct.p.Voxdims.VoI_RoFOV(ii)      = MetabHeader.VoI_RoFOV;
+MRS_struct.p.Voxdims.VoI_PeFOV(ii)      = MetabHeader.VoI_PeFOV;
+MRS_struct.p.Voxdims.VoIThickness(ii)   = MetabHeader.VoIThickness;
+MRS_struct.p.Voxdims.NormCor(ii)        = MetabHeader.NormCor;
+MRS_struct.p.Voxdims.NormSag(ii)        = MetabHeader.NormSag;
+MRS_struct.p.Voxdims.NormTra(ii)        = MetabHeader.NormTra;
+MRS_struct.p.Voxdims.PosCor(ii)         = MetabHeader.PosCor;
+MRS_struct.p.Voxdims.PosSag(ii)         = MetabHeader.PosSag;
+MRS_struct.p.Voxdims.PosTra(ii)         = MetabHeader.PosTra;
+MRS_struct.p.seqorig                    = MetabHeader.seqorig;
+
+if isfield(MetabHeader,'deltaFreq')
+    MRS_struct.p.Siemens.deltaFreq.metab(ii)    = MetabHeader.deltaFreq;
+end
+
 if isfield(MetabHeader,'editRF')
     MRS_struct.p.Siemens.editRF.freq(ii,:)      = MetabHeader.editRF.freq;
     MRS_struct.p.Siemens.editRF.centerFreq(ii)  = MetabHeader.editRF.centerFreq;
     MRS_struct.p.Siemens.editRF.bw(ii)          = MetabHeader.editRF.bw;
-end
-if isfield(MetabHeader,'deltaFreq')
-    MRS_struct.p.Siemens.deltaFreq.metab(ii)    = MetabHeader.deltaFreq;
-    MRS_struct.p.Siemens = reorderstructure(MRS_struct.p.Siemens, 'editRF', 'deltaFreq');
+    if isfield(MetabHeader,'deltaFreq')
+        MRS_struct.p.Siemens = reorderstructure(MRS_struct.p.Siemens, 'editRF', 'deltaFreq');
+    end
 end
 
 % If additional data points have been acquired before the echo starts,
@@ -134,9 +149,9 @@ twix_obj=mapVBVD(fname);
 % struct - single-RAID
 % cell - multi-RAID, with info in the last cell element
 if isstruct(twix_obj)
-    disp('Loading single-RAID file...')
+    disp('loading single-RAID file...')
 elseif iscell(twix_obj)
-    disp('Loading multi-RAID file...')
+    disp('loading multi-RAID file...')
     twix_obj = twix_obj{end};
 end
 
@@ -168,6 +183,15 @@ TwixHeader.NormTra              = twix_obj.hdr.Config.VoI_Normal_Tra; % Transver
 TwixHeader.PosCor               = twix_obj.hdr.Config.VoI_Position_Cor; % Coronal coordinate of voxel
 TwixHeader.PosSag               = twix_obj.hdr.Config.VoI_Position_Sag; % Sagittal coordinate of voxel
 TwixHeader.PosTra               = twix_obj.hdr.Config.VoI_Position_Tra; % Transversal coordinate of voxel
+% GO180108: If a parameter is set to zero (e.g. if no voxel rotation is
+% performed), the respective field is left empty in the TWIX file. This
+% case needs to be intercepted. Setting to the minimum possible value.
+VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra','PosCor','PosSag','PosTra'};
+for pp = 1:length(VoI_Params)
+    if isempty(TwixHeader.(VoI_Params{pp}))
+        TwixHeader.(VoI_Params{pp}) = realmin('double');
+    end
+end
 TwixHeader.SiemensSoftwareVersion  = twix_obj.hdr.Dicom.SoftwareVersions; % Full software version
 TwixHeader.B0                   = twix_obj.hdr.Dicom.flMagneticFieldStrength; % Nominal B0 [T]
 TwixHeader.tx_freq              = twix_obj.hdr.Dicom.lFrequency * 1e-6; % Transmitter frequency [MHz]

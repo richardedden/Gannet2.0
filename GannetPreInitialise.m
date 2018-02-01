@@ -3,7 +3,7 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
 % Some of these parameters will be parsed from the MRS data file header
 
 % Acquisition Parameters
-    MRS_struct.p.seqtype = 'JHU'; % determines patch origin; options are 'JHU' and 'Philips'; default: 'JHU'
+    MRS_struct.p.seqorig = 'JHU'; % determines patch origin; options are 'JHU' and 'Philips'; default: 'JHU'
     MRS_struct.p.sw = []; % parsed from header
     MRS_struct.p.npoints = []; % parsed from header
     MRS_struct.p.TR = []; % parsed from header
