@@ -48,6 +48,12 @@ for kk = 1:length(vox)
         
         % Shift baselines to zero (MM: 180108)
         baserange = MRS_struct.spec.freq <= 0 & MRS_struct.spec.freq >= -0.5;
+        % Some bandwidth-limited acquisitions may not record anything below
+        % 0 ppm, in this case get the baseline from the other side of
+        % water. (GO: 180213)
+        if sum(baserange) == 0
+            baserange = MRS_struct.spec.freq >= 7 & MRS_struct.spec.freq <= 8;
+        end
         switch MRS_struct.p.target
             case {'GABA','GABAGlx','Glx'}
                 peakrange = MRS_struct.spec.freq <= 4.1 & MRS_struct.spec.freq >= 2.79;
