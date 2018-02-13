@@ -263,6 +263,7 @@ if strcmp(TwixHeader.seqtype,'PRESS')
     dims.coils = 2;
     dims.averages = 3;
     dims.dyn = 4;
+    TwixData = TwixData(:,:,:,2);
     TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.averages]);
     TwixData = reshape(TwixData,[size(TwixData,1) size(TwixData,2) size(TwixData,3)*size(TwixData,4)]);
 elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')    

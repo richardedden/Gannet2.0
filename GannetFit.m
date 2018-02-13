@@ -1267,6 +1267,16 @@ function MRS_struct = CalcInstUnits(MRS_struct, vox, metab, ii)
 
 TR = MRS_struct.p.TR(ii)/1000;
 TE = MRS_struct.p.TE(ii)/1000;
+if isfield(MRS_struct.p,'TR_water')
+    TR_water = MRS_struct.p.TR_water(ii)/1000;
+else
+    TR_water = TR;
+end
+if isfield(MRS_struct.p,'TE_water')
+    TE_water = MRS_struct.p.TE_water(ii)/1000;
+else
+    TE_water = TE;
+end
 PureWaterConc = 55000; % mmol/L
 WaterVisibility = 0.65; % this is approx the value from Ernst, Kreis, Ross (1993, JMR)
 T1_Water = 1.100; % average of WM and GM, Wansapura et al. 1999 (JMRI)
@@ -1312,8 +1322,8 @@ switch metab
         MM = 1;
 end
 
-T1_Factor = (1-exp(-TR./T1_Water)) ./ (1-exp(-TR./T1_Metab));
-T2_Factor = exp(-TE./T2_Water) ./ exp(-TE./T2_Metab);
+T1_Factor = (1-exp(-TR_water./T1_Water)) ./ (1-exp(-TR./T1_Metab));
+T2_Factor = exp(-TE_water./T2_Water) ./ exp(-TE./T2_Metab);
 
 if strcmpi(MRS_struct.p.vendor,'Siemens')
     % Factor of 2 is appropriate for averaged Siemens data (read in separately as ON and OFF)

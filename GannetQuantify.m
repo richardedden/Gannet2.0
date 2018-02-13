@@ -74,6 +74,16 @@ for ii = 1:length(MRS_struct.metabfile)
     
     TR = MRS_struct.p.TR(ii)/1000;
     TE = MRS_struct.p.TE(ii)/1000;
+    if isfield(MRS_struct.p,'TR_water')
+        TR_water = MRS_struct.p.TR_water(ii)/1000;
+    else
+        TR_water = TR;
+    end
+    if isfield(MRS_struct.p,'TE_water')
+        TE_water = MRS_struct.p.TE_water(ii)/1000;
+    else
+        TE_water = TE;
+    end
     
     for kk = 1:length(vox)
         
@@ -129,9 +139,9 @@ for ii = 1:length(MRS_struct.metabfile)
             MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii) = ...
                 (MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) ./ MRS_struct.out.(vox{kk}).water.Area(ii)) * ...
                 (N_H_Water/N_H_Metab) * MM / EditingEfficiency * ...
-                (fracGM * concw_GM * (1-exp(-TR/T1w_GM)) * (exp(-TE/T2w_GM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
-                fracWM * concw_WM * (1-exp(-TR/T1w_WM)) * (exp(-TE/T2w_WM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
-                fracCSF * concw_CSF * (1-exp(-TR/T1w_CSF)) * (exp(-TE/T2w_CSF)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))));
+                (fracGM * concw_GM * (1-exp(-TR_water/T1w_GM)) * (exp(-TE_water/T2w_GM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
+                fracWM * concw_WM * (1-exp(-TR_water/T1w_WM)) * (exp(-TE_water/T2w_WM)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))) + ...
+                fracCSF * concw_CSF * (1-exp(-TR_water/T1w_CSF)) * (exp(-TE_water/T2w_CSF)) / ((1-exp(-TR/T1_Metab)) * (exp(-TE/T2_Metab))));
             MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_AlphaTissCorr(ii) = MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii) / (fracGM + alpha*fracWM);
             MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_AlphaTissCorr_GrpNorm(ii) = MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_TissCorr(ii) * CorrFactor;
             
