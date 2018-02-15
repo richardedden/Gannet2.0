@@ -76,7 +76,7 @@ while (isempty(strfind(tline , head_end_text))) %#ok<*STREMP>
     if ( isempty(strfind (tline , head_start_text)) + isempty(strfind (tline , head_end_text )) == 2)
                 
         % Find lines with 'equal' signs, all the information is in there.    
-        findequal = strfind('=',tline);
+        findequal = strfind(tline,'=');
         variable = strtrim(tline(1:findequal-1)) ;
         value    = strtrim(tline(findequal+1 : length(tline))) ;
         
