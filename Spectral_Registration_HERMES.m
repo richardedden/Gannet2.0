@@ -243,11 +243,11 @@ while SpecRegLoop > -1
         SUM_ChoCr = SUM(freqrange);
         Baseline_offset = real(SUM_ChoCr(1)+SUM_ChoCr(end))/2;
         Width_estimate = 0.05;
-        Area_estimate = -(max(real(SUM_ChoCr))-min(real(SUM_ChoCr))) * Width_estimate * 4;
+        Area_estimate = (max(real(SUM_ChoCr))-min(real(SUM_ChoCr))) * Width_estimate * 4;
         
-        LorentzModelInit = [Area_estimate Area_estimate Width_estimate Width_estimate 3.02 3.20 pi Baseline_offset 1 1];
-        lb = [Area_estimate/10 Area_estimate/10 Width_estimate/10 Width_estimate/10 3.02-0.02 3.20-0.02 -pi 2e3*Area_estimate 2e3*Area_estimate 2e3*Area_estimate];
-        ub = [-Area_estimate*10 -Area_estimate*10 Width_estimate*10 Width_estimate*10 3.02+0.02 3.20+0.02 pi -1e3*Area_estimate -1e3*Area_estimate -1e3*Area_estimate];
+        LorentzModelInit = [Area_estimate Area_estimate Width_estimate Width_estimate 3.02 3.20 pi Baseline_offset 1 1];        
+        lb = [Area_estimate/10 Area_estimate/10 Width_estimate/10 Width_estimate/10 3.02-0.02 3.20-0.02 -pi -1e3*Area_estimate -1e3*Area_estimate -1e3*Area_estimate];
+        ub = [Area_estimate*10 Area_estimate*10 Width_estimate*10 Width_estimate*10 3.02+0.02 3.20+0.02 pi 2e3*Area_estimate 2e3*Area_estimate 2e3*Area_estimate];
         
         LorentzModelInit = lsqcurvefit(@TwoLorentzModel, LorentzModelInit, freq, real(SUM_ChoCr)', lb, ub, lsqopts);
         LorentzModelParam = nlinfit(freq, real(SUM_ChoCr)', @TwoLorentzModel, LorentzModelInit, nlinopts);
