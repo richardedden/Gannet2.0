@@ -2,7 +2,7 @@ function MRS_struct = GannetCoRegister(MRS_struct, nii_name, rot_folder)
 
 %Coregistration of MRS voxel volumes to imaging datasets, based on headers.
 
-MRS_struct.version.coreg = '180117';
+MRS_struct.version.coreg = '180221';
 
 if MRS_struct.ii ~= length(nii_name)
     error('The number of nifti files does not match the number of MRS files processed by GannetLoad.');
