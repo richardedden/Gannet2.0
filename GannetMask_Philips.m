@@ -43,9 +43,8 @@ V = spm_vol(nii_file);
 
 % Shift imaging voxel coordinates by half an imaging voxel so that the XYZ matrix
 % tells us the x,y,z coordinates of the MIDDLE of that imaging voxel.
-voxdim = abs(V.mat(1:3,1:3));
-voxdim = voxdim(voxdim > 0.1);
-voxdim = round(voxdim/1e-2)*1e-2; % MM (180130)
+[~,voxdim] = spm_get_bbox(V,'fv'); % MM (180220)
+voxdim = abs(voxdim)';
 halfpixshift = -voxdim(1:3)/2;
 halfpixshift(3) = -halfpixshift(3);
 XYZ = XYZ + repmat(halfpixshift, [1 size(XYZ,2)]);
@@ -131,16 +130,13 @@ mask(sphere_mask==1) = isinside;
 
 mask = reshape(mask, V.dim);
 
-V_mask.fname   = fidoutmask ;
+V_mask.fname   = fidoutmask;
 V_mask.descrip = 'MRS_voxel_mask';
 V_mask.dim     = V.dim;
 V_mask.dt      = V.dt;
 V_mask.mat     = V.mat;
 
 spm_write_vol(V_mask,mask);
-
-T1img = T1/max(T1(:));
-T1img_mas = T1img + 0.2*mask;
 
 % Build output
 
@@ -149,46 +145,28 @@ MRS_struct.mask.outfile(ii,:) = fidoutmask;
 
 voxel_ctr      = [-lr_off -ap_off cc_off];
 voxel_ctr(1:2) = -voxel_ctr(1:2);
-voxel_search   = (XYZ(:,:)-repmat(voxel_ctr.',[1 size(XYZ,2)])).^2;
-voxel_search   = sqrt(sum(voxel_search,1));
-[~,index1]     = min(voxel_search);
-[slice(1), slice(2), slice(3)] = ind2sub(V.dim,index1);
 
-%slice = [round(V.dim(1)/2+voxel_ctr(1))
-%       round(V.dim(2)/2+voxel_ctr(2))
-%       round(V.dim(3)/2+voxel_ctr(3))];
+% Transform structural image and co-registered voxel mask from voxel to
+% world space for output (MM: 180221)
+[img_t,img_c,img_s] = voxel2world_space(V,voxel_ctr);
+V_mask = spm_vol(fidoutmask{1});
+[mask_t,mask_c,mask_s] = voxel2world_space(V_mask,voxel_ctr);
 
-im1 = squeeze(T1img_mas(:,:,slice(3)));
-im1 = im1(end:-1:1,:)';
-im3 = squeeze(T1img_mas(:,slice(2),:));
-im3 = im3(end:-1:1,end:-1:1)';
-im2 = squeeze(T1img_mas(slice(1),:,:));
-im2 = im2(:,end:-1:1)';
+img_t = flipud(img_t/max(T1(:)));
+img_c = flipud(img_c/max(T1(:)));
+img_s = flipud(img_s/max(T1(:)));
 
-% MM (180130): Resize slices if voxel resolution in T1 image isn't
-% isometric
-if voxdim(1) ~= voxdim(2)
-    a = max(voxdim([1 2])) ./ min(voxdim([1 2]));
-    im1 = imresize(im1, [size(im1,1)*a size(im1,2)]);
-end
+img_t = img_t + 0.2*flipud(mask_t);
+img_c = img_c + 0.2*flipud(mask_c);
+img_s = img_s + 0.2*flipud(mask_s);
 
-if voxdim(1) ~= voxdim(3)
-    a = max(voxdim([1 3])) ./ min(voxdim([1 3]));
-    im3 = imresize(im3, [size(im3,1)*a size(im3,2)]);
-end
-
-if voxdim(2) ~= voxdim(3)
-    a = max(voxdim([2 3])) ./ min(voxdim([2 3]));
-    im2 = imresize(im2, [size(im2,1)*a size(im2,2)]);
-end
-
-size_max = max([max(size(im1)) max(size(im2)) max(size(im3))]);
+size_max = max([max(size(img_t)) max(size(img_c)) max(size(img_s))]);
 three_plane_img = zeros([size_max 3*size_max]);
-three_plane_img(:,1:size_max)              = image_center(im1, size_max);
-three_plane_img(:,size_max*2+(1:size_max)) = image_center(im3, size_max);
-three_plane_img(:,size_max+(1:size_max))   = image_center(im2, size_max);
+three_plane_img(:,1:size_max)              = image_center(img_t, size_max);
+three_plane_img(:,size_max+(1:size_max))   = image_center(img_s, size_max);
+three_plane_img(:,size_max*2+(1:size_max)) = image_center(img_c, size_max);
 
-MRS_struct.mask.img(ii,:,:)   = three_plane_img;
+MRS_struct.mask.img{ii} = three_plane_img;
 MRS_struct.mask.T1image(ii,:) = {nii_file};
 
 warning('on','MATLAB:nearlySingularMatrix');

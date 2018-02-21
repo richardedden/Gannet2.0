@@ -892,7 +892,8 @@ for kk = 1:length(vox)
                 hc = subplot(2,2,2);
                 get(hc,'pos'); % get position of axes
                 set(hc,'pos',[0.52 0.52 0.42 0.42]) % move the axes slightly
-                imagesc(squeeze(MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
+                size_max = size(MRS_struct.mask.img{ii},1);
+                imagesc(MRS_struct.mask.img{ii}(:,size_max+(1:size_max)));
                 colormap('gray');
                 caxis([0 1])
                 axis equal;

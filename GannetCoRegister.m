@@ -153,14 +153,14 @@ for ii = 1:length(MRS_struct.metabfile)
     [~,tmp3,tmp4] = fileparts(MRS_struct.mask.T1image{ii});
     t = ['Voxel from ' tmp tmp2 ' on ' tmp3 tmp4];
     
-    imagesc(squeeze(MRS_struct.mask.img(ii,:,:)));
+    imagesc(squeeze(MRS_struct.mask.img{ii}));
     colormap('gray');
     caxis([0 0.5]); % range of 0 to 0.5 seems to work best for now - could calc optimal range later
     axis equal;
     axis tight;
     axis off;
-    text(10,size(MRS_struct.mask.img,2)/2,'L','Color',[1 1 1]);
-    text(size(MRS_struct.mask.img,3)-15,size(MRS_struct.mask.img,2)/2,'R','Color',[1 1 1]);
+    text(10,size(MRS_struct.mask.img{ii},1)/2,'L','Color',[1 1 1],'FontSize',20);
+    text(size(MRS_struct.mask.img{ii},2)-20,size(MRS_struct.mask.img{ii},1)/2,'R','Color',[1 1 1],'FontSize',20);
     get(h,'pos'); % get position of axes
     set(h,'pos',[0.0 0.15 1 1]) % move the axes slightly
     title(t, 'FontName', 'Helvetica', 'FontSize', 15, 'Interpreter', 'none');

@@ -164,7 +164,8 @@ for ii = 1:length(MRS_struct.metabfile)
     
     % Voxel co-registration
     subplot(2,2,1);
-    imagesc(squeeze(MRS_struct.mask.img(ii,:,1:round(size(MRS_struct.mask.img,3)/3))));
+    size_max = size(MRS_struct.mask.img{ii},1);
+    imagesc(MRS_struct.mask.img{ii}(:,size_max+(1:size_max)));
     colormap('gray');
     caxis([0 0.5]);
     axis equal;
