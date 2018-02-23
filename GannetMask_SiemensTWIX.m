@@ -18,7 +18,7 @@ VoI_InPlaneRot = MRS_struct.p.VoI_InPlaneRot(ii);
 Norm = [-NormSag -NormCor NormTra];
 %Norm = Norm *-1;
 ROT = VoI_InPlaneRot;
-sl_orient = 's'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+sl_orient = 't'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
 
 % phase reference vector - 
 % adapted from Andre van der Kouwe's "autoaligncorrect.cpp"
