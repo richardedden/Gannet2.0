@@ -21,6 +21,8 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %       2018-01-06: Loading of voxel geometry parameters moved from
 %                   GannetMask_SiemensTWIX to SiemensTwixRead.
 %       2018-01-31: Minor fixes.
+%       2018-02-23: Changed variable names for voxel geometry parameters to
+%                   be consistent with Philips and GE.
 
 ii = MRS_struct.ii;
 
@@ -35,16 +37,16 @@ MRS_struct.p.TE(ii)                     = MetabHeader.TE;
 MRS_struct.p.npoints(ii)                = size(MetabData,2);
 MRS_struct.p.nrows(ii)                  = size(MetabData,3);
 MRS_struct.p.Navg(ii)                   = size(MetabData,3);
-MRS_struct.p.Voxdims.VoI_InPlaneRot(ii) = MetabHeader.VoI_InPlaneRot;
-MRS_struct.p.Voxdims.VoI_RoFOV(ii)      = MetabHeader.VoI_RoFOV;
-MRS_struct.p.Voxdims.VoI_PeFOV(ii)      = MetabHeader.VoI_PeFOV;
-MRS_struct.p.Voxdims.VoIThickness(ii)   = MetabHeader.VoIThickness;
-MRS_struct.p.Voxdims.NormCor(ii)        = MetabHeader.NormCor;
-MRS_struct.p.Voxdims.NormSag(ii)        = MetabHeader.NormSag;
-MRS_struct.p.Voxdims.NormTra(ii)        = MetabHeader.NormTra;
-MRS_struct.p.Voxdims.PosCor(ii)         = MetabHeader.PosCor;
-MRS_struct.p.Voxdims.PosSag(ii)         = MetabHeader.PosSag;
-MRS_struct.p.Voxdims.PosTra(ii)         = MetabHeader.PosTra;
+MRS_struct.p.VoI_InPlaneRot(ii)         = MetabHeader.VoI_InPlaneRot;
+MRS_struct.p.NormCor(ii)                = MetabHeader.NormCor;
+MRS_struct.p.NormSag(ii)                = MetabHeader.NormSag;
+MRS_struct.p.NormTra(ii)                = MetabHeader.NormTra;
+MRS_struct.p.voxdim(ii,1)               = MetabHeader.VoI_RoFOV;
+MRS_struct.p.voxdim(ii,2)               = MetabHeader.VoI_PeFOV;
+MRS_struct.p.voxdim(ii,3)               = MetabHeader.VoIThickness;
+MRS_struct.p.voxoff(ii,1)               = MetabHeader.PosSag;
+MRS_struct.p.voxoff(ii,2)               = MetabHeader.PosCor;
+MRS_struct.p.voxoff(ii,3)               = MetabHeader.PosTra;
 MRS_struct.p.seqorig                    = MetabHeader.seqorig;
 
 if isfield(MetabHeader,'deltaFreq')
