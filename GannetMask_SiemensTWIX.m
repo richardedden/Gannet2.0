@@ -1,4 +1,20 @@
 function MRS_struct = GannetMask_SiemensTWIX(filename, nii_file, MRS_struct, ii)
+%   Creates a .nii file containing the voxel mask of the MRS voxel.
+%   Needs to be called from GannetCoRegister.
+%   Requires SPM8 or SPM12 to be added to the MATLAB path.
+%
+%   Author:
+%       Dr. Georg Oeltzschner (Johns Hopkins University, 2018-02-24)
+%       goeltzs1@jhmi.edu
+%   
+%   Credits:
+%       The routine for correct determination of the phase and readout
+%       directions of the MRS voxel is adapted from 
+%       vox2ras_rsolveAA.m
+%       (Dr. Rudolph Pienaar, Massachusetts General Hospital, Boston)
+%
+%   History:
+%       2018-02-24: New version of GannetMask_SiemensTWIX.
 
 warning('off','MATLAB:nearlySingularMatrix');
 warning('off','MATLAB:qhullmx:InternalWarning');
@@ -15,25 +31,41 @@ VoxOffs = [MRS_struct.p.voxoff(ii,1)+MRS_struct.p.TablePosition(ii,1) MRS_struct
 VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
 VoI_InPlaneRot = MRS_struct.p.VoI_InPlaneRot(ii);
 
-% Define normal vector, rotation angle, and orientation of the imaging slab
+% Define normal vector, rotation angle, and orientation of the MRS voxel
 Norm = [-NormSag -NormCor NormTra];
-%Norm = Norm *-1;
 ROT = VoI_InPlaneRot;
-sl_orient = 't'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
-
-% phase reference vector - 
-% adapted from Andre van der Kouwe's "autoaligncorrect.cpp"
+% Find largest element of normal vector of the voxel to determine primary
+% orientation
+[~, maxdir] = max([abs(NormSag) abs(NormCor) abs(NormTra)]);
+switch maxdir
+    case 1
+        vox_orient = 's'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+    case 2
+        vox_orient = 'c'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+    case 3
+        vox_orient = 't'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+end
+    
+% Phase reference vector
+% Adapted from Rudolph Pienaar's "vox2ras_rsolveAA.m" and
+% Andre van der Kouwe's "autoaligncorrect.cpp"
 Phase	= zeros(3, 1);
-switch sl_orient
-    case 't'
+switch vox_orient
+    case 'c'
+        % For coronal voxel orientation, the phase reference vector lies in
+        % the sagittal plane
         Phase(1)	= 0;
         Phase(2)	=  Norm(3)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
         Phase(3)	= -Norm(2)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
-    case 'c'
+    case 's'
+        % For sagittal voxel orientation, the phase reference vector lies in
+        % the transversal plane
         Phase(1)	=  Norm(2)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(2)	= -Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(3)	= 0;
-    case 's'
+    case 't'
+        % For transversal voxel orientation, the phase reference vector lies in
+        % the transversal plane
         Phase(1)	= -Norm(2)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(2)	=  Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(3)	= 0;
