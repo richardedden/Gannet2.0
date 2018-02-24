@@ -43,8 +43,8 @@ MRS_struct.p.VoI_InPlaneRot(ii)         = MetabHeader.VoI_InPlaneRot;
 MRS_struct.p.NormCor(ii)                = MetabHeader.NormCor;
 MRS_struct.p.NormSag(ii)                = MetabHeader.NormSag;
 MRS_struct.p.NormTra(ii)                = MetabHeader.NormTra;
-MRS_struct.p.voxdim(ii,1)               = MetabHeader.VoI_RoFOV;
-MRS_struct.p.voxdim(ii,2)               = MetabHeader.VoI_PeFOV;
+MRS_struct.p.voxdim(ii,1)               = MetabHeader.VoI_PeFOV;
+MRS_struct.p.voxdim(ii,2)               = MetabHeader.VoI_RoFOV;
 MRS_struct.p.voxdim(ii,3)               = MetabHeader.VoIThickness;
 MRS_struct.p.voxoff(ii,1)               = MetabHeader.PosSag;
 MRS_struct.p.voxoff(ii,2)               = MetabHeader.PosCor;
@@ -196,11 +196,11 @@ TwixHeader.TablePosTra          = twix_obj.hdr.Dicom.lGlobalTablePosTra; % Trans
 
 % GO180108: If a parameter is set to zero (e.g. if no voxel rotation is
 % performed), the respective field is left empty in the TWIX file. This
-% case needs to be intercepted. Setting to zero.
+% case needs to be intercepted. Setting to the minimum possible value.
 VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra','PosCor','PosSag','PosTra','TablePosSag','TablePosCor','TablePosTra'};
 for pp = 1:length(VoI_Params)
     if isempty(TwixHeader.(VoI_Params{pp}))
-        TwixHeader.(VoI_Params{pp}) = 0;
+        TwixHeader.(VoI_Params{pp}) = realmin('double');
     end
 end
 

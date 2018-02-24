@@ -28,14 +28,21 @@ NormCor = MRS_struct.p.NormCor(ii);
 NormTra = MRS_struct.p.NormTra(ii);
 % Correct voxel offsets by table position
 VoxOffs = [MRS_struct.p.voxoff(ii,1)+MRS_struct.p.TablePosition(ii,1) MRS_struct.p.voxoff(ii,2)+MRS_struct.p.TablePosition(ii,2) MRS_struct.p.voxoff(ii,3)+MRS_struct.p.TablePosition(ii,3)];
-VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
 VoI_InPlaneRot = MRS_struct.p.VoI_InPlaneRot(ii);
 
-% Define normal vector, rotation angle, and orientation of the MRS voxel
+% Parse direction cosines of the MRS voxel's normal vector and the rotation angle
+% around the normal vector
+% The direction cosine is the cosine of the angle between the normal
+% vector and the respective direction.
+% Example: If the normal vector points exactly along the FH direction, then: 
+% NormSag = cos(90) = 0, NormCor = cos(90) = 0, NormTra = cos(0) = 1.
 Norm = [-NormSag -NormCor NormTra];
 ROT = VoI_InPlaneRot;
 % Find largest element of normal vector of the voxel to determine primary
-% orientation
+% orientation. 
+% Example: if NormTra has the smallest out of the three Norm
+% values, the angle of the normal vector with the Tra direction (FH) is the
+% smallest, and the primary orientation is transversal.
 [~, maxdir] = max([abs(NormSag) abs(NormCor) abs(NormTra)]);
 switch maxdir
     case 1
@@ -51,27 +58,27 @@ end
 % Andre van der Kouwe's "autoaligncorrect.cpp"
 Phase	= zeros(3, 1);
 switch vox_orient
-    case 'c'
-        % For coronal voxel orientation, the phase reference vector lies in
+    case 't'
+        % For transversal voxel orientation, the phase reference vector lies in
         % the sagittal plane
         Phase(1)	= 0;
         Phase(2)	=  Norm(3)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
         Phase(3)	= -Norm(2)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
-    case 's'
-        % For sagittal voxel orientation, the phase reference vector lies in
+        VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
+    case 'c'
+        % For coronal voxel orientation, the phase reference vector lies in
         % the transversal plane
         Phase(1)	=  Norm(2)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(2)	= -Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(3)	= 0;
-    case 't'
-        % For transversal voxel orientation, the phase reference vector lies in
+        VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
+    case 's'
+        % For sagittal voxel orientation, the phase reference vector lies in
         % the transversal plane
         Phase(1)	= -Norm(2)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(2)	=  Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
         Phase(3)	= 0;
-    otherwise
-        fprintf(1, 'Unknown orientation parameter passed. Returning with dummy M_R');
-	return;
+        VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
 end
 
 % The readout reference vector is the cross product of Norm and Phase
