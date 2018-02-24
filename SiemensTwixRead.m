@@ -23,6 +23,8 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %       2018-01-31: Minor fixes.
 %       2018-02-23: Changed variable names for voxel geometry parameters to
 %                   be consistent with Philips and GE.
+%       2018-02-23: Function now reads TablePosition parameters from TWIX
+%                   header.
 
 ii = MRS_struct.ii;
 
@@ -47,6 +49,9 @@ MRS_struct.p.voxdim(ii,3)               = MetabHeader.VoIThickness;
 MRS_struct.p.voxoff(ii,1)               = MetabHeader.PosSag;
 MRS_struct.p.voxoff(ii,2)               = MetabHeader.PosCor;
 MRS_struct.p.voxoff(ii,3)               = MetabHeader.PosTra;
+MRS_struct.p.TablePosition(ii,1)        = MetabHeader.TablePosSag;
+MRS_struct.p.TablePosition(ii,2)        = MetabHeader.TablePosCor;
+MRS_struct.p.TablePosition(ii,3)        = MetabHeader.TablePosTra;
 MRS_struct.p.seqorig                    = MetabHeader.seqorig;
 
 if isfield(MetabHeader,'deltaFreq')
@@ -176,24 +181,29 @@ TwixHeader.removeOS             = twix_obj.hdr.Config.RemoveOversampling; % Is t
 TwixHeader.TR                   = twix_obj.hdr.Config.TR * 1e-3; % TR [ms]
 TwixHeader.vectorSize           = twix_obj.hdr.Config.VectorSize; % Data points specified on exam card
 TwixHeader.VoI_InPlaneRot       = twix_obj.hdr.Config.VoI_InPlaneRotAngle; % Voxel rotation in plane
-TwixHeader.VoI_RoFOV            = twix_obj.hdr.Config.VoI_RoFOV; % Voxel size in readout direction
-TwixHeader.VoI_PeFOV            = twix_obj.hdr.Config.VoI_PeFOV; % Voxel size in phase encoding direction
-TwixHeader.VoIThickness         = twix_obj.hdr.Config.VoI_SliceThickness; % Voxel size in slice selection direction
+TwixHeader.VoI_RoFOV            = twix_obj.hdr.Config.VoI_RoFOV; % Voxel size in readout direction [mm]
+TwixHeader.VoI_PeFOV            = twix_obj.hdr.Config.VoI_PeFOV; % Voxel size in phase encoding direction [mm]
+TwixHeader.VoIThickness         = twix_obj.hdr.Config.VoI_SliceThickness; % Voxel size in slice selection direction [mm]
 TwixHeader.NormCor              = twix_obj.hdr.Config.VoI_Normal_Cor; % Coronal component of normal vector of voxel
 TwixHeader.NormSag              = twix_obj.hdr.Config.VoI_Normal_Sag; % Sagittal component of normal vector of voxel
 TwixHeader.NormTra              = twix_obj.hdr.Config.VoI_Normal_Tra; % Transversal component of normal vector of voxel
-TwixHeader.PosCor               = twix_obj.hdr.Config.VoI_Position_Cor; % Coronal coordinate of voxel
-TwixHeader.PosSag               = twix_obj.hdr.Config.VoI_Position_Sag; % Sagittal coordinate of voxel
-TwixHeader.PosTra               = twix_obj.hdr.Config.VoI_Position_Tra; % Transversal coordinate of voxel
+TwixHeader.PosCor               = twix_obj.hdr.Config.VoI_Position_Cor; % Coronal coordinate of voxel [mm]
+TwixHeader.PosSag               = twix_obj.hdr.Config.VoI_Position_Sag; % Sagittal coordinate of voxel [mm]
+TwixHeader.PosTra               = twix_obj.hdr.Config.VoI_Position_Tra; % Transversal coordinate of voxel [mm]
+TwixHeader.TablePosSag          = twix_obj.hdr.Dicom.lGlobalTablePosSag; % Sagittal table position [mm]
+TwixHeader.TablePosCor          = twix_obj.hdr.Dicom.lGlobalTablePosCor; % Coronal table position [mm]
+TwixHeader.TablePosTra          = twix_obj.hdr.Dicom.lGlobalTablePosTra; % Transversal table position [mm]
+
 % GO180108: If a parameter is set to zero (e.g. if no voxel rotation is
 % performed), the respective field is left empty in the TWIX file. This
-% case needs to be intercepted. Setting to the minimum possible value.
-VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra','PosCor','PosSag','PosTra'};
+% case needs to be intercepted. Setting to zero.
+VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra','PosCor','PosSag','PosTra','TablePosSag','TablePosCor','TablePosTra'};
 for pp = 1:length(VoI_Params)
     if isempty(TwixHeader.(VoI_Params{pp}))
-        TwixHeader.(VoI_Params{pp}) = realmin('double');
+        TwixHeader.(VoI_Params{pp}) = 0;
     end
 end
+
 TwixHeader.SiemensSoftwareVersion  = twix_obj.hdr.Dicom.SoftwareVersions; % Full software version
 TwixHeader.B0                   = twix_obj.hdr.Dicom.flMagneticFieldStrength; % Nominal B0 [T]
 TwixHeader.tx_freq              = twix_obj.hdr.Dicom.lFrequency * 1e-6; % Transmitter frequency [MHz]

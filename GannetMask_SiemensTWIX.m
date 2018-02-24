@@ -10,7 +10,8 @@ fidoutmask = fullfile(path,[name '_mask.nii']);
 NormSag = MRS_struct.p.NormSag(ii);
 NormCor = MRS_struct.p.NormCor(ii);
 NormTra = MRS_struct.p.NormTra(ii);
-VoxOffs = [MRS_struct.p.voxoff(ii,1) MRS_struct.p.voxoff(ii,2) MRS_struct.p.voxoff(ii,3)];
+% Correct voxel offsets by table position
+VoxOffs = [MRS_struct.p.voxoff(ii,1)+MRS_struct.p.TablePosition(ii,1) MRS_struct.p.voxoff(ii,2)+MRS_struct.p.TablePosition(ii,2) MRS_struct.p.voxoff(ii,3)+MRS_struct.p.TablePosition(ii,3)];
 VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
 VoI_InPlaneRot = MRS_struct.p.VoI_InPlaneRot(ii);
 
