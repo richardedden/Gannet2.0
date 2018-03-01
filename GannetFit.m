@@ -608,25 +608,25 @@ for kk = 1:length(vox)
                 % Root sum square fit error and concentration in institutional units -- MGSaleh & MM
                 switch target{trg}
                     case 'GABA'
-                        MRS_struct.out.(vox{kk}).GABA.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).GABA.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'GABA', ii);
                         
                     case 'Glx'
-                        MRS_struct.out.(vox{kk}).Glx.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).Glx.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'Glx', ii);
                         
                     case 'GABAGlx'
-                        MRS_struct.out.(vox{kk}).GABA.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
-                        MRS_struct.out.(vox{kk}).Glx.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).GABA.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).GABA.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
+                        MRS_struct.out.(vox{kk}).Glx.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).Glx.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'GABA', ii);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, 'Glx', ii);
                         
                     case 'GSH'
-                        MRS_struct.out.(vox{kk}).GSH.FitError_W = sqrt(MRS_struct.out.(vox{kk}).GSH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).GSH.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).GSH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
                         
                     case 'Lac'
-                        MRS_struct.out.(vox{kk}).Lac.FitError_W = sqrt(MRS_struct.out.(vox{kk}).Lac.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError.^2);
+                        MRS_struct.out.(vox{kk}).Lac.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).Lac.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
                         MRS_struct = CalcInstUnits(MRS_struct, vox{kk}, (target{trg}), ii);
                 end
                 
