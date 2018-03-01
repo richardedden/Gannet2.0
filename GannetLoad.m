@@ -310,9 +310,9 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             elseif strcmpi(MRS_struct.p.seqorig,'Philips')
                 switch MRS_struct.p.ONOFForder
                     case 'onfirst'
-                        MRS_struct.fids.ON_OFF = [ones(1,160) zeros(1,160)];
+                        MRS_struct.fids.ON_OFF = [ones(1,size(MRS_struct.fids.data,2)/2) zeros(1,size(MRS_struct.fids.data,2)/2)];
                     case 'offfirst'
-                        MRS_struct.fids.ON_OFF = [zeros(1,160) ones(1,160)];
+                        MRS_struct.fids.ON_OFF = [zeros(1,size(MRS_struct.fids.data,2)/2) ones(1,size(MRS_struct.fids.data,2)/2)];
                 end
             else 
                 error('Philips sequence type not correctly specified in GannetPreInitialise. Options are JHU and Philips.') 
