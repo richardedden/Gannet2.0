@@ -160,39 +160,31 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
             %Set up vector of which rows of data are ONs and OFFs
             switch MRS_struct.p.ONOFForder
                 case 'onfirst'
-                    MRS_struct.fids.ON_OFF = repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
+                    if MRS_struct.p.HERMES % HERMES: GABAGlx or Lac and GSH -- Added by MGSaleh & MM 2016
+                        if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                            % 1=?, 2=?, 3=?, 4=? (MM: 170703)
+                            MRS_struct.fids.ON_OFF  = repmat([1 1 0 0 0 0 1 1], [1 size(MRS_struct.fids.data,2)/8]); % GABA
+                            MRS_struct.fids.ON_OFF2 = repmat([0 0 0 0 1 1 1 1], [1 size(MRS_struct.fids.data,2)/8]); % GSH
+                        elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac') %This has not been tested with universal sequence -- 03142018 MGSaleh
+                            % MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                            % MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % Lac
+                        end
+                    else
+                        if strcmp(MRS_struct.p.seq_string,'mgs_svs_ed') %This is a condition to check whether this is a universal sequence -- 03162018  MGSaleh
+                            MRS_struct.fids.ON_OFF = repmat([1 1 0 0],[1 size(MRS_struct.fids.data,2)/4]);
+                        else
+                            MRS_struct.fids.ON_OFF = repmat([1 0],[1 size(MRS_struct.fids.data,2)/2]);
+                        end
+                    end
+                    
+                    if strcmp(MRS_struct.p.seq_string,'mgs_svs_ed') %This is a condition to check whether this is a universal sequence -- 03162018  MGSaleh
+                        %Zero-order correction based on Cr -- 03162018  MGSaleh
+                        MRS_struct = cr_phase_corr_univ_seq(MRS_struct);
+                        FullData = MRS_struct.fids.data;
+                    end
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
-            
-        case 'Siemens_dicom' % GO 11/01/2016
-            if exist('waterfile','var')
-                % Load the data. GannetLoad specifies a file in the first
-                % place, so take apart that filename, and feed the containing
-                % folder into the SiemensDICOMRead function. % GO 11/01/2016
-                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 02/05/2017
-                [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
-                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder,waterfolder); % GO 02/05/2017
-                MRS_struct.p.Reference_compound='H2O';
-                WaterData = MRS_struct.fids.data_water;
-            else
-                MRS_struct.p.Reference_compound='Cr';
-                % Same as above, but without parsing the waterfolder. % GO 02/05/2017
-                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 11/01/2016
-                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder); % GO 11/01/2016
-            end
-            FullData = MRS_struct.fids.data;
-            
-            % Fill up fields required for downstream processing % GO 11/01/2016
-            switch MRS_struct.p.ONOFForder
-                case 'onfirst'
-                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-                case 'offfirst'
-                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
-                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-            end
-            
         case 'dicom' % GO 11/30/2016
             % care about water-unsuppressed files later % GO 11/30/2016
             if exist('waterfile','var')

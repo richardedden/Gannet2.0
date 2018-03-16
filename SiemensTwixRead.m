@@ -25,6 +25,8 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %                   be consistent with Philips and GE.
 %       2018-02-23: Function now reads TablePosition parameters from TWIX
 %                   header.
+%       2018-02-16: Function now reads in universal sequence using correct 
+%                   sequence string
 
 ii = MRS_struct.ii;
 
@@ -36,9 +38,16 @@ MRS_struct.p.sw(ii)                     = 1/MetabHeader.dwellTime;
 MRS_struct.p.LarmorFreq(ii)             = MetabHeader.tx_freq;
 MRS_struct.p.TR(ii)                     = MetabHeader.TR;
 MRS_struct.p.TE(ii)                     = MetabHeader.TE;
-MRS_struct.p.npoints(ii)                = size(MetabData,2);
-MRS_struct.p.nrows(ii)                  = size(MetabData,3);
-MRS_struct.p.Navg(ii)                   = size(MetabData,3);
+MRS_struct.p.seq_string                 = MetabHeader.sequenceString; % Added for the universal sequence -- 03162018 MGSaleh
+if strcmp(MRS_struct.p.seq_string,'mgs_svs_ed') % Added for the universal sequence -- 03162018 MGSaleh
+    MRS_struct.p.npoints(ii)            = MetabHeader.sqzSize(1);
+    MRS_struct.p.nrows(ii)              = MetabHeader.sqzSize(3)*MetabHeader.sqzSize(4);
+    MRS_struct.p.Navg(ii)               = MetabHeader.sqzSize(3)*MetabHeader.sqzSize(4);
+else
+    MRS_struct.p.npoints(ii)            = size(MetabData,2);
+    MRS_struct.p.nrows(ii)              = size(MetabData,3);
+    MRS_struct.p.Navg(ii)               = size(MetabData,3);
+end
 MRS_struct.p.VoI_InPlaneRot(ii)         = MetabHeader.VoI_InPlaneRot;
 MRS_struct.p.NormCor(ii)                = MetabHeader.NormCor;
 MRS_struct.p.NormSag(ii)                = MetabHeader.NormSag;
@@ -80,9 +89,16 @@ if nargin == 3
     MRS_struct.p.sw_water(ii)            = 1/WaterHeader.dwellTime;
     MRS_struct.p.TR_water(ii)            = WaterHeader.TR;
     MRS_struct.p.TE_water(ii)            = WaterHeader.TE;
-    MRS_struct.p.npoints_water(ii)       = size(WaterData,2);
-    MRS_struct.p.nrows_water(ii)         = size(WaterData,3);
-    MRS_struct.p.Nwateravg(ii)           = size(WaterData,3);
+    MRS_struct.p.seq_string              = MetabHeader.sequenceString; % Added for the universal sequence -- 03162018 MGSaleh
+    if strcmp(MRS_struct.p.seq_string,'mgs_svs_ed') % Added for the universal sequence -- 03162018 MGSaleh
+        MRS_struct.p.npoints_water(ii)   = WaterHeader.sqzSize(1);
+        MRS_struct.p.nrows_water(ii)     = WaterHeader.sqzSize(3)*MetabHeader.sqzSize(4);
+        MRS_struct.p.Nwateravg(ii)       = WaterHeader.sqzSize(3)*MetabHeader.sqzSize(4);
+    else
+        MRS_struct.p.npoints_water(ii)   = size(WaterData,2);
+        MRS_struct.p.nrows_water(ii)     = size(WaterData,3);
+        MRS_struct.p.Nwateravg(ii)       = size(WaterData,3);
+    end
     MRS_struct.p.seqtype_water           = WaterHeader.seqtype;
     if isfield(WaterHeader,'deltaFreq')
         MRS_struct.p.Siemens.deltaFreq.water(ii) = WaterHeader.deltaFreq;
