@@ -160,7 +160,7 @@ V_mask.dim     = V.dim;
 V_mask.dt      = V.dt;
 V_mask.mat     = V.mat;
 
-spm_write_vol(V_mask,mask);
+V_mask = spm_write_vol(V_mask,mask);
 
 % Build output page
 fidoutmask = cellstr(fidoutmask);
@@ -171,7 +171,6 @@ MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];
 % Transform structural image and co-registered voxel mask from voxel to
 % world space for output (MM: 180221)
 [img_t,img_c,img_s] = voxel2world_space(V,VoxOffs);
-V_mask = spm_vol(fidoutmask{1});
 [mask_t,mask_c,mask_s] = voxel2world_space(V_mask,VoxOffs);
 
 img_t = flipud(img_t/max(T1(:)));

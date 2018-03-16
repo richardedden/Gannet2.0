@@ -173,7 +173,7 @@ V_mask.dim     = V.dim;
 V_mask.dt      = V.dt;
 V_mask.mat     = V.mat;
 
-spm_write_vol(V_mask,mask);
+V_mask = spm_write_vol(V_mask,mask);
 
 % Build output
 
@@ -188,7 +188,6 @@ voxel_ctr(1:2) = -voxel_ctr(1:2);
 % Transform structural image and co-registered voxel mask from voxel to
 % world space for output (MM: 180221)
 [img_t,img_c,img_s] = voxel2world_space(V,voxel_ctr);
-V_mask = spm_vol(fidoutmask{1});
 [mask_t,mask_c,mask_s] = voxel2world_space(V_mask,voxel_ctr);
 
 img_t = flipud(img_t/max(T1(:)));
