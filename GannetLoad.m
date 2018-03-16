@@ -185,6 +185,35 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
                 case 'offfirst'
                     MRS_struct.fids.ON_OFF = repmat([0 1],[1 size(MRS_struct.fids.data,2)/2]);
             end
+            
+        case 'Siemens_dicom' % GO 11/01/2016
+            if exist('waterfile','var')
+                % Load the data. GannetLoad specifies a file in the first
+                % place, so take apart that filename, and feed the containing
+                % folder into the SiemensDICOMRead function. % GO 11/01/2016
+                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 02/05/2017
+                [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
+                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder,waterfolder); % GO 02/05/2017
+                MRS_struct.p.Reference_compound='H2O';
+                WaterData = MRS_struct.fids.data_water;
+            else
+                MRS_struct.p.Reference_compound='Cr';
+                % Same as above, but without parsing the waterfolder. % GO 02/05/2017
+                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 11/01/2016
+                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder); % GO 11/01/2016
+            end
+            FullData = MRS_struct.fids.data;
+            
+            % Fill up fields required for downstream processing % GO 11/01/2016
+            switch MRS_struct.p.ONOFForder
+                case 'onfirst'
+                    MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+                case 'offfirst'
+                    MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
+                    MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+            end
+            
         case 'dicom' % GO 11/30/2016
             % care about water-unsuppressed files later % GO 11/30/2016
             if exist('waterfile','var')
