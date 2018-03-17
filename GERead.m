@@ -1,51 +1,49 @@
 function MRS_struct = GERead(MRS_struct, fname)
-% 121106 RAEE moving code from GannetLoad to GERead (to match other file
-% formats and tidy things up some
 % RTN edits to accommodate Noeske version RAEE 141007
 % 160916: MM & RTN edits to accommodate different encoding schemes
 
 ii = MRS_struct.ii;
 
-fid = fopen(fname,'r', 'ieee-be');
+fid = fopen(fname, 'r', 'ieee-be');
 if fid == -1
     tmp = ['Unable to locate Pfile ' fname];
     disp(tmp);
     return
 end
 % Return error message if unable to read file type.
-% Determine size of Pfile header based on Rev number
+% Determine size of Pfile header based on rdbm_rev number
 fseek(fid, 0, 'bof');
 f_hdr_value = fread(fid, 1, 'real*4');
 rdbm_rev_num = f_hdr_value(1);
-if( rdbm_rev_num == 7.0 )
-    pfile_header_size = 39984;  % LX
-elseif ( rdbm_rev_num == 8.0 )
-    pfile_header_size = 60464;  % Cardiac / MGD
-elseif (( rdbm_rev_num > 5.0 ) && (rdbm_rev_num < 6.0))
-    pfile_header_size = 39940;  % Signa 5.5
+if rdbm_rev_num == 7.0
+    pfile_header_size = 39984; % LX
+elseif rdbm_rev_num == 8.0
+    pfile_header_size = 60464; % Cardiac / MGD
+elseif rdbm_rev_num > 5.0 && rdbm_rev_num < 6.0
+    pfile_header_size = 39940; % Signa 5.5
 else
     % In 11.0 and later the header and data are stored as little-endian
     fclose(fid);
-    fid = fopen(fname,'r', 'ieee-le');
+    fid = fopen(fname, 'r', 'ieee-le');
     fseek(fid, 0, 'bof');
     f_hdr_value = fread(fid, 1, 'real*4');
-    if (f_hdr_value == 9.0)  % 11.0 product release
-        pfile_header_size= 61464;
-    elseif (f_hdr_value == 11.0)  % 12.0 product release
-        pfile_header_size= 66072;
-    elseif (f_hdr_value > 11.0) && (f_hdr_value < 100.0)  % 14.0 and later
+    if f_hdr_value == 9.0 % 11.0 product release
+        pfile_header_size = 61464;
+    elseif f_hdr_value == 11.0 % 12.0 product release
+        pfile_header_size = 66072;
+    elseif f_hdr_value > 11.0 && f_hdr_value < 100.0 % 14.0 and later
         fseek(fid, 1468, 'bof');
-        pfile_header_size = fread(fid,1,'integer*4');
+        pfile_header_size = fread(fid, 1, 'integer*4');
     else
-        sprintf('Invalid Pfile header revision: %f', f_hdr_value );
-        return;
+        sprintf('Invalid Pfile header revision: %f', f_hdr_value);
+        return
     end
 end
 
 MRS_struct.p.GE.rdbm_rev_num = f_hdr_value(1); % MM (170118)
-chkRev = [16, 24]; % GERead mods tested with these revisions only
-if ~any(MRS_struct.p.GE.rdbm_rev_num == chkRev)
-    warning('!!! GERead not fully functional with header revision number %d !!!', MRS_struct.p.GE.rdbm_rev_num);
+chkRev = [14.3, 16, 24]; % GERead mods tested with these revisions only
+if ~any(MRS_struct.p.GE.rdbm_rev_num < chkRev | MRS_struct.p.GE.rdbm_rev_num > chkRev)
+    warning('GERead not fully functional with header revision number %g!', MRS_struct.p.GE.rdbm_rev_num);
 end
 % Read header information
 fseek(fid, 0, 'bof');
@@ -77,7 +75,10 @@ fseek(fid, 1468, 'bof');
 p_hdr_value = fread(fid, 12, 'integer*4'); % byte offsets to start of sub-header structures
 fseek(fid, p_hdr_value(10), 'bof'); % set position to start of rdb_hdr_image
 t_hdr_value = fread(fid, p_hdr_value(1)-p_hdr_value(10), 'integer*4');
-if MRS_struct.p.GE.rdbm_rev_num == 16
+if strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), '14.3')
+    MRS_struct.p.TE(ii) = t_hdr_value(181)/1e3;
+    MRS_struct.p.TR(ii) = t_hdr_value(179)/1e3;
+elseif MRS_struct.p.GE.rdbm_rev_num == 16
     MRS_struct.p.TE(ii) = t_hdr_value(193)/1e3;
     MRS_struct.p.TR(ii) = t_hdr_value(191)/1e3;
 elseif MRS_struct.p.GE.rdbm_rev_num == 24
@@ -88,7 +89,13 @@ end
 % MM (170127): Find voxel dimensions and edit pulse parameters
 fseek(fid, p_hdr_value(8), 'bof'); % set position to start of rdb_hdr_exam
 o_hdr_value = fread(fid, p_hdr_value(9)-p_hdr_value(8), 'real*4');
-if MRS_struct.p.GE.rdbm_rev_num == 16
+if strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), '14.3')
+    MRS_struct.p.voxdim(ii,:) = o_hdr_value(810:812)';
+    MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(821);
+    MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(822:823)';
+    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
+    MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(824)/1e3;
+elseif MRS_struct.p.GE.rdbm_rev_num == 16
     MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
     MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(833);
     MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(834:835)';
@@ -103,7 +110,7 @@ elseif MRS_struct.p.GE.rdbm_rev_num == 24
 end
 
 % Spectro prescan pfiles
-if (MRS_struct.p.npoints(ii) == 1) && (MRS_struct.p.nrows(ii) == 1)
+if MRS_struct.p.npoints(ii) == 1 && MRS_struct.p.nrows(ii) == 1
     MRS_struct.p.npoints(ii) = 2048;
 end
 
@@ -112,7 +119,7 @@ data_elements = MRS_struct.p.npoints(ii)*2;
 frame_size = data_elements*point_size;
 my_frame = 1;
 
-%Start to read data into Eightchannel structure.
+% Start to read data into Eightchannel structure.
 totalframes = (MRS_struct.p.nrows(ii)-my_frame+1)*nechoes; % RTN nechoes mulitply
 MRS_struct.p.nrows(ii) = totalframes;
 data_elements2 = data_elements * totalframes * nreceivers;
@@ -202,7 +209,6 @@ FullData = permute(FullData,[3 1 2]);
 WaterData = WaterData.*repmat([1;1i], [1 MRS_struct.p.npoints(ii) Frames_for_Water nreceivers]);
 WaterData = squeeze(sum(WaterData,1));
 WaterData = permute(WaterData,[3 1 2]);
-% At this point, FullData(rx_channel, point, average)
 
 % MM (170505)
 firstpoint_water = conj(WaterData(:,1,:));
@@ -222,12 +228,12 @@ firstpoint = repmat(firstpoint, [1 1 size(FullData,3)]);
 FullData = FullData .* firstpoint;
 FullData = squeeze(sum(FullData,1));
 MRS_struct.fids.data = FullData;
-%%%%%% end of GE specific load
 
-rescale = 1/1e11; % Necessary for GE data or numbers blow up
+rescale = 1/1e11; % necessary for GE data or numbers blow up
 MRS_struct.fids.data = MRS_struct.fids.data * rescale;
 MRS_struct.fids.data_water = MRS_struct.fids.data_water * rescale;
 
 end
+
 
 
