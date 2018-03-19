@@ -750,37 +750,31 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     end
     saveas(h, pdfname);
     
-    % Save the processed data into an SDAT file
+    % Export the processed data into an SDAT file
     if MRS_struct.p.sdat
-        if strcmpi(MRS_struct.p.vendor,'Philips')
-            if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                %sdat_G_name=[ 'MRSload_output/' fullpath '_G.data' ]
-                %NOT SUPPORTED
-            else
-                %set up filenames for sdat output
-                sdat_G_name=['GannetLoad_output/' metabfile_nopath  '_G.sdat'];
-                spar_G_name=['GannetLoad_output/' metabfile_nopath  '_G.spar'];
-                %make file copies for sdat output
-                copyfile(metabfile{ii},sdat_G_name);
-                sparname=metabfile{ii};
-                sparname = [sparname(1:(end-4)) MRS_struct.p.spar_string];
-                copyfile(sparname,spar_G_name);
-                %write into the sdat file
-                %What do we write
-                sdat_diff_out=conj(ifft(fftshift(MRS_struct.spec.diff(ii,:),2),[],2));
-                sdat_diff_out=sdat_diff_out(1:MRS_struct.p.npoints(ii));
-                %Also write out OFF
-                sdat_off_out=conj(ifft(fftshift(MRS_struct.spec.GABA.off(ii,:),2),[],2));
-                sdat_off_out=sdat_off_out(1:MRS_struct.p.npoints(ii));
-                %How do we write it out?
-                fileid  = fopen(sdat_G_name,'w','ieee-le');
-                ff(:,1:2:2*MRS_struct.p.npoints(ii)) = real(sdat_diff_out);
-                ff(:,2:2:2*MRS_struct.p.npoints(ii)) = imag(sdat_diff_out);
-                gg(:,1:2:2*MRS_struct.p.npoints(ii)) = real(sdat_off_out);
-                gg(:,2:2:2*MRS_struct.p.npoints(ii)) = imag(sdat_off_out);
-                fwriteVAXD(fileid,[ff.' gg.'],'float');
-                fclose(fileid);
-            end
+        if strcmpi(MRS_struct.p.vendor,'Philips')            
+            % Set up filenames
+            sdat_G_name = ['GannetLoad_output/' metabfile_nopath  '_G.sdat'];
+            spar_G_name = ['GannetLoad_output/' metabfile_nopath  '_G.spar'];
+            % Make file copies for SDAT/SPAR files
+            copyfile(metabfile{ii},sdat_G_name);
+            sparname = [metabfile{ii}(1:end-4) MRS_struct.p.spar_string];
+            copyfile(sparname,spar_G_name);
+            % Write DIFF data into the SDAT file
+            sdat_diff_out = conj(ifft(fftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:),2),[],2));
+            sdat_diff_out = sdat_diff_out(1:MRS_struct.p.npoints(ii));
+            % Also write out OFF data
+            sdat_off_out = conj(ifft(fftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off(ii,:),2),[],2));
+            sdat_off_out = sdat_off_out(1:MRS_struct.p.npoints(ii));
+            fileid  = fopen(sdat_G_name,'w','ieee-le');
+            ff(:,1:2:2*MRS_struct.p.npoints(ii)) = real(sdat_diff_out);
+            ff(:,2:2:2*MRS_struct.p.npoints(ii)) = imag(sdat_diff_out);
+            gg(:,1:2:2*MRS_struct.p.npoints(ii)) = real(sdat_off_out);
+            gg(:,2:2:2*MRS_struct.p.npoints(ii)) = imag(sdat_off_out);
+            fwriteVAXD(fileid,[ff.' gg.'],'float');
+            fclose(fileid);
+        else
+            warning('Only Philips SDAT files can be exported! No data exported.');
         end
     end
     
