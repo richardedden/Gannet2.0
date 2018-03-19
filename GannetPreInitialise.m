@@ -29,6 +29,6 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
     MRS_struct.p.HERMES = 0; % 1 = YES, 0 = NO (for MEGA-PRESS)
     MRS_struct.p.PRIAM  = 0; % 1 = YES, 0 = NO
     MRS_struct.p.mat    = 0; % 1 = YES, save MRS_struct as .mat file
-    MRS_struct.p.sdat   = 0; % 1 = YES, save MRS_struct as .sdat file (only for Philips SDAT MEGA-PRESS datasets)
+    MRS_struct.p.sdat   = 0; % 1 = YES, save processed difference spectrum as .sdat file (only for Philips SDAT MEGA-PRESS datasets)
     
 end
