@@ -42,7 +42,10 @@ fseek(fid, 1468, 'bof');
 p_hdr_value = fread(fid, 12, 'integer*4'); % byte offsets to start of sub-header structures
 fseek(fid, p_hdr_value(8), 'bof'); % set position to start of rdb_hdr_exam
 o_hdr_value = fread(fid, p_hdr_value(9)-p_hdr_value(8), 'real*4');
-if MRS_struct.p.GE.rdbm_rev_num == 16
+if strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), '14.3')
+    MRS_struct.p.voxdim(ii,:) = o_hdr_value(810:812)';
+    MRS_struct.p.voxoff(ii,:) = o_hdr_value(813:815)';
+elseif MRS_struct.p.GE.rdbm_rev_num == 16
     MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
     MRS_struct.p.voxoff(ii,:) = o_hdr_value(825:827)';
 elseif MRS_struct.p.GE.rdbm_rev_num == 24

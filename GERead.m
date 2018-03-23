@@ -41,8 +41,8 @@ else
 end
 
 MRS_struct.p.GE.rdbm_rev_num = f_hdr_value(1); % MM (170118)
-chkRev = [14.3, 16, 24]; % GERead mods tested with these revisions only
-if ~any(MRS_struct.p.GE.rdbm_rev_num < chkRev | MRS_struct.p.GE.rdbm_rev_num > chkRev)
+chkRev = {'14.3', '16', '24'}; % GERead mods tested with these revisions only
+if ~any(strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), chkRev))
     warning('GERead not fully functional with header revision number %g!', MRS_struct.p.GE.rdbm_rev_num);
 end
 % Read header information
