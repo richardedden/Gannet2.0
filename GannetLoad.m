@@ -439,33 +439,7 @@ for ii = 1:numpfiles % Loop over all files in the batch (from metabfile)
     % Frame-by-frame determination of frequency of residual water (MM: 170201)
     water_range = MRS_struct.spec.freq-4.68 >= -0.2 & MRS_struct.spec.freq-4.68 <= 0.2;
     [~,FrameMaxPos] = max(abs(real(AllFramesFT(water_range,:))),[],1);
-    % Not always true that water starts at 4.68, if drift is rapid...
-    water_off = abs(MRS_struct.spec.freq-4.68);
-    water_index = find(min(water_off)==water_off);
-    % Determine frame shifts
-    FrameShift = FrameMaxPos - water_index;
-    
-    switch MRS_struct.p.vendor
-        case 'GE'
-            AllFramesFTrealign = AllFramesFT;
-        case {'Philips','Philips_data'}
-            if any(strcmp(MRS_struct.p.target,{'GSH','GABAGlx'})) % Added by MGSaleh 2016
-                AllFramesFTrealign = AllFramesFT;
-            else
-                for jj = 1:size(AllFramesFT,2)
-                    AllFramesFTrealign(:,jj) = circshift(AllFramesFT(:,jj), -FrameShift(jj)); % is this used????
-                end
-            end
-            %This quite possibly doesn't carry through, as it seems
-            %that the later stuff all starts with AllFramesFT, not
-            %AllFramesFTrealign
-        case 'Siemens_twix'
-            AllFramesFTrealign = AllFramesFT;
-        case 'Siemens_dicom'
-            AllFramesFTrealign = AllFramesFT;
-        case 'dicom'
-            AllFramesFTrealign = AllFramesFT;
-    end
+    AllFramesFTrealign = AllFramesFT;
     
     % MM (170703)
     freqWaterRange = MRS_struct.spec.freq(water_range);
