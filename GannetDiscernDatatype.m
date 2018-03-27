@@ -4,6 +4,7 @@ function MRS_struct = GannetDiscernDatatype(filename,MRS_struct)
 lastchar=filename;
 
 last2char=lastchar((end-1):end);
+last3char=lastchar((end-2):end);
 last4char=lastchar((end-3):end);
 
 if strcmpi(last2char,'.7')
@@ -20,8 +21,8 @@ elseif strcmpi(last2char,'TA')
     MRS_struct.p.vendor = 'Philips_data';
 elseif(strcmpi(last4char,'.RAW')) % GO 11/01/2016
     MRS_struct.p.vendor = 'Philips_raw'; % GO 11/01/2016
-elseif strcmpi(last2char,'DA')
-    MRS_struct.p.vendor = 'Siemens';
+elseif strcmpi(last3char,'RDA')
+    MRS_struct.p.vendor = 'Siemens_rda';
 elseif strcmpi(last4char,'.DAT')
     MRS_struct.p.vendor = 'Siemens_twix';
 elseif(strcmpi(last4char,'.IMA')) % GO 11/11/2016

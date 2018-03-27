@@ -21,7 +21,7 @@ function MRS_struct = GannetFit(MRS_struct, varargin)
 % create a loop -- MGSaleh 2016
 
 if MRS_struct.p.PRIAM % deciding how many regions are there -- MGSaleh 2016
-    vox = {MRS_struct.p.Vox};
+    vox = MRS_struct.p.Vox;
 else
     vox = {MRS_struct.p.Vox{1}};
 end
@@ -51,7 +51,7 @@ else
 end
 
 freq = MRS_struct.spec.freq;
-MRS_struct.version.fit = '171013';
+MRS_struct.version.fit = '180326';
 
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10,'Display','off');
@@ -909,7 +909,7 @@ for kk = 1:length(vox)
             text_pos = 0.9; % A variable to determine y-position of text on printout on figure -- Added by MGSaleh
                         
             % MM (180112)
-            if strcmp(MRS_struct.p.vendor,'Siemens')
+            if strcmp(MRS_struct.p.vendor,'Siemens_rda')
                 [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
             else
                 [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
@@ -1048,7 +1048,7 @@ for kk = 1:length(vox)
             end
             
             % MM (180112)
-            if strcmp(MRS_struct.p.vendor,'Siemens')
+            if strcmp(MRS_struct.p.vendor,'Siemens_rda')
                 [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii*2-1});
             else
                 [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii});
@@ -1072,9 +1072,9 @@ for kk = 1:length(vox)
             end
             
             if strcmpi(MRS_struct.p.vendor,'Philips_data')
-                pdfname = fullfile('GannetFit_output', [fullpath '_' target{trg} '_fit.pdf']); % MM (180112)
+                pdfname = fullfile('GannetFit_output', [fullpath '_' target{trg} '_' vox{kk} '_fit.pdf']); % MM (180112)
             else
-                pdfname = fullfile('GannetFit_output', [metabfile_nopath '_' target{trg} '_fit.pdf']); % MM (180112)
+                pdfname = fullfile('GannetFit_output', [metabfile_nopath '_' target{trg} '_' vox{kk} '_fit.pdf']); % MM (180112)
             end            
             saveas(h, pdfname);
             
@@ -1326,7 +1326,7 @@ end
 T1_Factor = (1-exp(-TR_water./T1_Water)) ./ (1-exp(-TR./T1_Metab));
 T2_Factor = exp(-TE_water./T2_Water) ./ exp(-TE./T2_Metab);
 
-if strcmpi(MRS_struct.p.vendor,'Siemens')
+if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
     % Factor of 2 is appropriate for averaged Siemens data (read in separately as ON and OFF)
     MRS_struct.out.(vox).(metab).ConcIU(ii) = (MRS_struct.out.(vox).(metab).Area(ii) ./ MRS_struct.out.(vox).water.Area(ii))  ...
         .* PureWaterConc .* WaterVisibility .* T1_Factor .* T2_Factor .* (N_H_Water./N_H_Metab) ...

@@ -3,7 +3,7 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
 % Some of these parameters will be parsed from the MRS data file header
 
 % Acquisition Parameters
-    MRS_struct.p.seqorig = 'JHU'; % origin of Philips patch; options are 'JHU' or 'Philips'
+    MRS_struct.p.seqorig = 'Philips'; % origin of Philips patch; options are 'JHU' or 'Philips'
     MRS_struct.p.sw = []; % parsed from header
     MRS_struct.p.npoints = []; % parsed from header
     MRS_struct.p.TR = []; % parsed from header
@@ -13,7 +13,7 @@ function MRS_struct = GannetPreInitialise(MRS_struct)
     MRS_struct.p.target = 'GABAGlx'; % signal(s) to fit; options are 'GABAGlx', 'GSH' or 'Lac'
     MRS_struct.p.target2 = 'GSH'; % applies to HERMES data only; options are 'GSH' or 'Lac'
     MRS_struct.p.ONOFForder = 'offfirst'; % order of editing pulses; options are 'onfirst' or 'offfirst'
-    MRS_struct.p.Water_Positive = 1; % for Philips MOIST water suppression, set to 0
+    MRS_struct.p.Water_Positive = 0; % for Philips MOIST water suppression, set to 0
     
 % Analysis Parameters
     MRS_struct.p.LB = 3; % line-broadening (in Hz)

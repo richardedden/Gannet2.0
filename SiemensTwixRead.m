@@ -1,5 +1,5 @@
 function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
-%% function [ MRS_struct ] = SiemensTwixRead(MRS_struct,fname,fname_water)
+%% function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %   Reads Siemens TWIX files (*.dat).
 %
 %   Author:
@@ -25,8 +25,8 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %                   be consistent with Philips and GE.
 %       2018-02-23: Function now reads TablePosition parameters from TWIX
 %                   header.
-%       2018-02-16: Function now reads in universal sequence using correct 
-%                   sequence string
+%       2018-03-16: Function now reads in universal sequence using correct 
+%                   sequence string.
 
 ii = MRS_struct.ii;
 

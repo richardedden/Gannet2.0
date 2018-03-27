@@ -43,7 +43,7 @@ for ii = 1:length(MRS_struct.metabfile)
                 %       MRS_struct.p.vendor = 'Philips_data'
             end
             
-        case 'Siemens'
+        case 'Siemens_rda'
             fname = MRS_struct.metabfile{ii};
             MRS_struct = GannetMask_Siemens(fname, nii_name{ii}, MRS_struct, ii);
             
@@ -145,7 +145,7 @@ for ii = 1:length(MRS_struct.metabfile)
     h = subplot(2,3,1:3);
     
     % MM (180112)
-    if strcmp(MRS_struct.p.vendor,'Siemens')
+    if strcmp(MRS_struct.p.vendor,'Siemens_rda')
         [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
     else
         [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
@@ -187,7 +187,7 @@ for ii = 1:length(MRS_struct.metabfile)
     end
     
     % MM (180112)
-    if strcmp(MRS_struct.p.vendor,'Siemens')
+    if strcmp(MRS_struct.p.vendor,'Siemens_rda')
         [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii*2-1});
     else
         [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii});

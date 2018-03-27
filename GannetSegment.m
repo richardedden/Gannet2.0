@@ -153,7 +153,7 @@ for ii = 1:length(MRS_struct.metabfile)
         axis off;
         
         % MM (180112)
-        if strcmp(MRS_struct.p.vendor,'Siemens')
+        if strcmp(MRS_struct.p.vendor,'Siemens_rda')
             [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
         else
             [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
@@ -224,7 +224,7 @@ for ii = 1:length(MRS_struct.metabfile)
         
         % MM (180112)
         tmp1 = 'Filename';
-        if strcmp(MRS_struct.p.vendor,'Siemens')
+        if strcmp(MRS_struct.p.vendor,'Siemens_rda')
             [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii*2-1});
         else
             [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii});
@@ -267,7 +267,7 @@ for ii = 1:length(MRS_struct.metabfile)
         end
         
         % MM (180112)
-        if strcmp(MRS_struct.p.vendor,'Siemens')
+        if strcmp(MRS_struct.p.vendor,'Siemens_rda')
             [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii*2-1});
         else
             [~,metabfile_nopath] = fileparts(MRS_struct.metabfile{ii});
