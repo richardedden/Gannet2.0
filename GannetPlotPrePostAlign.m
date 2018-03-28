@@ -76,12 +76,14 @@ else
     yaxismax = yaxismax + yaxismax/10;
     yaxismin = -peakheight/2;
     
-    box on;
-    legendtxt = {'pre','post'};
-    hl = legend(legendtxt);
-    set(hl,'EdgeColor',[1 1 1]);
-    set(gca,'XDir','reverse');
-    axis([0 5 yaxismin yaxismax]);
-    
 end
+
+box on;
+legendtxt = {'pre','post'};
+hl = legend(legendtxt);
+set(hl,'EdgeColor',[1 1 1]);
+set(gca,'XDir','reverse');
+axis([0 5 yaxismin yaxismax]);
+
+
 

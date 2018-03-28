@@ -38,16 +38,9 @@ MRS_struct.p.sw(ii)                     = 1/MetabHeader.dwellTime;
 MRS_struct.p.LarmorFreq(ii)             = MetabHeader.tx_freq;
 MRS_struct.p.TR(ii)                     = MetabHeader.TR;
 MRS_struct.p.TE(ii)                     = MetabHeader.TE;
-MRS_struct.p.seq_string                 = MetabHeader.sequenceString; % Added for the universal sequence -- 03162018 MGSaleh
-if strcmp(MRS_struct.p.seq_string,'mgs_svs_ed') % Added for the universal sequence -- 03162018 MGSaleh
-    MRS_struct.p.npoints(ii)            = MetabHeader.sqzSize(1);
-    MRS_struct.p.nrows(ii)              = MetabHeader.sqzSize(3)*MetabHeader.sqzSize(4);
-    MRS_struct.p.Navg(ii)               = MetabHeader.sqzSize(3)*MetabHeader.sqzSize(4);
-else
-    MRS_struct.p.npoints(ii)            = size(MetabData,2);
-    MRS_struct.p.nrows(ii)              = size(MetabData,3);
-    MRS_struct.p.Navg(ii)               = size(MetabData,3);
-end
+MRS_struct.p.npoints(ii)                = size(MetabData,2);
+MRS_struct.p.nrows(ii)                  = size(MetabData,3);
+MRS_struct.p.Navg(ii)                   = size(MetabData,3);
 MRS_struct.p.VoI_InPlaneRot(ii)         = MetabHeader.VoI_InPlaneRot;
 MRS_struct.p.NormCor(ii)                = MetabHeader.NormCor;
 MRS_struct.p.NormSag(ii)                = MetabHeader.NormSag;
@@ -89,16 +82,9 @@ if nargin == 3
     MRS_struct.p.sw_water(ii)            = 1/WaterHeader.dwellTime;
     MRS_struct.p.TR_water(ii)            = WaterHeader.TR;
     MRS_struct.p.TE_water(ii)            = WaterHeader.TE;
-    MRS_struct.p.seq_string              = MetabHeader.sequenceString; % Added for the universal sequence -- 03162018 MGSaleh
-    if strcmp(MRS_struct.p.seq_string,'mgs_svs_ed') % Added for the universal sequence -- 03162018 MGSaleh
-        MRS_struct.p.npoints_water(ii)   = WaterHeader.sqzSize(1);
-        MRS_struct.p.nrows_water(ii)     = WaterHeader.sqzSize(3)*MetabHeader.sqzSize(4);
-        MRS_struct.p.Nwateravg(ii)       = WaterHeader.sqzSize(3)*MetabHeader.sqzSize(4);
-    else
-        MRS_struct.p.npoints_water(ii)   = size(WaterData,2);
-        MRS_struct.p.nrows_water(ii)     = size(WaterData,3);
-        MRS_struct.p.Nwateravg(ii)       = size(WaterData,3);
-    end
+    MRS_struct.p.npoints_water(ii)       = size(WaterData,2);
+    MRS_struct.p.nrows_water(ii)         = size(WaterData,3);
+    MRS_struct.p.Nwateravg(ii)           = size(WaterData,3);
     MRS_struct.p.seqtype_water           = WaterHeader.seqtype;
     if isfield(WaterHeader,'deltaFreq')
         MRS_struct.p.Siemens.deltaFreq.water(ii) = WaterHeader.deltaFreq;
@@ -213,7 +199,8 @@ TwixHeader.TablePosTra          = twix_obj.hdr.Dicom.lGlobalTablePosTra; % Trans
 % GO180108: If a parameter is set to zero (e.g. if no voxel rotation is
 % performed), the respective field is left empty in the TWIX file. This
 % case needs to be intercepted. Setting to the minimum possible value.
-VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra','PosCor','PosSag','PosTra','TablePosSag','TablePosCor','TablePosTra'};
+VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra', ...
+              'PosCor','PosSag','PosTra','TablePosSag','TablePosCor','TablePosTra'};
 for pp = 1:length(VoI_Params)
     if isempty(TwixHeader.(VoI_Params{pp}))
         TwixHeader.(VoI_Params{pp}) = realmin('double');
@@ -263,7 +250,11 @@ end
 % Determine the origin of the sequence
 if strfind(TwixHeader.sequenceFileName,'svs_edit')
     TwixHeader.seqtype = 'MEGAPRESS';
-    TwixHeader.seqorig = 'WIP'; % Siemens WIP
+    if strfind(TwixHeader.sequenceFileName(end-3:end),'univ') %#ok<STRIFCND>
+        TwixHeader.seqorig = 'Universal'; % Universal sequence
+    else
+        TwixHeader.seqorig = 'WIP'; % Siemens WIP
+    end
 elseif strfind(TwixHeader.sequenceFileName,'jn_')
     TwixHeader.seqtype = 'MEGAPRESS';
     TwixHeader.seqorig = 'JN'; % Jamie Near's sequence
@@ -309,9 +300,9 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
     else
         if strcmp(TwixHeader.seqorig,'CMRR')
             % Averages can be in dimension 'Set' or 'Rep'
-            if ~isempty(find(strcmp(TwixHeader.sqzDims,'Set')))
+            if ~isempty(find(strcmp(TwixHeader.sqzDims,'Set'),1))
                 dims.averages=find(strcmp(TwixHeader.sqzDims,'Set'));
-            elseif ~isempty(find(strcmp(TwixHeader.sqzDims,'Rep')))
+            elseif ~isempty(find(strcmp(TwixHeader.sqzDims,'Rep'),1))
                 dims.averages=find(strcmp(TwixHeader.sqzDims,'Rep'));
             end
         else
