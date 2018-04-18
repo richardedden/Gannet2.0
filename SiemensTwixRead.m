@@ -88,10 +88,7 @@ if nargin == 3
     MRS_struct.p.seqtype_water           = WaterHeader.seqtype;
     if isfield(WaterHeader,'deltaFreq')
         MRS_struct.p.Siemens.deltaFreq.water(ii) = WaterHeader.deltaFreq;
-        
-        if isfield(WaterHeader, 'editRF')
-            MRS_struct.p.Siemens = reorderstructure(MRS_struct.p.Siemens, 'editRF', 'deltaFreq');
-        end
+        MRS_struct.p.Siemens = reorderstructure(MRS_struct.p.Siemens, 'editRF', 'deltaFreq');
     end
     
     % If additional data points have been acquired before the echo starts,

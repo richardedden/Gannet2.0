@@ -10,7 +10,7 @@ function MRS_struct = GannetSegment(MRS_struct)
 MRS_struct.version.segment = '170914';
 
 if MRS_struct.p.PRIAM % deciding how many regions are there -- MGSaleh 2016
-    vox = {MRS_struct.p.Vox};
+    vox = MRS_struct.p.Vox;
 else
     vox = {MRS_struct.p.Vox{1}};
 end
@@ -283,6 +283,13 @@ for ii = 1:length(MRS_struct.metabfile)
             pdfname = fullfile('GannetSegment_output', [metabfile_nopath '_segment.pdf']); % MM (180112)
         end        
         saveas(gcf, pdfname);
+        
+        % Save MRS_struct as mat file
+        if MRS_struct.p.mat
+            % Set up filename
+            mat_name = ['GannetSegment_output/MRS_struct_' metabfile_nopath  '_' vox{kk} '.mat'];
+            save(mat_name,'MRS_struct');
+        end
         
     end
     

@@ -1,4 +1,4 @@
-function MRS_struct = GannetMask_GE(fname, dcm_dir, MRS_struct, dcm_dir2, ii)
+function MRS_struct = GannetMask_GE(fname, dcm_dir, MRS_struct, dcm_dir2, ii, kk)
 
 warning('off','MATLAB:nearlySingularMatrix');
 warning('off','MATLAB:qhullmx:InternalWarning');
@@ -181,7 +181,7 @@ V_mask = spm_write_vol(V_mask,mask);
 % Build output
 
 fidoutmask = cellstr(fidoutmask);
-MRS_struct.mask.outfile(ii,:) = fidoutmask;
+MRS_struct.mask.vox{kk}.outfile(ii,:) = fidoutmask;
 MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
 % this is similar to GE - don't have the angles directly - can fix later
 
@@ -207,8 +207,8 @@ three_plane_img(:,1:size_max)              = image_center(img_t, size_max);
 three_plane_img(:,size_max+(1:size_max))   = image_center(img_s, size_max);
 three_plane_img(:,size_max*2+(1:size_max)) = image_center(img_c, size_max);
 
-MRS_struct.mask.img{ii} = three_plane_img;
-MRS_struct.mask.T1image(ii,:) = {nii_file};
+MRS_struct.mask.vox{kk}.img{ii} = three_plane_img;
+MRS_struct.mask.vox{kk}.T1image(ii,:) = {nii_file};
 
 warning('on','MATLAB:nearlySingularMatrix');
 warning('on','MATLAB:qhullmx:InternalWarning');

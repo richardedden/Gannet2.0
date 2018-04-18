@@ -1,4 +1,4 @@
-function MRS_struct = GannetMask_SiemensTWIX(filename, nii_file, MRS_struct, ii)
+function MRS_struct = GannetMask_SiemensTWIX(filename, nii_file, MRS_struct, ii, kk)
 %   Creates a .nii file containing the voxel mask of the MRS voxel.
 %   Needs to be called from GannetCoRegister.
 %   Requires SPM8 or SPM12 to be added to the MATLAB path.
@@ -164,7 +164,7 @@ V_mask = spm_write_vol(V_mask,mask);
 
 % Build output page
 fidoutmask = cellstr(fidoutmask);
-MRS_struct.mask.outfile(ii,:) = fidoutmask;
+MRS_struct.mask.vox{kk}.outfile(ii,:) = fidoutmask;
 % Not clear how to formulate the rotations for triple rotations (revisit)
 MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  
 
@@ -187,8 +187,8 @@ three_plane_img(:,1:size_max)              = image_center(img_t, size_max);
 three_plane_img(:,size_max+(1:size_max))   = image_center(img_s, size_max);
 three_plane_img(:,size_max*2+(1:size_max)) = image_center(img_c, size_max);
 
-MRS_struct.mask.img{ii} = three_plane_img;
-MRS_struct.mask.T1image(ii,:) = {nii_file};
+MRS_struct.mask.vox{kk}.img{ii} = three_plane_img;
+MRS_struct.mask.vox{kk}.T1image(ii,:) = {nii_file};
 
 warning('on','MATLAB:nearlySingularMatrix');
 warning('on','MATLAB:qhullmx:InternalWarning');
