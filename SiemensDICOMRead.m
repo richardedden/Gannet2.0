@@ -111,26 +111,34 @@ while (isempty(strfind(tline , head_end_text))) %#ok<*STREMP>
                 MRS_struct.p.sw(ii) = (1/str2double(value)) * 1E9 * 0.5; % check with oversampling? hence factor 0.5, need to figure out why <=> probably dataset with 512 points, oversampled is 1024
             case {'lFrequency','sTXSPEC.asNucleusInfo[0].lFrequency'}
                 MRS_struct.p.LarmorFreq(ii) = str2double(value) * 1E-6;
-            case {'sSpecPara.sVoI.dThickness'}
-                MRS_struct.p.VoIThickness(ii) = str2double(value);
             case {'sSpecPara.sVoI.dPhaseFOV'}
-                MRS_struct.p.VoIPhaseFOV(ii) = str2double(value);
+                MRS_struct.p.voxdim(ii,1) = str2double(value);
             case {'sSpecPara.sVoI.dReadoutFOV'}
-                MRS_struct.p.VoIReadoutFOV(ii) = str2double(value);
+                MRS_struct.p.voxdim(ii,2) = str2double(value);
+            case {'sSpecPara.sVoI.dThickness'}
+                MRS_struct.p.voxdim(ii,3) = str2double(value);
             case {'sSpecPara.sVoI.dInPlaneRot'}
-                MRS_struct.p.VoIInPlaneRot(ii) = str2double(value);
+                MRS_struct.p.VoI_InPlaneRot(ii) = str2double(value);
             case {'sSpecPara.sVoI.sPosition.dSag'}
-                MRS_struct.p.VoIPositionSag(ii) = str2double(value);
+                MRS_struct.p.voxoff(ii,1) = str2double(value);
             case {'sSpecPara.sVoI.sPosition.dCor'}
-                MRS_struct.p.VoIPositionCor(ii) = str2double(value);
+                MRS_struct.p.voxoff(ii,2) = str2double(value);
             case {'sSpecPara.sVoI.sPosition.dTra'}
-                MRS_struct.p.VoIPositionTra(ii) = str2double(value);
-            case {'sSpecPara.sVoI.sNormal.dSag'}
-                MRS_struct.p.VoINormalSag(ii) = str2double(value);
+                MRS_struct.p.voxoff(ii,3) = str2double(value);
             case {'sSpecPara.sVoI.sNormal.dCor'}
-                MRS_struct.p.VoINormalCor(ii) = str2double(value);
+                MRS_struct.p.NormCor(ii) = str2double(value);
+            case {'sSpecPara.sVoI.sNormal.dSag'}
+                MRS_struct.p.NormSag(ii) = str2double(value);
             case {'sSpecPara.sVoI.sNormal.dTra'}
-                MRS_struct.p.VoINormalTra(ii) = str2double(value);
+                MRS_struct.p.NormTra(ii) = str2double(value);
+            case {'sSpecPara.dDeltaFrequency'}
+                MRS_struct.p.Siemens.deltaFreq = str2double(value);
+            case {'sWipMemBlock.adFree[7]'}    
+                MRS_struct.p.Siemens.editRF.freq = str2double(value);
+            case {'sWipMemBlock.adFree[8]'}
+                MRS_struct.p.Siemens.editRF.bw = str2double(value);
+            case {'sWipMemBlock.adFree[9]'}
+                MRS_struct.p.Siemens.editRF.centerFreq = str2double(value);
             otherwise
                 % don't care, do nothing
         end

@@ -55,7 +55,7 @@ for ii = 1:length(MRS_struct.metabfile)
                 fname = MRS_struct.metabfile{ii};
                 MRS_struct = GannetMask_SiemensRDA(fname, nii_name{ii}, MRS_struct, ii, kk);
 
-            case 'Siemens_twix'
+            case {'Siemens_twix', 'Siemens_dicom'} 
                 fname = MRS_struct.metabfile{ii};
                 MRS_struct = GannetMask_SiemensTWIX(fname, nii_name{ii}, MRS_struct, ii, kk);
 
@@ -90,7 +90,7 @@ for ii = 1:length(MRS_struct.metabfile)
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
-        [~,tmp,tmp2] = fileparts(MRS_struct.mask.outfile{ii});
+        [~,tmp,tmp2] = fileparts(MRS_struct.mask.vox{kk}.outfile{ii});
         text(0.5, 0.75, [': ' tmp tmp2], ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13,'Interpreter','none');
@@ -158,17 +158,17 @@ for ii = 1:length(MRS_struct.metabfile)
         else
             [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
         end
-        [~,tmp3,tmp4] = fileparts(MRS_struct.mask.T1image{ii});
+        [~,tmp3,tmp4] = fileparts(MRS_struct.mask.vox{kk}.T1image{ii});
         t = ['Voxel from ' tmp tmp2 ' on ' tmp3 tmp4];
 
-        imagesc(squeeze(MRS_struct.mask.img{ii}));
+        imagesc(squeeze(MRS_struct.mask.vox{kk}.img{ii}));
         colormap('gray');
         caxis([0 0.5]); % range of 0 to 0.5 seems to work best for now - could calc optimal range later
         axis equal;
         axis tight;
         axis off;
-        text(10,size(MRS_struct.mask.img{ii},1)/2,'L','Color',[1 1 1],'FontSize',20);
-        text(size(MRS_struct.mask.img{ii},2)-20,size(MRS_struct.mask.img{ii},1)/2,'R','Color',[1 1 1],'FontSize',20);
+        text(10,size(MRS_struct.mask.vox{kk}.img{ii},1)/2,'L','Color',[1 1 1],'FontSize',20);
+        text(size(MRS_struct.mask.vox{kk}.img{ii},2)-20,size(MRS_struct.mask.vox{kk}.img{ii},1)/2,'R','Color',[1 1 1],'FontSize',20);
         get(h,'pos'); % get position of axes
         set(h,'pos',[0.0 0.15 1 1]) % move the axes slightly
         title(t, 'FontName', 'Helvetica', 'FontSize', 15, 'Interpreter', 'none');
