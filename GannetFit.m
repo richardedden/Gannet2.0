@@ -601,7 +601,7 @@ for kk = 1:length(vox)
                 MRS_struct.out.(vox{kk}).water.ModelParam(ii,:) = LGPModelParam;
                 MRS_struct.out.(vox{kk}).water.Resid(ii,:) = residw; % MM (160913)
                 
-                % Calculate SNR of GABA signal (MM: 170502)
+                % Calculate SNR of water signal (MM: 170502)
                 noiseSigma_Water = CalcNoise(freq, WaterData(ii,:));
                 MRS_struct.out.(vox{kk}).water.SNR(ii) = abs(waterheight)/noiseSigma_Water;
                 

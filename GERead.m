@@ -1,20 +1,14 @@
 function MRS_struct = GERead(MRS_struct, fname)
-% RTN edits to accommodate Noeske version RAEE 141007
+% 141007: RTN edits to accommodate Noeske version
 % 160916: MM & RTN edits to accommodate different encoding schemes
+% 180404: RTN edits for more flexible handling of different P-file header
+% revisions; added support for rdbm_rev_num 26.002
 
 ii = MRS_struct.ii;
 
 fid = fopen(fname, 'r', 'ieee-be');
-if fid == -1
-    tmp = ['Unable to locate Pfile ' fname];
-    disp(tmp);
-    return
-end
-% Return error message if unable to read file type.
-% Determine size of Pfile header based on rdbm_rev number
 fseek(fid, 0, 'bof');
-f_hdr_value = fread(fid, 1, 'real*4');
-rdbm_rev_num = f_hdr_value(1);
+rdbm_rev_num = fread(fid, 1, 'real*4');
 if rdbm_rev_num == 7.0
     pfile_header_size = 39984; % LX
 elseif rdbm_rev_num == 8.0
@@ -26,87 +20,231 @@ else
     fclose(fid);
     fid = fopen(fname, 'r', 'ieee-le');
     fseek(fid, 0, 'bof');
-    f_hdr_value = fread(fid, 1, 'real*4');
-    if f_hdr_value == 9.0 % 11.0 product release
+    rdbm_rev_num = fread(fid, 1, 'real*4');
+    if rdbm_rev_num == 9.0 % 11.0 product release
         pfile_header_size = 61464;
-    elseif f_hdr_value == 11.0 % 12.0 product release
+    elseif rdbm_rev_num == 11.0 % 12.0 product release
         pfile_header_size = 66072;
-    elseif f_hdr_value > 11.0 && f_hdr_value < 100.0 % 14.0 and later
-        fseek(fid, 1468, 'bof');
-        pfile_header_size = fread(fid, 1, 'integer*4');
-    else
-        sprintf('Invalid Pfile header revision: %f', f_hdr_value);
-        return
     end
 end
 
-MRS_struct.p.GE.rdbm_rev_num = f_hdr_value(1); % MM (170118)
-chkRev = {'14.3', '16', '24'}; % GERead mods tested with these revisions only
-if ~any(strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), chkRev))
-    warning('GERead not fully functional with header revision number %g!', MRS_struct.p.GE.rdbm_rev_num);
+MRS_struct.p.GE.rdbm_rev_num = rdbm_rev_num;
+chkRev = {'14.3', '16', '24', '26.002'}; % GERead mods tested with these revisions only
+if ~any(strcmp(num2str(rdbm_rev_num), chkRev))
+    warning('GERead not fully functional with header revision number %g!', rdbm_rev_num);
 end
-% Read header information
-fseek(fid, 0, 'bof');
-hdr_value = fread(fid, 102, 'integer*2');
-% RTN - read rhuser
-fseek(fid, 0, 'bof');
-f_hdr_value = fread(fid, 74, 'real*4');
-% RTN (170118): Find center frequency
-fseek(fid, 0, 'bof');
-i_hdr_value = fread(fid, 102+9, 'integer*4');
-MRS_struct.p.LarmorFreq(ii) = i_hdr_value(102+5)/1e7;
-MRS_struct.p.sw(ii) = f_hdr_value(55); % MM (160916)
 
-nechoes = hdr_value(36);
+% RTN 2018
+% Added flexible P-file revision support
+% Values are read from rdb_hdr and image sub-headers
+% Position can be found in rdbm.h (RDB_HEADER_REC) and imagedb.h (MRIMAGEDATATYPE)
+
+% RTN 2018
+% unsigned int rdb_hdr_ps_mps_freq
+% float rdb_hdr_user0
+% float rdb_hdr_user4
+% float rdb_hdr_user19
+% short rdb_hdr_nechoes
+% short rdb_hdr_navs
+% short rdb_hdr_nframes
+% short rdb_hdr_point_size
+% unsigned short rdb_hdr_da_xres
+% short rdb_hdr_da_yres
+% short rdb_hdr_dab[0].start_rcv
+% short rdb_hdr_dab[0].stop_rcv
+% int rdb_hdr_off_image
+% int rdb_hdr_off_data
+%
+% image sub-header
+% int te
+% int tr
+% float user8-10    voxel dimensions
+% float user19      rf waveform
+% float user20-21   offset frequencies
+% float user22      pulse width (-1 default)
+
+switch num2str(rdbm_rev_num)
+    
+    case '14.3'
+        
+        % int
+        rdb_hdr_off_image   = 377;
+        rdb_hdr_off_data    = 368;
+        rdb_hdr_ps_mps_freq = 107;
+        
+        % float
+        rdb_hdr_user0  = 55;
+        rdb_hdr_user4  = 59;
+        rdb_hdr_user19 = 74;
+        
+        % short
+        rdb_hdr_nechoes       = 36;
+        rdb_hdr_navs          = 37;
+        rdb_hdr_nframes       = 38;
+        rdb_hdr_point_size    = 42;
+        rdb_hdr_da_xres       = 52;
+        rdb_hdr_da_yres       = 53;
+        rdb_hdr_dab_start_rcv = 101;
+        rdb_hdr_dab_stop_rcv  = 102;
+        
+        % int
+        image_te = 181;
+        image_tr = 179;
+        
+        % float
+        image_user8  = 38;
+        image_user19 = 49;
+        image_user20 = 50;
+        image_user22 = 52;
+        
+    case '16'
+        
+        % int
+        rdb_hdr_off_image   = 377;
+        rdb_hdr_off_data    = 368;
+        rdb_hdr_ps_mps_freq = 107;
+        
+        % float
+        rdb_hdr_user0  = 55;
+        rdb_hdr_user4  = 59;
+        rdb_hdr_user19 = 74;
+        
+        % short
+        rdb_hdr_nechoes       = 36;
+        rdb_hdr_navs          = 37;
+        rdb_hdr_nframes       = 38;
+        rdb_hdr_point_size    = 42;
+        rdb_hdr_da_xres       = 52;
+        rdb_hdr_da_yres       = 53;
+        rdb_hdr_dab_start_rcv = 101;
+        rdb_hdr_dab_stop_rcv  = 102;
+        
+        % int
+        image_te = 193;
+        image_tr = 191;
+        
+        % float
+        image_user8  = 50;
+        image_user19 = 61;
+        image_user20 = 62;
+        image_user22 = 64;
+        
+    case '24'
+        
+        % int
+        rdb_hdr_off_image   = 377;
+        rdb_hdr_off_data    = 368;
+        rdb_hdr_ps_mps_freq = 107;
+        
+        % float
+        rdb_hdr_user0  = 55;
+        rdb_hdr_user4  = 59;
+        rdb_hdr_user19 = 74;
+        
+        % short
+        rdb_hdr_nechoes       = 36;
+        rdb_hdr_navs          = 37;
+        rdb_hdr_nframes       = 38;
+        rdb_hdr_point_size    = 42;
+        rdb_hdr_da_xres       = 52;
+        rdb_hdr_da_yres       = 53;
+        rdb_hdr_dab_start_rcv = 101;
+        rdb_hdr_dab_stop_rcv  = 102;
+        
+        % int
+        image_te = 267;
+        image_tr = 265;
+        
+        % float
+        image_user8  = 98;
+        image_user19 = 109;
+        image_user20 = 110;
+        image_user22 = 112;
+        
+    case '26.002'
+        
+        % int
+        rdb_hdr_off_image   = 11;
+        rdb_hdr_off_data    = 2;
+        rdb_hdr_ps_mps_freq = 123;
+        
+        % float
+        rdb_hdr_user0  = 71;
+        rdb_hdr_user4  = 75;
+        rdb_hdr_user19 = 90;
+        
+        % short
+        rdb_hdr_nechoes       = 74;
+        rdb_hdr_navs          = 75;
+        rdb_hdr_nframes       = 76;
+        rdb_hdr_point_size    = 80;
+        rdb_hdr_da_xres       = 90;
+        rdb_hdr_da_yres       = 91;
+        rdb_hdr_dab_start_rcv = 133;
+        rdb_hdr_dab_stop_rcv  = 134;
+        
+        % int
+        image_te = 267;
+        image_tr = 265;
+        
+        % float
+        image_user8  = 98;
+        image_user19 = 109;
+        image_user20 = 110;
+        image_user22 = 112;
+        
+end
+
+% Read rdb header as short, int and float
+fseek(fid, 0, 'bof');
+hdr_value = fread(fid, rdb_hdr_dab_stop_rcv, 'integer*2');
+fseek(fid, 0, 'bof');
+f_hdr_value = fread(fid, rdb_hdr_user19, 'real*4');
+fseek(fid, 0, 'bof');
+i_hdr_value = fread(fid, max(rdb_hdr_off_image, rdb_hdr_ps_mps_freq), 'integer*4');
+
+if rdbm_rev_num > 11.0
+    pfile_header_size = i_hdr_value(rdb_hdr_off_data);
+end
+
+MRS_struct.p.LarmorFreq(ii) = i_hdr_value(rdb_hdr_ps_mps_freq)/1e7;
+MRS_struct.p.sw(ii) = f_hdr_value(rdb_hdr_user0);
+
+nechoes = hdr_value(rdb_hdr_nechoes);
 MRS_struct.p.GE.nechoes = nechoes;
-% RTN - number of phase cycles
-nex = hdr_value(37);
+nex = hdr_value(rdb_hdr_navs);
 MRS_struct.p.GE.NEX = nex;
-nframes = hdr_value(38);
-point_size = hdr_value(42);
-MRS_struct.p.npoints(ii) = hdr_value(52);
-MRS_struct.p.nrows(ii) = hdr_value(53);
-start_recv = hdr_value(101);
-stop_recv = hdr_value(102);
+nframes = hdr_value(rdb_hdr_nframes);
+point_size = hdr_value(rdb_hdr_point_size);
+MRS_struct.p.npoints(ii) = hdr_value(rdb_hdr_da_xres);
+MRS_struct.p.nrows(ii) = hdr_value(rdb_hdr_da_yres);
+
+start_recv = hdr_value(rdb_hdr_dab_start_rcv);
+stop_recv = hdr_value(rdb_hdr_dab_stop_rcv);
 nreceivers = (stop_recv - start_recv) + 1;
 
+% RTN 2018
+dataframes = f_hdr_value(rdb_hdr_user4)/nex;
+refframes = f_hdr_value(rdb_hdr_user19);
+
+% Read image header as int and float
 % MM (170118): Find TE/TR
-fseek(fid, 1468, 'bof');
-p_hdr_value = fread(fid, 12, 'integer*4'); % byte offsets to start of sub-header structures
-fseek(fid, p_hdr_value(10), 'bof'); % set position to start of rdb_hdr_image
-t_hdr_value = fread(fid, p_hdr_value(1)-p_hdr_value(10), 'integer*4');
-if strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), '14.3')
-    MRS_struct.p.TE(ii) = t_hdr_value(181)/1e3;
-    MRS_struct.p.TR(ii) = t_hdr_value(179)/1e3;
-elseif MRS_struct.p.GE.rdbm_rev_num == 16
-    MRS_struct.p.TE(ii) = t_hdr_value(193)/1e3;
-    MRS_struct.p.TR(ii) = t_hdr_value(191)/1e3;
-elseif MRS_struct.p.GE.rdbm_rev_num == 24
-    MRS_struct.p.TE(ii) = t_hdr_value(267)/1e3;
-    MRS_struct.p.TR(ii) = t_hdr_value(265)/1e3;
-end
+fseek(fid, i_hdr_value(rdb_hdr_off_image), 'bof');
+t_hdr_value = fread(fid, image_te, 'integer*4');
+fseek(fid, i_hdr_value(rdb_hdr_off_image), 'bof');
+o_hdr_value = fread(fid, image_user22, 'real*4');
+MRS_struct.p.TE(ii) = t_hdr_value(image_te)/1e3;
+MRS_struct.p.TR(ii) = t_hdr_value(image_tr)/1e3;
 
 % MM (170127): Find voxel dimensions and edit pulse parameters
-fseek(fid, p_hdr_value(8), 'bof'); % set position to start of rdb_hdr_exam
-o_hdr_value = fread(fid, p_hdr_value(9)-p_hdr_value(8), 'real*4');
-if strcmp(num2str(MRS_struct.p.GE.rdbm_rev_num), '14.3')
-    MRS_struct.p.voxdim(ii,:) = o_hdr_value(810:812)';
-    MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(821);
-    MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(822:823)';
-    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
-    MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(824)/1e3;
-elseif MRS_struct.p.GE.rdbm_rev_num == 16
-    MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
-    MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(833);
-    MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(834:835)';
-    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
-    MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(836)/1e3;
-elseif MRS_struct.p.GE.rdbm_rev_num == 24
-    MRS_struct.p.voxdim(ii,:) = o_hdr_value(1228:1230)';
-    MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(1239);
-    MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(1240:1241)';
-    MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
-    MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(1242)/1e3;
+MRS_struct.p.voxdim(ii,:) = o_hdr_value(image_user8:image_user8+2)';
+MRS_struct.p.GE.editRF.waveform(ii) = o_hdr_value(image_user19);
+MRS_struct.p.GE.editRF.freq_Hz(ii,:) = o_hdr_value(image_user20:image_user20+1)';
+MRS_struct.p.GE.editRF.freq_ppm(ii,:) = (MRS_struct.p.GE.editRF.freq_Hz(ii,:) / MRS_struct.p.LarmorFreq(ii)) + 4.68;
+MRS_struct.p.GE.editRF.dur(ii) = o_hdr_value(image_user22)/1e3;
+% RTN 2018: check for default value (-1) of pulse length
+if MRS_struct.p.GE.editRF.dur(ii) <= 0
+    MRS_struct.p.GE.editRF.dur(ii) = 16;
 end
 
 % Spectro prescan pfiles
@@ -114,25 +252,18 @@ if MRS_struct.p.npoints(ii) == 1 && MRS_struct.p.nrows(ii) == 1
     MRS_struct.p.npoints(ii) = 2048;
 end
 
-% Compute size (in bytes) of each frame, echo and slice
-data_elements = MRS_struct.p.npoints(ii)*2;
-frame_size = data_elements*point_size;
-my_frame = 1;
-
-% Start to read data into Eightchannel structure.
-totalframes = (MRS_struct.p.nrows(ii)-my_frame+1)*nechoes; % RTN nechoes mulitply
+% Compute size (in bytes) of data
+data_elements = MRS_struct.p.npoints(ii) * 2;
+totalframes = MRS_struct.p.nrows(ii) * nechoes; % RTN nechoes mulitply
 MRS_struct.p.nrows(ii) = totalframes;
-data_elements2 = data_elements * totalframes * nreceivers;
+data_elements = data_elements * totalframes * nreceivers;
 
-% Compute offset in bytes to start of frame.
-file_offset = pfile_header_size + ((my_frame-1)*frame_size);
-
-fseek(fid, file_offset, 'bof');
-% Read data: point_size = 2 means 16 bit data, point_size = 4 means EDR
+fseek(fid, pfile_header_size, 'bof');
+% Read data: point_size = 2 means 16-bit data, point_size = 4 means EDR
 if point_size == 2
-    raw_data = fread(fid, data_elements2, 'integer*2');
+    raw_data = fread(fid, data_elements, 'integer*2');
 else
-    raw_data = fread(fid, data_elements2, 'integer*4');
+    raw_data = fread(fid, data_elements, 'integer*4');
 end
 fclose(fid);
 
@@ -146,30 +277,29 @@ fclose(fid);
 % MM (171120): RTN edits to accomodate HERMES aquisitions; better looping
 %              over phase cycles
 if nechoes == 1
-    MRS_struct.p.Navg(ii) = (nframes-8)*2;
+    
+    MRS_struct.p.Navg(ii) = (nframes - 8) * 2;
     MRS_struct.p.Nwateravg = 8;
-    ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
+    ShapeData = reshape(raw_data, [2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
     WaterData = ShapeData(:,:,2:9,:);
     FullData = ShapeData(:,:,10:end,:);
     
-    totalframes = totalframes-9;
-    MRS_struct.p.nrows(ii)=totalframes;
+    totalframes = totalframes - 9;
+    MRS_struct.p.nrows(ii) = totalframes;
+    waterframes = 8;
     
-    Frames_for_Water = 8;
 else
-    dataframes = f_hdr_value(59)/nex;
-    refframes = f_hdr_value(74);
     
     MRS_struct.p.Navg(ii) = dataframes * nex * nechoes; % RTN 2017
     
-    if (dataframes+refframes) ~= nframes
+    if (dataframes + refframes) ~= nframes
         mult = nex/2; % RTN 2016
         multw = nex; % RTN 2016
         %mult = 1; % RTN 2017
         %multw = 1; % RTN 2017
         MRS_struct.p.GE.noadd = 1;
         dataframes = dataframes * nex;
-        refframes = nframes - dataframes; % refframes*nex; 2015
+        refframes = nframes - dataframes;
     else
         mult = nex/2; % RTN 2016
         multw = 1; % RTN 2016
@@ -180,42 +310,48 @@ else
     
     MRS_struct.p.Nwateravg(ii) = refframes * nechoes; % RTN 2017
     
-    if totalframes ~= (dataframes+refframes+1)*nechoes % RTN 2017
-        error('# of totalframes not same as (dataframes+refframes+1)*2');
+    if totalframes ~= (dataframes + refframes + 1) * nechoes % RTN 2017
+        error('# of totalframes not same as (dataframes + refframes + 1) * nechoes');
     end
-    ShapeData = reshape(raw_data,[2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
-    WaterData = zeros([2 MRS_struct.p.npoints(ii) refframes*nechoes nreceivers]); % RTN 2017
-    for loop = 1:refframes
-        for echoloop = 1:nechoes
-            WaterData(:,:,nechoes*(loop-1)+echoloop,:) = (-1)^(MRS_struct.p.GE.noadd*(loop-1)) * ...
-                ShapeData(:,:,1+(totalframes/nechoes)*(echoloop-1)+loop,:) * multw; % RTN 2017
-        end
-    end
-    FullData = zeros([2 MRS_struct.p.npoints(ii) dataframes*2 nreceivers]);
-    for loop = 1:dataframes
-        for echoloop = 1:nechoes
-            FullData(:,:,nechoes*(loop-1)+echoloop,:)=(-1)^(MRS_struct.p.GE.noadd*(loop-1)) * ...
-                ShapeData(:,:,1+refframes+(totalframes/nechoes)*(echoloop-1)+loop,:) * mult; % RTN 2017
-        end
-    end
-    totalframes = totalframes - (refframes+1) * nechoes; % RTN 2017
+    
+    ShapeData = reshape(raw_data, [2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
+    
+    % MM (180404)
+    [X1,X2] = ndgrid(1:refframes, 1:nechoes);
+    X1 = X1'; X1 = X1(:);
+    X2 = X2'; X2 = X2(:);
+    Y1 = (-1).^(MRS_struct.p.GE.noadd * (X1-1));
+    Y1 = permute(repmat(Y1, [1 MRS_struct.p.npoints(ii) 2 nreceivers]), [3 2 1 4]);
+    Y2 = 1 + (totalframes/nechoes) * (X2-1) + X1;
+    WaterData = Y1 .* ShapeData(:,:,Y2,:) * multw;
+    
+    [X1,X2] = ndgrid(1:dataframes, 1:nechoes);
+    X1 = X1'; X1 = X1(:);
+    X2 = X2'; X2 = X2(:);
+    Y1 = (-1).^(MRS_struct.p.GE.noadd * (X1-1));
+    Y1 = permute(repmat(Y1, [1 MRS_struct.p.npoints(ii) 2 nreceivers]), [3 2 1 4]);
+    Y2 = 1 + refframes + (totalframes/nechoes) * (X2-1) + X1;
+    FullData = Y1 .* ShapeData(:,:,Y2,:) * mult;
+    
+    totalframes = totalframes - (refframes + 1) * nechoes; % RTN 2017
     MRS_struct.p.nrows(ii) = totalframes;
-    Frames_for_Water = refframes * nechoes; % RTN 2017
+    waterframes = refframes * nechoes; % RTN 2017
+    
 end
 
-FullData = FullData.*repmat([1;1i], [1 MRS_struct.p.npoints(ii) totalframes nreceivers]);
+FullData = FullData .* repmat([1; 1i], [1 MRS_struct.p.npoints(ii) totalframes nreceivers]);
 FullData = squeeze(sum(FullData,1));
-FullData = permute(FullData,[3 1 2]);
-WaterData = WaterData.*repmat([1;1i], [1 MRS_struct.p.npoints(ii) Frames_for_Water nreceivers]);
+FullData = permute(FullData, [3 1 2]);
+WaterData = WaterData .* repmat([1; 1i], [1 MRS_struct.p.npoints(ii) waterframes nreceivers]);
 WaterData = squeeze(sum(WaterData,1));
-WaterData = permute(WaterData,[3 1 2]);
+WaterData = permute(WaterData, [3 1 2]);
 
 % MM (170505)
 firstpoint_water = conj(WaterData(:,1,:));
 channels_scale = squeeze(sqrt(sum(firstpoint_water .* conj(firstpoint_water),1)));
 channels_scale = repmat(channels_scale, [1 nreceivers MRS_struct.p.npoints(ii)]);
 channels_scale = permute(channels_scale, [2 3 1]);
-firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints(ii) 1])./channels_scale;
+firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints(ii) 1]) ./ channels_scale;
 
 WaterData = WaterData .* firstpoint_water;
 WaterData = squeeze(sum(WaterData,1));
@@ -229,9 +365,9 @@ FullData = FullData .* firstpoint;
 FullData = squeeze(sum(FullData,1));
 MRS_struct.fids.data = FullData;
 
-rescale = 1/1e11; % necessary for GE data or numbers blow up
-MRS_struct.fids.data = MRS_struct.fids.data * rescale;
-MRS_struct.fids.data_water = MRS_struct.fids.data_water * rescale;
+% Rescale, otherwise numbers blow up
+MRS_struct.fids.data = MRS_struct.fids.data/1e11;
+MRS_struct.fids.data_water = MRS_struct.fids.data_water/1e11;
 
 end
 
