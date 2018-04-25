@@ -30,6 +30,8 @@ function MRS_struct = DICOMRead(MRS_struct,folder,waterfolder)
 %           Meyerhoff.
 %   0.94: Added support for CMRR sequence (Eddie Auerbach, CMRR, University
 %           of Minnesota) (2017-11-20). Thanks to Jim Lagopoulos.
+%   0.95: Fills missing voxel geometry parameters in DICOM header with zero
+%           values. Thanks to Alen Tersakyan.
 %   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -58,90 +60,25 @@ dcm_file_names = strcat(folder, filesep, dcm_file_names); % GO 11/20/2016
 %%% /PREPARATION %%%
 
 %%% HEADER INFO PARSING %%%
-% Simply open the first IMA file, the information should all be the same.
-fid = fopen(dcm_file_names{1});
-
-% Start looking for a convenient parameter block in the first IMA file. The
-% line before will start with ### ASCCONV BEGIN and end with ### ASCCONV
-% END. This is defined here.
-head_start_text = '### ASCCONV BEGIN';
-head_end_text   = '### ASCCONV END';
-
-tline = fgets(fid);
-
-while (isempty(strfind(tline , head_end_text))) %#ok<*STREMP>
-    
-    tline = fgets(fid);
-    
-    if ( isempty(strfind (tline , head_start_text)) + isempty(strfind (tline , head_end_text )) == 2)
-                
-        % Find lines with 'equal' signs, all the information is in there.    
-        findequal = strfind(tline,'=');
-        variable = strtrim(tline(1:findequal-1)) ;
-        value    = strtrim(tline(findequal+1 : length(tline))) ;
-        
-        switch variable
-            case {'tSequenceFileName'}
-                MRS_struct.p.seq = value;
-            case {'alTR[0]'}
-                MRS_struct.p.TR(ii) = str2double(value) / 1000;
-            case {'alTE[0]'}
-                MRS_struct.p.TE(ii) = str2double(value) / 1000;
-            case {'sSpecPara.lVectorSize'}
-                MRS_struct.p.npoints(ii) = str2double(value);
-            case {'lAverages'}
-                % Minnesota sequence (CMRR, Eddy Auerbach) stores numbers of averages in a
-                % different field. GO 112017.
-                if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
-                    % Don't bother
-                else
-                    MRS_struct.p.Navg(ii) = 2*str2double(value);
-                    MRS_struct.p.nrows(ii) = 2*str2double(value);
-                end
-            case {'sWipMemBlock.alFree[2]'}
-                % Minnesota sequence (CMRR, Eddy Auerbach) stores numbers of averages in a
-                % different field. GO 112017.
-                if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
-                    MRS_struct.p.Navg(ii) = 2*str2double(value);
-                    MRS_struct.p.nrows(ii) = 2*str2double(value);
-                else
-                    % Don't bother
-                end
-            case {'sRXSPEC.alDwellTime[0]'}
-                MRS_struct.p.sw(ii) = (1/str2double(value)) * 1E9 * 0.5; % check with oversampling? hence factor 0.5, need to figure out why <=> probably dataset with 512 points, oversampled is 1024
-            case {'lFrequency','sTXSPEC.asNucleusInfo[0].lFrequency'}
-                MRS_struct.p.LarmorFreq(ii) = str2double(value) * 1E-6;
-            case {'sSpecPara.sVoI.dPhaseFOV'}
-                MRS_struct.p.voxdim(ii,1) = str2double(value);
-            case {'sSpecPara.sVoI.dReadoutFOV'}
-                MRS_struct.p.voxdim(ii,2) = str2double(value);
-            case {'sSpecPara.sVoI.dThickness'}
-                MRS_struct.p.voxdim(ii,3) = str2double(value);
-            case {'sSpecPara.sVoI.dInPlaneRot'}
-                MRS_struct.p.VoI_InPlaneRot(ii) = str2double(value);
-            case {'sSpecPara.sVoI.sPosition.dSag'}
-                MRS_struct.p.voxoff(ii,1) = str2double(value);
-            case {'sSpecPara.sVoI.sPosition.dCor'}
-                MRS_struct.p.voxoff(ii,2) = str2double(value);
-            case {'sSpecPara.sVoI.sPosition.dTra'}
-                MRS_struct.p.voxoff(ii,3) = str2double(value);
-            case {'sSpecPara.sVoI.sNormal.dCor'}
-                MRS_struct.p.NormCor(ii) = str2double(value);
-            case {'sSpecPara.sVoI.sNormal.dSag'}
-                MRS_struct.p.NormSag(ii) = str2double(value);
-            case {'sSpecPara.sVoI.sNormal.dTra'}
-                MRS_struct.p.NormTra(ii) = str2double(value);
-            case {'sSpecPara.dDeltaFrequency'}
-                MRS_struct.p.deltaFreq = str2double(value);
-            otherwise
-                % don't care, do nothing
-        end
-    else
-        % don't care about the rest, do nothing
-    end
-end
-
-    
+DicomHeader = read_dcm_header(dcm_file_names{1});
+MRS_struct.p.seq = DicomHeader.sequenceFileName;
+MRS_struct.p.TR(ii) = DicomHeader.TR;
+MRS_struct.p.TE(ii) = DicomHeader.TE;
+MRS_struct.p.npoints(ii) = DicomHeader.vectorSize;
+MRS_struct.p.Navg(ii) = 2*DicomHeader.nAverages;
+MRS_struct.p.nrows(ii) = 2*DicomHeader.nAverages;
+MRS_struct.p.sw(ii) = 1/DicomHeader.dwellTime * 1E9 * 0.5; % check with oversampling? hence factor 0.5, need to figure out why <=> probably dataset with 512 points, oversampled is 1024
+MRS_struct.p.LarmorFreq(ii) = DicomHeader.tx_freq * 1E-6;
+MRS_struct.p.voxdim(ii,1) = DicomHeader.VoI_PeFOV;
+MRS_struct.p.voxdim(ii,2) = DicomHeader.VoI_RoFOV;
+MRS_struct.p.voxdim(ii,3) = DicomHeader.VoIThickness;
+MRS_struct.p.VoI_InPlaneRot(ii) = DicomHeader.VoI_InPlaneRot;
+MRS_struct.p.voxoff(ii,1) = DicomHeader.PosSag;
+MRS_struct.p.voxoff(ii,2) = DicomHeader.PosCor;
+MRS_struct.p.voxoff(ii,3) = DicomHeader.PosTra;
+MRS_struct.p.NormCor(ii) = DicomHeader.NormCor;
+MRS_struct.p.NormSag(ii) = DicomHeader.NormSag;
+MRS_struct.p.NormTra(ii) = DicomHeader.NormTra;
 %%% /HEADER INFO PARSING %%%
 
 %%% DATA LOADING %%%
