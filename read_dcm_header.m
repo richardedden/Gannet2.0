@@ -36,7 +36,7 @@ while (isempty(strfind(tline, head_end_text)))
     [tokens,matches] = regexp(tline,'([\w\[\].]*)\s*=\s*([\w.-\"\\]*)','tokens','match');
     % When a matching string is found, parse the results into a struct
     if length(tokens) == 1
-        fieldname = erase(tokens{1}{1},["[","]","_"]); % delete invalid characters
+        fieldname = regexprep(tokens{1}{1}, '\[|\]|_',''); % delete invalid characters
         if isempty(strfind(tokens{1}{2},'"'))
             if strcmp(tokens{1}{2},'0x1')
                 value = 0;
