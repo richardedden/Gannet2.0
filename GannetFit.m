@@ -280,7 +280,7 @@ for kk = 1:length(vox)
                 
                 %MRS_struct.out.(vox{kk}).Lac.Area(ii) = real(sum(FourGaussModel(LacGaussModelParam,freq(freqbounds)) - FourGaussModel(BaselineModelParam,freq(freqbounds)))) * abs(freq(1)-freq(2));
                 MRS_struct.out.(vox{kk}).Lac.Area(ii) = real(sum(FourGaussModel([FourGaussModelParam(1:6) 0 0 0],freq(freqbounds)))) * abs(freq(1)-freq(2));
-                Lacheight = FourGaussModelParam(ii,4);
+                Lacheight = FourGaussModelParam(4);
                 MRS_struct.out.(vox{kk}).Lac.FitError(ii) = 100*std(resid)/Lacheight;
                 MRS_struct.out.(vox{kk}).Lac.FWHM(ii) = NaN; % MM (170818): Still need to calculate FWHM
                 MRS_struct.out.(vox{kk}).Lac.Resid(ii,:) = resid;
