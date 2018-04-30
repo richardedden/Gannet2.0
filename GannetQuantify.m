@@ -166,8 +166,8 @@ for ii = 1:length(MRS_struct.metabfile)
 
         % Voxel co-registration
         subplot(2,2,1);
-        size_max = size(MRS_struct.mask.vox{kk}.img{ii},1);
-        imagesc(MRS_struct.mask.vox{kk}.img{ii}(:,size_max+(1:size_max)));
+        size_max = size(MRS_struct.mask.(vox{kk}).img{ii},1);
+        imagesc(MRS_struct.mask.(vox{kk}).img{ii}(:,size_max+(1:size_max)));
         colormap('gray');
         caxis([0 0.5]);
         axis equal;
@@ -180,7 +180,7 @@ for ii = 1:length(MRS_struct.metabfile)
         else
             [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
         end
-        [~,tmp3,tmp4] = fileparts(MRS_struct.mask.vox{kk}.T1image{ii});
+        [~,tmp3,tmp4] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
         t = ['Voxel from ' tmp tmp2 ' on ' tmp3 tmp4];
         title(t, 'Interpreter', 'none');
 
@@ -273,7 +273,7 @@ for ii = 1:length(MRS_struct.metabfile)
         text(0.375, text_pos-0.1, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
 
         tmp1 = 'Anatomical image';
-        [~,tmp2,tmp3] = fileparts(MRS_struct.mask.vox{kk}.T1image{ii}); % MM (180112)
+        [~,tmp2,tmp3] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii}); % MM (180112)
         text(0, text_pos-0.2, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
         text(0.375, text_pos-0.2, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
 

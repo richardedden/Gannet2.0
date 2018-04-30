@@ -26,8 +26,8 @@ for ii = 1:length(MRS_struct.metabfile)
         
     % 1 - Take nifti from GannetCoRegister and segment it in SPM
     
-    [T1dir, T1name, T1ext] = fileparts(MRS_struct.mask.vox{kk}.T1image{ii});
-    anatimage = MRS_struct.mask.vox{kk}.T1image{ii};
+    [T1dir, T1name, T1ext] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
+    anatimage = MRS_struct.mask.(vox{kk}).T1image{ii};
     
     % Check to see if segmentation already done - if not, do it
     % Check which SPM version is installed and segment accordingly
@@ -55,7 +55,7 @@ for ii = 1:length(MRS_struct.metabfile)
     WMvol  = spm_vol(WM);
     CSFvol = spm_vol(CSF);
         
-        voxmaskvol = spm_vol(cell2mat(MRS_struct.mask.vox{kk}.outfile(ii)));
+        voxmaskvol = spm_vol(cell2mat(MRS_struct.mask.(vox{kk}).outfile(ii)));
         
         % GM
         O_GMvox.fname = [T1dir '/c1' T1name '_GM_mask.nii'];
@@ -144,8 +144,8 @@ for ii = 1:length(MRS_struct.metabfile)
         
         % Voxel co-registration
         subplot(2,2,1);
-        size_max = size(MRS_struct.mask.vox{kk}.img{ii},1);
-        imagesc(MRS_struct.mask.vox{kk}.img{ii}(:,size_max+(1:size_max)));
+        size_max = size(MRS_struct.mask.(vox{kk}).img{ii},1);
+        imagesc(MRS_struct.mask.(vox{kk}).img{ii}(:,size_max+(1:size_max)));
         colormap('gray');
         caxis([0 0.5]);
         axis equal;
@@ -158,7 +158,7 @@ for ii = 1:length(MRS_struct.metabfile)
         else
             [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii});
         end
-        [~,tmp3,tmp4] = fileparts(MRS_struct.mask.vox{kk}.T1image{ii});
+        [~,tmp3,tmp4] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
         t = ['Voxel from ' tmp tmp2 ' on ' tmp3 tmp4];
         title(t, 'Interpreter', 'none');
         
@@ -233,7 +233,7 @@ for ii = 1:length(MRS_struct.metabfile)
         text(0.5, text_pos-0.4, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
         
         tmp1 = 'Anatomical image';
-        [~,tmp2,tmp3] = fileparts(MRS_struct.mask.vox{kk}.T1image{ii}); % MM (180112)
+        [~,tmp2,tmp3] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii}); % MM (180112)
         text(0, text_pos-0.5, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
         text(0.5, text_pos-0.5, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
         
@@ -287,7 +287,7 @@ for ii = 1:length(MRS_struct.metabfile)
         % Save MRS_struct as mat file
         if MRS_struct.p.mat
             % Set up filename
-            mat_name = ['GannetSegment_output/MRS_struct_' metabfile_nopath  '_' vox{kk} '.mat'];
+            mat_name = ['GannetSegment_output/MRS_struct_' metabfile_nopath  '_' (vox{kk}) '.mat'];
             save(mat_name,'MRS_struct');
         end
         
