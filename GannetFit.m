@@ -1078,64 +1078,36 @@ for kk = 1:length(vox)
             end            
             saveas(h, pdfname);
             
-            if ii == numscans && MRS_struct.p.mat == 1
-                matname = fullfile('GannetFit_output','MRS_struct');
-                save(matname,'MRS_struct');
-            end
-            
-            % 140116: ADH reorder structure
-            if isfield(MRS_struct, 'mask')
-                if isfield(MRS_struct, 'waterfile')
-                    structorder = {'version', 'ii', ...
-                        'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
-                else
-                    structorder = {'version', 'ii', ...
-                        'metabfile', 'p', 'fids', 'spec', 'out', 'mask'};
-                end
-            else
-                if isfield(MRS_struct, 'waterfile')
-                    structorder = {'version', 'ii', ...
-                        'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out'};
-                else
-                    structorder = {'version','ii', ...
-                        'metabfile', 'p', 'fids', 'spec', 'out'};
-                end
-            end            
-            MRS_struct = orderfields(MRS_struct, structorder);
-            
-            % Dec 09: based on FitSeries.m:  Richard's GABA Fitting routine
-            %     Fits using GaussModel
-            % Feb 10: Change the quantification method for water.  Regions of poor homogeneity (e.g. limbic)
-            %     can produce highly asymetric lineshapes, which are fitted poorly.  Don't fit - integrate
-            %     the water peak.
-            % March 10: 100301
-            %           use MRS_struct to pass loaded data data, call MRSGABAinstunits from here.
-            %           scaling of fitting to sort out differences between original (RE) and my analysis of FEF data
-            %           change tolerance on gaba fit
-            % 110308:   Keep definitions of fit functions in MRSGABAfit, rather
-            %               than in separate .m files
-            %           Ditto institutional units calc
-            %           Include FIXED version of Lorentzian fitting
-            %           Get Navg from struct (need version 110303, or later of
-            %               MRSLoadPfiles
-            %           rejig the output plots - one fig per scan.
-            % 110624:   set parmeter to choose fitting routine... for awkward spectra
-            %           report fit error (100*stdev(resid)/gabaheight), rather than "SNR"
-            %           can estimate this from confidence interval for nlinfit - need
-            %               GABA and water estimates
-            
-            % 111111:   RAEE To integrate in Philips data, which doesn't always have
-            % water spectr, we need to add in referenceing to Cr... through
-            % MRS_struct.p.Reference_compound
-            % 140115: MRS_struct.p.Reference_compound is now
-            %   MRS_struct.p.Reference compound
-            %
-            %111214 integrating CJE's changes on water fitting (pre-init and revert to
-            %linear bseline). Also investigating Navg(ii)
-            
         end
     end
     
+    % 140116: ADH reorder structure
+    if isfield(MRS_struct, 'mask')
+        if isfield(MRS_struct, 'waterfile')
+            structorder = {'version', 'ii', ...
+                'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out', 'mask'};
+        else
+            structorder = {'version', 'ii', ...
+                'metabfile', 'p', 'fids', 'spec', 'out', 'mask'};
+        end
+    else
+        if isfield(MRS_struct, 'waterfile')
+            structorder = {'version', 'ii', ...
+                'metabfile', 'waterfile', 'p', 'fids', 'spec', 'out'};
+        else
+            structorder = {'version','ii', ...
+                'metabfile', 'p', 'fids', 'spec', 'out'};
+        end
+    end
+    MRS_struct = orderfields(MRS_struct, structorder);
+    
+    % Save MRS_struct as mat file
+    if ii == numscans && MRS_struct.p.mat
+        % Set up filename
+        mat_name = ['GannetFit_output/MRS_struct_' vox{kk} '.mat'];
+        save(mat_name,'MRS_struct');
+    end
+
     fprintf('\n\n');
     
 end

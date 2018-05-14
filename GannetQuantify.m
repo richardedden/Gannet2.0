@@ -330,9 +330,9 @@ for ii = 1:length(MRS_struct.metabfile)
         saveas(gcf, pdfname);
 
         % Save MRS_struct as mat file
-        if MRS_struct.p.mat
+        if ii == numscans && MRS_struct.p.mat
             % Set up filename
-            mat_name = ['GannetSegment_output/MRS_struct_' metabfile_nopath  '_' vox{kk} '.mat'];
+            mat_name = ['GannetQuantify_output/MRS_struct_' vox{kk} '.mat'];
             save(mat_name,'MRS_struct');
         end
     end  

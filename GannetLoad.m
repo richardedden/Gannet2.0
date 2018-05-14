@@ -670,29 +670,28 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
                 fclose(fileid);
             else
                 warning('Only Philips SDAT files can be exported! No data exported.');
-            end
-            
-            % Save MRS_struct as mat file
-            if MRS_struct.p.mat
-                % Set up filename
-                mat_name = ['GannetLoad_output/MRS_struct_' metabfile_nopath  '_' vox{kk} '.mat'];
-                save(mat_name,'MRS_struct');
-            end
+            end      
+        end
         
+        % 140116: ADH reorder structure
+        if(isfield(MRS_struct, 'waterfile') == 1)
+            structorder = {'version', 'ii', 'metabfile', ...
+                'waterfile', 'p', 'fids', 'spec', 'out'};
+        else
+            structorder = {'version', 'ii', 'metabfile', ...
+                'p', 'fids', 'spec', 'out'};
+        end
+        MRS_struct = orderfields(MRS_struct, structorder);
+        
+        % Save MRS_struct as mat file
+        if ii == numscans && MRS_struct.p.mat
+            % Set up filename
+            mat_name = ['GannetLoad_output/MRS_struct_' vox{kk} '.mat'];
+            save(mat_name,'MRS_struct');
         end
         
     end % end of output loop over voxels
     
-    % 140116: ADH reorder structure
-    if(isfield(MRS_struct, 'waterfile') == 1)
-        structorder = {'version', 'ii', 'metabfile', ...
-            'waterfile', 'p', 'fids', 'spec', 'out'};
-    else
-        structorder = {'version', 'ii', 'metabfile', ...
-            'p', 'fids', 'spec', 'out'};
-    end
-    MRS_struct = orderfields(MRS_struct, structorder);
-        
 end % end of load-and-processing loop over datasets
 
 end
