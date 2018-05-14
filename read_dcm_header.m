@@ -13,6 +13,7 @@ function DicomHeader = read_dcm_header(fid)
 % 
 %   Version history:
 %   0.9: First version (2018-04-24)
+%   0.91: Several sequence-specific loading fixes (2018-05-13)
 %   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% HEADER INFO PARSING %%%
@@ -97,12 +98,16 @@ end
 % Read information
 DicomHeader.TR                   = dcmHeader.alTR0 * 1e-3; % TR [ms]
 DicomHeader.TE                   = dcmHeader.alTE0 * 1e-3; % TE [ms]
-if strcmp(DicomHeader.seqorig,'CMRR')
-    % Minnesota sequence (CMRR, Eddy Auerbach) stores numbers of averages in a
-    % different field. GO 112017.
-    DicomHeader.nAverages        = dcmHeader.sWipMemBlock.alFree2;
-else
+if isfield(dcmHeader, 'lAverages')
     DicomHeader.nAverages        = dcmHeader.lAverages;
+else
+    % Minnesota sequence (CMRR, Eddy Auerbach) may store numbers of averages in a
+    % different field. GO 112017. Spelling may vary as well...
+    if isfield(dcmHeader, 'sWipMemBlock')
+        DicomHeader.nAverages        = dcmHeader.sWipMemBlock.alFree2;
+    elseif isfield(dcmHeader, 'sWiPMemBlock')
+        DicomHeader.nAverages        = dcmHeader.sWiPMemBlock.alFree2;
+    end
 end
 DicomHeader.removeOS             = dcmHeader.sSpecPara.ucRemoveOversampling; % Is the oversampling removed in the RDA files?
 DicomHeader.vectorSize           = dcmHeader.sSpecPara.lVectorSize; % Data points specified on exam card
@@ -145,28 +150,51 @@ DicomHeader.tx_freq              = dcmHeader.sTXSPEC.asNucleusInfo0.lFrequency; 
 
 % these may only be extractable from a few MEGA-PRESS versions
 % editing pulse parameters
-if isfield(dcmHeader, 'sWipMemBlock')
-    if isfield(dcmHeader.sWipMemBlock, 'adFree9')
-        DicomHeader.editRF.centerFreq = dcmHeader.sWipMemBlock.adFree9;
+if strcmp(DicomHeader.seqorig,'CMRR')
+    if isfield(dcmHeader, 'sWipMemBlock')
+        if isfield(dcmHeader.sWipMemBlock, 'adFree3')
+            DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree3;
+        end
+        if isfield(dcmHeader.sWipMemBlock, 'adFree2')
+            DicomHeader.editRF.freq(2) = dcmHeader.sWipMemBlock.adFree2;
+        end
+        if isfield(dcmHeader.sWipMemBlock, 'adFree6')
+            DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
+        end
+    elseif isfield(dcmHeader, 'sWiPMemBlock')
+        if isfield(dcmHeader.sWiPMemBlock, 'adFree3')
+            DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree3;
+        end
+        if isfield(dcmHeader.sWiPMemBlock, 'adFree2')
+            DicomHeader.editRF.freq(2) = dcmHeader.sWiPMemBlock.adFree2;
+        end
+        if isfield(dcmHeader.sWiPMemBlock, 'adFree6')
+            DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
+        end
     end
-    if isfield(dcmHeader.sWipMemBlock, 'adFree7')
-        DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree7;
-        DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
-    end
-    if isfield(dcmHeader.sWipMemBlock, 'adFree8')
-        DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
-    end
-elseif isfield(dcmHeader, 'sWiPMemBlock')
-    if isfield(dcmHeader.sWiPMemBlock, 'adFree9')
-        DicomHeader.editRF.centerFreq = dcmHeader.sWiPMemBlock.adFree9;
-    end
-    if isfield(dcmHeader.sWiPMemBlock, 'adFree7')
-        DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree7;
-        DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
-    end
-    if isfield(dcmHeader.sWiPMemBlock, 'adFree8')
-        DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
+else
+    if isfield(dcmHeader, 'sWipMemBlock')
+        if isfield(dcmHeader.sWipMemBlock, 'adFree9')
+            DicomHeader.editRF.centerFreq = dcmHeader.sWipMemBlock.adFree9;
+        end
+        if isfield(dcmHeader.sWipMemBlock, 'adFree7')
+            DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree7;
+            DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
+        end
+        if isfield(dcmHeader.sWipMemBlock, 'adFree8')
+            DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
+        end
+    elseif isfield(dcmHeader, 'sWiPMemBlock')
+        if isfield(dcmHeader.sWiPMemBlock, 'adFree9')
+            DicomHeader.editRF.centerFreq = dcmHeader.sWiPMemBlock.adFree9;
+        end
+        if isfield(dcmHeader.sWiPMemBlock, 'adFree7')
+            DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree7;
+            DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
+        end
+        if isfield(dcmHeader.sWiPMemBlock, 'adFree8')
+            DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
+        end
     end
 end
-
 

@@ -175,21 +175,21 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
                 % sequence appears to go OFF-OFF-ON-ON in the DICOM
                 % sorting?! Fixing this hard for now. GO 112017
                 case 'onfirst'
-                    if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
-                        MRS_struct.fids.ON_OFF=repmat([1 1 0 0],[1 MRS_struct.p.Navg(ii)/4]);
-                        MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-                    else
+%                     if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
+%                         MRS_struct.fids.ON_OFF=repmat([1 1 0 0],[1 MRS_struct.p.Navg(ii)/4]);
+%                         MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+%                     else
                         MRS_struct.fids.ON_OFF=repmat([1 0],[1 MRS_struct.p.Navg(ii)/2]);
                         MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-                    end
+%                    end
                 case 'offfirst'
-                    if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
-                        MRS_struct.fids.ON_OFF=repmat([0 0 1 1],[1 MRS_struct.p.Navg(ii)/4]);
-                        MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-                    else
+%                     if strcmp(MRS_struct.p.seq,'""%CustomerSeq%\eja_svs_mpress""')
+%                         MRS_struct.fids.ON_OFF=repmat([0 0 1 1],[1 MRS_struct.p.Navg(ii)/4]);
+%                         MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
+%                     else
                         MRS_struct.fids.ON_OFF=repmat([0 1],[1 MRS_struct.p.Navg(ii)/2]);
                         MRS_struct.fids.ON_OFF=MRS_struct.fids.ON_OFF(:).';
-                    end
+%                    end
             end
             
         case 'Siemens_rda'
