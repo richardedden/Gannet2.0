@@ -302,7 +302,8 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
             else
                 ComWater = WaterData.';
             end
-            
+
+        
             % Performing phase corrrection on the water-suppressed data
             % based on Klose (1990), MRM,14:26-30. The equation was
             % taken from Jiru (2008), EJR,67:202-217 -- MGSaleh 2016
@@ -329,7 +330,9 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
             end
             
             % Line-broadening, zero-filling and FFT
-            ComWater = ComWater .* exp(-time'*MRS_struct.p.LB*pi);
+            % GO (180514): Water data may have different bandwidth
+            time_water = (1:1:size(ComWater,1))/MRS_struct.p.sw_water(ii);
+            ComWater = ComWater .* exp(-time_water'*MRS_struct.p.LB*pi);
             MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo(ii),1))';
         end % end of H2O reference loop
         
@@ -684,7 +687,7 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
         MRS_struct = orderfields(MRS_struct, structorder);
         
         % Save MRS_struct as mat file
-        if ii == numscans && MRS_struct.p.mat
+        if MRS_struct.p.mat
             % Set up filename
             mat_name = ['GannetLoad_output/MRS_struct_' vox{kk} '.mat'];
             save(mat_name,'MRS_struct');
