@@ -331,7 +331,11 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
             
             % Line-broadening, zero-filling and FFT
             % GO (180514): Water data may have different bandwidth
-            time_water = (1:1:size(ComWater,1))/MRS_struct.p.sw_water(ii);
+            if isfield(MRS_struct.p,'sw_water')
+                time_water = (1:1:size(ComWater,1))/MRS_struct.p.sw_water(ii);
+            else
+                time_water = (1:1:size(ComWater,1))/MRS_struct.p.sw(ii);
+            end
             ComWater = ComWater .* exp(-time_water'*MRS_struct.p.LB*pi);
             MRS_struct.spec.(vox{kk}).water(ii,:) = fftshift(fft(ComWater,MRS_struct.p.ZeroFillTo(ii),1))';
         end % end of H2O reference loop
