@@ -15,11 +15,16 @@ else
     vox = {MRS_struct.p.Vox{1}};
 end
 
+numscans = numel(MRS_struct.metabfile);
+if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
+    numscans = numscans/2;
+end
+
 % Set up SPM for batch processing
 spm('defaults','fmri');
 spm_jobman('initcfg');
 
-for ii = 1:length(MRS_struct.metabfile)
+for ii = 1:numscans
     
     % Loop over voxels if PRIAM
     for kk = 1:length(vox)
@@ -278,9 +283,9 @@ for ii = 1:length(MRS_struct.metabfile)
         set(gcf,'PaperSize',[11 8.5]);
         set(gcf,'PaperPosition',[0 0 11 8.5]);
         if strcmpi(MRS_struct.p.vendor,'Philips_data')
-            pdfname = fullfile('GannetSegment_output', [fullpath '_segment.pdf']); % MM (180112)
+            pdfname = fullfile('GannetSegment_output', [fullpath '_' vox{kk} '_segment.pdf']); % MM (180112)
         else
-            pdfname = fullfile('GannetSegment_output', [metabfile_nopath '_segment.pdf']); % MM (180112)
+            pdfname = fullfile('GannetSegment_output', [metabfile_nopath '_' vox{kk} '_segment.pdf']); % MM (180112)
         end        
         saveas(gcf, pdfname);
         

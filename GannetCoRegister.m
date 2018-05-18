@@ -14,7 +14,12 @@ if MRS_struct.ii ~= length(nii_name)
     error('The number of nifti files does not match the number of MRS files processed by GannetLoad.');
 end
 
-for ii = 1:length(MRS_struct.metabfile)
+numscans = numel(MRS_struct.metabfile);
+if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
+    numscans = numscans/2;
+end
+
+for ii = 1:numscans
     % Loop over voxels if PRIAM
     for kk = 1:length(vox)
 
@@ -52,7 +57,7 @@ for ii = 1:length(MRS_struct.metabfile)
                 end
 
             case 'Siemens_rda'
-                fname = MRS_struct.metabfile{ii};
+                fname = MRS_struct.metabfile{ii*2-1};
                 MRS_struct = GannetMask_SiemensRDA(fname, nii_name{ii}, MRS_struct, ii, vox, kk);
 
             case {'Siemens_twix', 'Siemens_dicom'} 
@@ -206,19 +211,21 @@ for ii = 1:length(MRS_struct.metabfile)
         set(gcf,'PaperSize',[11 8.5]);
         set(gcf,'PaperPosition',[0 0 11 8.5]);
         if strcmpi(MRS_struct.p.vendor,'Philips_data')
-            pdfname = fullfile('GannetCoRegister_output', [fullpath '_coreg.pdf']); % MM (180112)
+            pdfname = fullfile('GannetCoRegister_output', [fullpath '_' vox{kk} '_coreg.pdf']); % MM (180112)
         else
-            pdfname = fullfile('GannetCoRegister_output', [metabfile_nopath '_coreg.pdf']); % MM (180112)
+            pdfname = fullfile('GannetCoRegister_output', [metabfile_nopath '_' vox{kk} '_coreg.pdf']); % MM (180112)
         end
         saveas(gcf, pdfname);
-
+        
         % Save MRS_struct as mat file
         if ii == numscans && MRS_struct.p.mat
             % Set up filename
             mat_name = ['GannetCoRegister_output/MRS_struct_' vox{kk} '.mat'];
             save(mat_name,'MRS_struct');
         end
-    end 
+        
+    end
+    
 end
 
 

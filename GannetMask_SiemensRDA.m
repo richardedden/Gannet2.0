@@ -8,8 +8,8 @@ warning('off','MATLAB:qhullmx:InternalWarning');
 % being testing on data from Univ of Florida - will need to extend
 % also may need to extend to change dicoms into nifti
 
-if(nargin == 2)
-    MRS_struct.ii=1;
+if nargin == 2
+    MRS_struct.ii = 1;
     ii = 1;
 end
 

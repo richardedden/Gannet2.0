@@ -75,22 +75,21 @@ end
 
 % Determine number of provided water-suppressed files in the batch
 MRS_struct.p.Reference_compound='Cr';
-numfiles = numel(metabfile);
-pfiles = metabfile;
+numscans = numel(metabfile);
 
 % Discern input data format
-MRS_struct = GannetDiscernDatatype(pfiles{1}, MRS_struct);
+MRS_struct = GannetDiscernDatatype(metabfile{1}, MRS_struct);
 
 % For Siemens RDA, each acquisition has two RDA files, i.e. correct the
 % number:
 if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
-    numfiles = numfiles/2;
+    numscans = numscans/2;
 end
 % Determine number of provided water-unsuppressed files in the batch
 if exist('waterfile','var')
     MRS_struct.p.Reference_compound='H2O';
-    numwaterfiles = numel(waterfile);
-    if numwaterfiles ~= numfiles
+    numwaterscans = numel(waterfile);
+    if numwaterscans ~= numscans
         error ('Number of water-unsuppressed files does not match number of water-suppressed files.');
     end
 end
@@ -105,7 +104,7 @@ end
 %   3. Load data from files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
+for ii = 1:numscans % Loop over all files in the batch (from metabfile)
     
     MRS_struct.ii = ii;
     
@@ -194,11 +193,11 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
             
         case 'Siemens_rda'
             if exist('waterfile','var')
-                MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2},metabfile{ii*2-1}, waterfile{ii});
+                MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2}, metabfile{ii*2-1}, waterfile{ii});
                 WaterData = MRS_struct.fids.data_water;
                 MRS_struct.p.Nwateravg = 1;
             else
-                MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2},metabfile{ii*2-1});
+                MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2}, metabfile{ii*2-1});
             end
             FullData = MRS_struct.fids.data;
             % Determine order of ON and OFF acquisitions
@@ -691,7 +690,7 @@ for ii = 1:numfiles % Loop over all files in the batch (from metabfile)
         MRS_struct = orderfields(MRS_struct, structorder);
         
         % Save MRS_struct as mat file
-        if MRS_struct.p.mat
+        if ii == numscans && MRS_struct.p.mat
             % Set up filename
             mat_name = ['GannetLoad_output/MRS_struct_' vox{kk} '.mat'];
             save(mat_name,'MRS_struct');
