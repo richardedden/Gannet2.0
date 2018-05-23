@@ -171,7 +171,7 @@ for ii = 1:numscans
         size_max = size(MRS_struct.mask.(vox{kk}).img{ii},1);
         imagesc(MRS_struct.mask.(vox{kk}).img{ii}(:,size_max+(1:size_max)));
         colormap('gray');
-        caxis([0 0.2]);
+        caxis([0 0.5]);
         axis equal;
         axis tight;
         axis off;
