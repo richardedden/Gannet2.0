@@ -168,7 +168,7 @@ for ii = 1:numscans
 
         imagesc(squeeze(MRS_struct.mask.(vox{kk}).img{ii}));
         colormap('gray');
-        caxis([0 0.5]); % range of 0 to 0.5 seems to work best for now - could calc optimal range later
+        caxis([0 0.2]); % range of 0 to 0.5 seems to work best for now - could calc optimal range later
         axis equal;
         axis tight;
         axis off;

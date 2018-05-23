@@ -197,9 +197,9 @@ img_t = flipud(img_t/max(T1(:)));
 img_c = flipud(img_c/max(T1(:)));
 img_s = flipud(img_s/max(T1(:)));
 
-img_t = img_t + 0.2*flipud(mask_t);
-img_c = img_c + 0.2*flipud(mask_c);
-img_s = img_s + 0.2*flipud(mask_s);
+img_t = img_t + 0.08*flipud(mask_t);
+img_c = img_c + 0.08*flipud(mask_c);
+img_s = img_s + 0.08*flipud(mask_s);
 
 size_max = max([max(size(img_t)) max(size(img_c)) max(size(img_s))]);
 three_plane_img = zeros([size_max 3*size_max]);
