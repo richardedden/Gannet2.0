@@ -1,8 +1,8 @@
-function MRS_struct = GannetCoRegister(MRS_struct, nii_name, rot_folder)
+function MRS_struct = GannetCoRegister(MRS_struct, nii_name)
 
 %Coregistration of MRS voxel volumes to imaging datasets, based on headers.
 
-MRS_struct.version.coreg = '180221';
+MRS_struct.version.coreg = '180523';
 
 if MRS_struct.p.PRIAM % deciding how many voxels there are -- MGSaleh 2016
     vox = MRS_struct.p.Vox;
@@ -66,10 +66,7 @@ for ii = 1:numscans
 
             case 'GE'
                 fname = MRS_struct.metabfile{ii};
-                if ~exist('rot_folder','var')
-                    rot_folder = nii_name;
-                end
-                MRS_struct = GannetMask_GE(fname, nii_name{ii}, MRS_struct, rot_folder{ii}, ii, vox, kk);
+                MRS_struct = GannetMask_GE(fname, nii_name{ii}, MRS_struct, ii, vox, kk);
 
         end
 
