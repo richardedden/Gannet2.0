@@ -174,7 +174,6 @@ TwixHeader.sequenceString       = twix_obj.hdr.Config.SequenceString; % Short se
 % Read information from .image part of the TWIX object
 TwixHeader.sqzSize              = twix_obj.image.sqzSize; % dimensions (data points, averages, number of coils, dynamics (ON and OFF))
 TwixHeader.sqzDims              = twix_obj.image.sqzDims; % variable names for dimensions
-TwixHeader.pointsBeforeEcho     = twix_obj.image.freeParam(1);
 TwixData                        = squeeze(twix_obj.image()); % FID data, remove singleton dimensions
 
 % Read information from .hdr part of the TWIX object
@@ -267,6 +266,15 @@ else
     TwixHeader.seqorig = TwixHeader.sequenceString;
     error(['Unknown sequence: ' TwixHeader.seqorig '. Please consult the Gannet team for support.'])
 end
+
+% Some parameters are stored in different places depending on the sequence
+if strcmp(TwixHeader.seqorig,'CMRR')
+    TwixHeader.pointsBeforeEcho     = twix_obj.image.iceParam(5,1);
+else
+    TwixHeader.pointsBeforeEcho     = twix_obj.image.cutOff(1,1);
+    TwixHeader.pointsAfterEcho      = twix_obj.image.cutOff(1,2);
+end
+
 
 % Now reorder the FID data array according to software version and sequence 
 % origin and sequence type.
