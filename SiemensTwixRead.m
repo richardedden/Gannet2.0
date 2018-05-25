@@ -272,7 +272,7 @@ if strcmp(TwixHeader.seqorig,'CMRR')
     TwixHeader.pointsBeforeEcho     = twix_obj.image.iceParam(5,1);
 else
     TwixHeader.pointsBeforeEcho     = twix_obj.image.cutOff(1,1);
-    TwixHeader.pointsAfterEcho      = twix_obj.image.cutOff(1,2);
+    TwixHeader.pointsAfterEcho      = twix_obj.image.cutOff(2,1);
 end
 
 
