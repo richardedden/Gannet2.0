@@ -27,6 +27,9 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %                   header.
 %       2018-03-16: Function now reads in universal sequence using correct 
 %                   sequence string.
+%       2018-05-25: Correct extraction of acquired data points before the
+%                   echo for PRESS, Siemens WIP MEGA-PRESS, and CMRR
+%                   MEGA-PRESS sequences.
 
 ii = MRS_struct.ii;
 
@@ -267,14 +270,6 @@ else
     error(['Unknown sequence: ' TwixHeader.seqorig '. Please consult the Gannet team for support.'])
 end
 
-% Some parameters are stored in different places depending on the sequence
-if strcmp(TwixHeader.seqorig,'CMRR')
-    TwixHeader.pointsBeforeEcho     = twix_obj.image.iceParam(5,1);
-else
-    TwixHeader.pointsBeforeEcho     = twix_obj.image.cutOff(1,1);
-    TwixHeader.pointsAfterEcho      = twix_obj.image.cutOff(2,1);
-end
-
 
 % Now reorder the FID data array according to software version and sequence 
 % origin and sequence type.
@@ -293,8 +288,14 @@ if strcmp(TwixHeader.seqtype,'PRESS')
     if ndims(TwixData) == 4
         TwixData = TwixData(:,:,:,2);
     end
+    
+    % For the standard Siemens svs_se sequence, the number of points
+    % acquired before the echo maximum are stored here:
+    TwixHeader.pointsBeforeEcho     = twix_obj.image.freeParam(1);
+    
     TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.averages]);
     TwixData = reshape(TwixData,[size(TwixData,1) size(TwixData,2) size(TwixData,3)*size(TwixData,4)]);
+    
 elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')    
     % For all known MEGA-PRESS implementations, the first dimension of the 4D
     % data array contains the time-domain FID datapoints.
@@ -334,6 +335,16 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
         end
     end
     
+    % MEGA-PRESS sequences store the number of points acquired before the
+    % echo maximum in different fields, depending on the origin of the
+    % sequence:
+    if strcmp(TwixHeader.seqorig,'CMRR')
+        TwixHeader.pointsBeforeEcho     = twix_obj.image.iceParam(5,1);
+    else % Siemens WIP
+        TwixHeader.pointsBeforeEcho     = twix_obj.image.cutOff(1,1);
+        TwixHeader.pointsAfterEcho      = twix_obj.image.cutOff(2,1);
+    end
+
     TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.averages]);
     TwixData = reshape(TwixData,[size(TwixData,1) size(TwixData,2) size(TwixData,3)*size(TwixData,4)]);
 end
