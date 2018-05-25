@@ -28,8 +28,8 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %       2018-03-16: Function now reads in universal sequence using correct 
 %                   sequence string.
 %       2018-05-25: Correct extraction of acquired data points before the
-%                   echo for PRESS, Siemens WIP MEGA-PRESS, and CMRR
-%                   MEGA-PRESS sequences.
+%                   echo for Siemens PRESS, Siemens WIP MEGA-PRESS, and 
+%                   Siemens CMRR MEGA-PRESS sequences.
 
 ii = MRS_struct.ii;
 
