@@ -65,7 +65,7 @@ else
     SpectraToPlot = SpectraToPlot - repmat(specbaseline, [1 length(SpectraToPlot)]);
     
     % Stack spectra (MM: 180108)
-    peakheight = abs(max(real(SpectraToPlot(1,peakrange))));
+    peakheight = max(abs(real(SpectraToPlot(1,peakrange))));
     SpectraToPlot(2,:) = SpectraToPlot(2,:) + peakheight;
     hold on;
     plot(MRS_struct.spec.freq, real(SpectraToPlot(2,:)), 'Color', 'r');
