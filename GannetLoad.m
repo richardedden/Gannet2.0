@@ -1,10 +1,10 @@
 function MRS_struct = GannetLoad(metabfile, waterfile)
-%Gannet 3.0 GannetLoad
-%Started by RAEE Nov 5, 2012
-%Updates by MGS, MM, GO 2016-2018
+% Gannet 3.0 GannetLoad
+% Started by RAEE Nov 5, 2012
+% Updates by MGS, MM, GO 2016-2018
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Work flow summary
+% Workflow summary
 %   1. Pre-initialise
 %   2. Determine data parameters from headers
 %   3. Load data from files
@@ -18,13 +18,13 @@ function MRS_struct = GannetLoad(metabfile, waterfile)
 %   0. Check the file list for typos
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-missing=0;
-for filecheck=1:length(metabfile)
+missing = 0;
+for filecheck = 1:length(metabfile)
     % If only water-suppressed data are provided, select Cr as reference.
     MRS_struct.p.Reference_compound = 'Cr';
     if ~exist(metabfile{filecheck},'file')
-        disp(['The file ' metabfile{filecheck} ' (' num2str(filecheck) ')' ' is missing. Typo?'])
-        missing=1;
+        disp(['The file ' metabfile{filecheck} ' (' num2str(filecheck) ')' ' is missing. Typo?']);
+        missing = 1;
     end
 end
 if nargin > 1
@@ -34,7 +34,7 @@ if nargin > 1
     for filecheck=1:length(waterfile)
         if ~exist(waterfile{filecheck},'file')
             disp(['The file ' waterfile(filecheck) ' is missing. Typo?'])
-            missing=1;
+            missing = 1;
         end
     end
 end
@@ -301,7 +301,6 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             else
                 ComWater = WaterData.';
             end
-
         
             % Performing phase corrrection on the water-suppressed data
             % based on Klose (1990), MRM,14:26-30. The equation was
@@ -506,11 +505,9 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             end
             
         end
-        
-    
-    
+                
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %   7. Build GannetLoad Output
+        %   6. Build GannetLoad Output
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
         if ishandle(101)
@@ -701,5 +698,6 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
 end % end of load-and-processing loop over datasets
 
 end
+
 
 

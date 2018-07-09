@@ -7,7 +7,7 @@ function MRS_struct = GannetSegment(MRS_struct)
 % for the GM, WM and CSF segmentations. If these files are present, they
 % are loaded and used for the voxel segmentation
 
-MRS_struct.version.segment = '170914';
+MRS_struct.version.segment = '180706';
 
 if MRS_struct.p.PRIAM % deciding how many regions are there -- MGSaleh 2016
     vox = MRS_struct.p.Vox;
@@ -29,36 +29,36 @@ for ii = 1:numscans
     % Loop over voxels if PRIAM
     for kk = 1:length(vox)
         
-    % 1 - Take nifti from GannetCoRegister and segment it in SPM
-    
-    [T1dir, T1name, T1ext] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
-    anatimage = MRS_struct.mask.(vox{kk}).T1image{ii};
-    
-    % Check to see if segmentation already done - if not, do it
-    % Check which SPM version is installed and segment accordingly
-    tmp = [T1dir '/c1' T1name T1ext];
-    if ~exist(tmp,'file')
-        spmversion = fileparts(which('spm'));
-        if strcmpi(spmversion(end-4:end),'spm12')
-            CallSPM12segmentation(anatimage);
-        else
-            CallSPM8segmentation(anatimage);
+        % 1 - Take nifti from GannetCoRegister and segment it in SPM
+        
+        [T1dir, T1name, T1ext] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
+        anatimage = MRS_struct.mask.(vox{kk}).T1image{ii};
+        
+        % Check to see if segmentation already done - if not, do it
+        % Check which SPM version is installed and segment accordingly
+        tmp = [T1dir '/c1' T1name T1ext];
+        if ~exist(tmp,'file')
+            spmversion = fileparts(which('spm'));
+            if strcmpi(spmversion(end-4:end),'spm12')
+                CallSPM12segmentation(anatimage);
+            else
+                CallSPM8segmentation(anatimage);
+            end
         end
-    end
-    
-    % 2 - Determine GM, WM and CSF fractions for each voxel
-    
-    if strcmp(T1dir,'')
-        T1dir='.';
-    end
-    
-    GM  = [T1dir '/c1' T1name T1ext];
-    WM  = [T1dir '/c2' T1name T1ext];
-    CSF = [T1dir '/c3' T1name T1ext];
-    
-    GMvol  = spm_vol(GM);
-    WMvol  = spm_vol(WM);
-    CSFvol = spm_vol(CSF);
+        
+        % 2 - Determine GM, WM and CSF fractions for each voxel
+        
+        if strcmp(T1dir,'')
+            T1dir='.';
+        end
+        
+        GM  = [T1dir '/c1' T1name T1ext];
+        WM  = [T1dir '/c2' T1name T1ext];
+        CSF = [T1dir '/c3' T1name T1ext];
+        
+        GMvol  = spm_vol(GM);
+        WMvol  = spm_vol(WM);
+        CSFvol = spm_vol(CSF);
         
         voxmaskvol = spm_vol(cell2mat(MRS_struct.mask.(vox{kk}).outfile(ii)));
         
@@ -286,14 +286,17 @@ for ii = 1:numscans
             pdfname = fullfile('GannetSegment_output', [fullpath '_' vox{kk} '_segment.pdf']); % MM (180112)
         else
             pdfname = fullfile('GannetSegment_output', [metabfile_nopath '_' vox{kk} '_segment.pdf']); % MM (180112)
-        end        
+        end
         saveas(gcf, pdfname);
         
-        % Save MRS_struct as mat file
-        if ii == numscans && MRS_struct.p.mat
-            % Set up filename
-            mat_name = ['GannetSegment_output/MRS_struct_' (vox{kk}) '.mat'];
-            save(mat_name,'MRS_struct');
+        if ii == numscans
+            if MRS_struct.p.mat % save MRS_struct as mat file
+                mat_name = ['MRS_struct_' vox{kk} '.mat'];
+                save(mat_name,'MRS_struct');
+            end            
+            if MRS_struct.p.csv % export MRS_struct fields into csv file
+                ExportToCSV(MRS_struct, target, kk, 'segment');
+            end
         end
         
     end

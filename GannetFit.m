@@ -1,26 +1,9 @@
 function MRS_struct = GannetFit(MRS_struct, varargin)
-%Gannet 3.0 GannetFit
-%Started by RAEE Nov 5, 2012
-%Updates by MGS, MM 2016-2017
+% Gannet 3.0 GannetFit
+% Started by RAEE Nov 5, 2012
+% Updates by MGS, MM 2016-2018
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Gannet 3.0 version of Gannet Fit - analysis tool for GABA-edited MRS
-% Need some new sections like
-%   1. GABA, Glx and GSH Fit
-%   2. Water Fit
-%   3. Cr Fit
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Changes made to the code for Gannet3.0:
-% GABA and Glx outputs are saved in seperate structure fields -- MGSaleh 29 June 2016
-% Concentration estimates from GABAGlx fitting -- MGSaleh 13 July 2016
-% GSH output is saved in seperate structure fields -- MGSaleh January 2017
-
-% Input parameters and some definitions:
-% Determine whether multiple regions and fitting targets or not and then use it to
-% create a loop -- MGSaleh 2016
-
-if MRS_struct.p.PRIAM % deciding how many regions are there -- MGSaleh 2016
+if MRS_struct.p.PRIAM
     vox = MRS_struct.p.Vox;
 else
     vox = {MRS_struct.p.Vox{1}};
@@ -51,7 +34,7 @@ else
 end
 
 freq = MRS_struct.spec.freq;
-MRS_struct.version.fit = '180326';
+MRS_struct.version.fit = '180706';
 
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10,'Display','off');
@@ -1079,6 +1062,7 @@ for kk = 1:length(vox)
             saveas(h, pdfname);
             
         end
+        
     end
     
     % 140116: ADH reorder structure
@@ -1101,13 +1085,15 @@ for kk = 1:length(vox)
     end
     MRS_struct = orderfields(MRS_struct, structorder);
     
-    % Save MRS_struct as mat file
-    if trg == length(target) && MRS_struct.p.mat
-        % Set up filename
-        mat_name = ['GannetFit_output/MRS_struct_' vox{kk} '.mat'];
+    if MRS_struct.p.mat % save MRS_struct as mat file
+        mat_name = ['MRS_struct_' vox{kk} '.mat'];
         save(mat_name,'MRS_struct');
     end
-
+    
+    if MRS_struct.p.csv % export MRS_struct fields into csv file
+        ExportToCSV(MRS_struct, target, kk, 'fit');
+    end
+    
     fprintf('\n\n');
     
 end

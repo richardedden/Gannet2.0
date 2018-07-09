@@ -1,6 +1,6 @@
 function MRS_struct = GannetQuantify(MRS_struct)
 
-MRS_struct.version.quantify = '180416';
+MRS_struct.version.quantify = '180706';
 
 cWM = 1; % concentration of GABA in pure WM
 cGM = 2; % concentration of GABA in pure GM
@@ -326,11 +326,14 @@ for ii = 1:numscans
         end
         saveas(gcf, pdfname);
         
-        % Save MRS_struct as mat file
-        if ii == numscans && MRS_struct.p.mat
-            % Set up filename
-            mat_name = ['GannetQuantify_output/MRS_struct_' vox{kk} '.mat'];
-            save(mat_name,'MRS_struct');
+        if ii == numscans
+            if MRS_struct.p.mat % save MRS_struct as mat file
+                mat_name = ['MRS_struct_' vox{kk} '.mat'];
+                save(mat_name,'MRS_struct');
+            end
+            if MRS_struct.p.csv % export MRS_struct fields into csv file
+                ExportToCSV(MRS_struct, target, kk, 'quantify');
+            end
         end
         
     end
