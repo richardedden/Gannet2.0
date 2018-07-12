@@ -293,8 +293,15 @@ for ii = 1:numscans
             if MRS_struct.p.mat % save MRS_struct as mat file
                 mat_name = ['MRS_struct_' vox{kk} '.mat'];
                 save(mat_name,'MRS_struct');
-            end            
+            end
             if MRS_struct.p.csv % export MRS_struct fields into csv file
+                if ~strcmp(MRS_struct.p.Reference_compound,'H2O') % this bit of code needed for ExportToCSV when no water ref is provided
+                    if MRS_struct.p.HERMES
+                        target = {MRS_struct.p.target, MRS_struct.p.target2};
+                    else
+                        target = {MRS_struct.p.target};
+                    end
+                end
                 ExportToCSV(MRS_struct, target, kk, 'segment');
             end
         end
