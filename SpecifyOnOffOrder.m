@@ -40,8 +40,8 @@ switch MRS_struct.p.ONOFForder
                 case 'Siemens_twix'
                     if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=?, 2=?, 3=?, 4=? (MM: 170703)
-                        MRS_struct.fids.ON_OFF  = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GABA
-                        MRS_struct.fids.ON_OFF2 = repmat([0 0 1 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                        MRS_struct.fids.ON_OFF2 = repmat([1 1 0 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                     elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
                         % This has not been tested with universal sequence -- 03142018 MGSaleh
                         % MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
@@ -86,6 +86,17 @@ switch MRS_struct.p.ONOFForder
                     elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
                         MRS_struct.fids.ON_OFF  = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                         MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % Lac
+                    end
+                    
+                case 'Siemens_twix'
+                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                        % 1=?, 2=?, 3=?, 4=? (MM: 170703)
+                        MRS_struct.fids.ON_OFF  = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                        MRS_struct.fids.ON_OFF2 = repmat([0 0 1 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                    elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
+                        % This has not been tested with universal sequence -- 03142018 MGSaleh
+                        % MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        % MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % Lac
                     end
             end
             
