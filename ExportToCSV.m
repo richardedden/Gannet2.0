@@ -9,13 +9,23 @@ for trg = 1:length(target)
         metab = target{trg};
     end
     
-    out.matlabVersion = repmat(version('-release'), [length(MRS_struct.metabfile) 1]);
-    out.GannetVersion = repmat('3', [length(MRS_struct.metabfile) 1]);
-    out.date          = repmat(date, [length(MRS_struct.metabfile) 1]);
+    if strcmp(MRS_struct.p.vendor,'Siemens_rda')
+        out.matlabVersion = repmat(version('-release'), [length(MRS_struct.metabfile)/2 1]);
+        out.GannetVersion = repmat('3', [length(MRS_struct.metabfile)/2 1]);
+        out.date          = repmat(date, [length(MRS_struct.metabfile)/2 1]);
+    else
+        out.matlabVersion = repmat(version('-release'), [length(MRS_struct.metabfile) 1]);
+        out.GannetVersion = repmat('3', [length(MRS_struct.metabfile) 1]);
+        out.date          = repmat(date, [length(MRS_struct.metabfile) 1]);
+    end
     
     %%% 1. Extract data from GannetFit %%%
     
-    out.filename   = MRS_struct.metabfile(:);
+    if strcmp(MRS_struct.p.vendor,'Siemens_rda')
+        out.filename = MRS_struct.metabfile(1:2:end);
+    else
+        out.filename = MRS_struct.metabfile(:);
+    end
     out.AvgDeltaF0 = MRS_struct.out.AvgDeltaF0(:);
     
     if strcmpi(target{trg},'GABAGlx')
@@ -108,7 +118,7 @@ for trg = 1:length(target)
     if strcmpi(module,'fit')
         csv_name = ['MRS_struct_' target{trg} '_' vox '.csv'];
         writetable(T, csv_name);
-        break
+        continue
     end
     
     %%% 2. Extract data from GannetSegment %%%
@@ -154,7 +164,7 @@ for trg = 1:length(target)
     if strcmpi(module,'segment')
         csv_name = ['MRS_struct_' target{trg} '_' vox '.csv'];
         writetable(T, csv_name);
-        break
+        continue
     end
     
     %%% 3. Extract data from GannetQuantify %%%
