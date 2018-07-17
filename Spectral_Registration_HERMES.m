@@ -18,7 +18,6 @@ end
 
 % Pre-allocate memory
 ii = MRS_struct.ii;
-MRS_struct.fids.data_align = zeros(size(MRS_struct.fids.data));
 MRS_struct.out.SpecReg.freq(ii,:) = zeros(1, size(MRS_struct.fids.data,2));
 MRS_struct.out.SpecReg.phase(ii,:) = zeros(1, size(MRS_struct.fids.data,2));
 zMSE = zeros(1,size(MRS_struct.fids.data,2));
@@ -220,63 +219,62 @@ while SpecRegLoop > -1
         FullData = DataToAlign .* repmat((exp(-time*MRS_struct.p.LB*pi)), [1 size(MRS_struct.fids.data,2)]);
         AllFramesFTrealign = fftshift(fft(FullData,MRS_struct.p.ZeroFillTo(ii),1),1);
         
-        % In frequency domain, shift Cr signals to 3.02 and get frequency 'right' as opposed to 'consistent'
-        freqrange = MRS_struct.spec.freq >= 2.925 & MRS_struct.spec.freq <= 3.125;
-        %freqrange = MRS_struct.spec.freq >= 3.125 & MRS_struct.spec.freq <= 3.32; % Cho
-        
-        [~,FrameMaxPos] = max(real(AllFramesFTrealign(freqrange,:)),[],1);
-        freq = MRS_struct.spec.freq(freqrange);
-        CrFreqShift = freq(FrameMaxPos);
-        CrFreqShift = CrFreqShift - 3.02; % 3.2
-        CrFreqShift_pts = round(CrFreqShift / abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
-        
-        % Apply circular frequency shifts
-        for corrloop = 1:size(AllFramesFTrealign,2)
-            AllFramesFTrealign(:,corrloop) = circshift(AllFramesFTrealign(:,corrloop), CrFreqShift_pts(corrloop));
+        if ~MRS_struct.p.phantom
+            % In frequency domain, shift Cr signals to 3.02 and get frequency 'right' as opposed to 'consistent'
+            freqrange = MRS_struct.spec.freq >= 2.925 & MRS_struct.spec.freq <= 3.125;
+            %freqrange = MRS_struct.spec.freq >= 3.125 & MRS_struct.spec.freq <= 3.32; % Cho
+            
+            [~,FrameMaxPos] = max(real(AllFramesFTrealign(freqrange,:)),[],1);
+            freq = MRS_struct.spec.freq(freqrange);
+            CrFreqShift = freq(FrameMaxPos);
+            CrFreqShift = CrFreqShift - 3.02; % 3.2
+            CrFreqShift_pts = round(CrFreqShift / abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2)));
+            
+            % Apply circular frequency shifts
+            for corrloop = 1:size(AllFramesFTrealign,2)
+                AllFramesFTrealign(:,corrloop) = circshift(AllFramesFTrealign(:,corrloop), CrFreqShift_pts(corrloop));
+            end
+            
+            % Use ChoCr signals of SUM spectrum for final phasing
+            SUM = mean(AllFramesFTrealign,2);
+            freqrange = MRS_struct.spec.freq >= 2.9 & MRS_struct.spec.freq <= 3.35;
+            freq = MRS_struct.spec.freq(freqrange);
+            
+            SUM_ChoCr = SUM(freqrange);
+            Baseline_offset = real(SUM_ChoCr(1)+SUM_ChoCr(end))/2;
+            Width_estimate = 0.05;
+            Area_estimate = (max(real(SUM_ChoCr))-min(real(SUM_ChoCr))) * Width_estimate * 4;
+            
+            LorentzModelInit = [Area_estimate Area_estimate Width_estimate Width_estimate 3.02 3.20 pi Baseline_offset 1 1];
+            lb = [Area_estimate/10 Area_estimate/10 Width_estimate/10 Width_estimate/10 3.02-0.02 3.20-0.02 -pi -1e3*Area_estimate -1e3*Area_estimate -1e3*Area_estimate];
+            ub = [Area_estimate*10 Area_estimate*10 Width_estimate*10 Width_estimate*10 3.02+0.02 3.20+0.02 pi 2e3*Area_estimate 2e3*Area_estimate 2e3*Area_estimate];
+            
+            LorentzModelInit = lsqcurvefit(@TwoLorentzModel, LorentzModelInit, freq, real(SUM_ChoCr)', lb, ub, lsqopts);
+            LorentzModelParam = nlinfit(freq, real(SUM_ChoCr)', @TwoLorentzModel, LorentzModelInit, nlinopts);
+            
+            if strcmpi(showPlots,'y')
+                H2 = figure(334);
+                hold on;
+                plot(freq', real(SUM_ChoCr), 'k');
+                plot(freq', TwoLorentzModel(LorentzModelParam,freq), 'r');
+                hold off;
+                set(gca,'xdir','reverse');
+                drawnow;
+                pause(1);
+            end
+            
+            % Convert to complex number then recalculate phase within 2*pi range
+            phi = LorentzModelParam(7);
+            phi = cos(phi) + 1i*sin(phi);
+            phi = angle(phi);
+            % Then fix to be within -pi...pi
+            offsetpos = pi*lt(phi,-pi/2);
+            offsetneg = -pi*gt(phi,pi/2);
+            phi = phi + offsetpos + offsetneg;
+            
+            % Apply zero-order phase correction
+            AllFramesFTrealign = AllFramesFTrealign * exp(1i*phi);
         end
-        
-        % Use ChoCr signals of SUM spectrum for final phasing
-        SUM = mean(AllFramesFTrealign,2);
-        freqrange = MRS_struct.spec.freq >= 2.9 & MRS_struct.spec.freq <= 3.35;
-        freq = MRS_struct.spec.freq(freqrange);
-        
-        SUM_ChoCr = SUM(freqrange);
-        Baseline_offset = real(SUM_ChoCr(1)+SUM_ChoCr(end))/2;
-        Width_estimate = 0.05;
-        Area_estimate = (max(real(SUM_ChoCr))-min(real(SUM_ChoCr))) * Width_estimate * 4;
-        
-        LorentzModelInit = [Area_estimate Area_estimate Width_estimate Width_estimate 3.02 3.20 pi Baseline_offset 1 1];        
-        lb = [Area_estimate/10 Area_estimate/10 Width_estimate/10 Width_estimate/10 3.02-0.02 3.20-0.02 -pi -1e3*Area_estimate -1e3*Area_estimate -1e3*Area_estimate];
-        ub = [Area_estimate*10 Area_estimate*10 Width_estimate*10 Width_estimate*10 3.02+0.02 3.20+0.02 pi 2e3*Area_estimate 2e3*Area_estimate 2e3*Area_estimate];
-        
-        LorentzModelInit = lsqcurvefit(@TwoLorentzModel, LorentzModelInit, freq, real(SUM_ChoCr)', lb, ub, lsqopts);
-        LorentzModelParam = nlinfit(freq, real(SUM_ChoCr)', @TwoLorentzModel, LorentzModelInit, nlinopts);
-        
-        if strcmpi(showPlots,'y')
-            H2 = figure(334);
-            hold on;
-            plot(freq', real(SUM_ChoCr), 'k');
-            plot(freq', TwoLorentzModel(LorentzModelParam,freq), 'r');
-            hold off;
-            set(gca,'xdir','reverse');
-            drawnow;
-            pause(1);
-        end
-        
-        % Convert to complex number then recalculate phase within 2*pi range
-        phi = LorentzModelParam(7);
-        phi = cos(phi) + 1i*sin(phi);
-        phi = angle(phi);
-        % Then fix to be within -pi...pi
-        offsetpos = pi*lt(phi,-pi/2);
-        offsetneg = -pi*gt(phi,pi/2);
-        phi = phi + offsetpos + offsetneg;
-%         if phi > 0
-%            phi = -phi;
-%         end
-        
-        % Apply zero-order phase correction
-        AllFramesFTrealign = AllFramesFTrealign * exp(1i*phi);
         
         % Reject transients that are greater than 3 st. devs. of MSEs (MM: 171117)
         MRS_struct.out.reject(:,ii) = zMSE > 3;
@@ -321,4 +319,6 @@ Lorentz = cos(phase) .* Absorption + sin(phase) .* Dispersion + ...
       baseline3 .* cos(pi.*freq./1.31./4);
 
 end
+
+
 

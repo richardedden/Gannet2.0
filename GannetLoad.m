@@ -345,7 +345,12 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         
         % Work out frequency scale
         freqrange = MRS_struct.p.sw(ii)/MRS_struct.p.LarmorFreq(ii);
-        MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo(ii)+1-(1:1:MRS_struct.p.ZeroFillTo(ii)))/MRS_struct.p.ZeroFillTo(ii)*freqrange+4.68-freqrange/2.0;
+        if MRS_struct.p.phantom
+            F0 = 4.8;
+        else
+            F0 = 4.68;
+        end
+        MRS_struct.spec.freq = (MRS_struct.p.ZeroFillTo(ii)+1-(1:1:MRS_struct.p.ZeroFillTo(ii)))/MRS_struct.p.ZeroFillTo(ii)*freqrange+F0-freqrange/2;
         % MM (170119)
         MRS_struct.p.df(ii) = abs(MRS_struct.spec.freq(1) - MRS_struct.spec.freq(2));
         MRS_struct.p.SpecRes(ii) = MRS_struct.p.sw(ii)/MRS_struct.p.npoints(ii);
@@ -353,7 +358,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         MRS_struct.p.Tacq(ii) = 1/MRS_struct.p.SpecRes(ii);
         
         % Frame-by-frame determination of frequency of residual water (MM: 170201)
-        water_range = MRS_struct.spec.freq-4.68 >= -0.2 & MRS_struct.spec.freq-4.68 <= 0.2;
+        water_range = MRS_struct.spec.freq-F0 >= -0.2 & MRS_struct.spec.freq-F0 <= 0.2;
         [~,FrameMaxPos] = max(abs(real(AllFramesFT(water_range,:))),[],1);
         AllFramesFTrealign = AllFramesFT;
         
@@ -365,7 +370,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         if any(strcmp(MRS_struct.p.vendor,{'Siemens_rda','Siemens_twix','Siemens_dicom'}))
             MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.7); % Siemens assumes 4.7 ppm as F0
         else
-            MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.68);
+            MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - F0);
         end
         
         % Frame-by-frame alignment
