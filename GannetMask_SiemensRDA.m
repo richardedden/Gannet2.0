@@ -74,13 +74,13 @@ end
 fclose(fid);
 
 % Create voxel coordinates
-MRS_struct.p.voxoff(ii) =[ rda.VOIPositionSag rda.VOIPositionCor rda.VOIPositionTra];
-MRS_struct.p.voxdim(ii) = [rda.VOIThickness rda.VOIReadoutFOV rda.VOIPhaseFOV ]; 
-MRS_Rot(:,1)=rda.row.'.* [-1 -1 1]' ;
-MRS_Rot(:,2)=rda.column.' ;
-MRS_Rot(:,3)=cross(MRS_Rot(:,1),MRS_Rot(:,2));
-MRS_Rot(1,:)=-MRS_Rot(1,:);
-rotmat=-MRS_Rot;
+MRS_struct.p.voxoff(ii,:) = [rda.VOIPositionSag rda.VOIPositionCor rda.VOIPositionTra];
+MRS_struct.p.voxdim(ii,:) = [rda.VOIThickness rda.VOIReadoutFOV rda.VOIPhaseFOV]; 
+MRS_Rot(:,1) = rda.row.'.* [-1 -1 1]';
+MRS_Rot(:,2) = rda.column.' ;
+MRS_Rot(:,3) = cross(MRS_Rot(:,1),MRS_Rot(:,2));
+MRS_Rot(1,:) = -MRS_Rot(1,:);
+rotmat = -MRS_Rot;
 
 % Change to current working directory
 currdir=pwd;

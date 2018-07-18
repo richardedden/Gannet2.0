@@ -1,13 +1,22 @@
 function MRS_struct = GannetSegment(MRS_struct)
 
-% Relies on SPM being installed
+% Relies on SPM12 being installed
 %
 % Runs segmentation script if segmented images not present according to
 % file convention of c1, c2 and c3 as prefixes on the anatomical image name
 % for the GM, WM and CSF segmentations. If these files are present, they
 % are loaded and used for the voxel segmentation
 
-MRS_struct.version.segment = '180706';
+MRS_struct.version.segment = '180718';
+
+% First check if SPM12 is installed and on the search path
+spmversion = fileparts(which('spm'));
+if isempty(spmversion)
+    error('SPM not found! Please install SPM12 (https://www.fil.ion.ucl.ac.uk/spm/software/spm12) and make sure it is on your search path.');
+elseif strcmpi(spmversion(end-3:end),'spm8')
+    error(['SPM8 detected! Gannet 3.0 no longer supports SPM8. ' ...
+           'Please install SPM12 (https://www.fil.ion.ucl.ac.uk/spm/software/spm12) and make sure it is on your search path.']);
+end
 
 if MRS_struct.p.PRIAM % deciding how many regions are there -- MGSaleh 2016
     vox = MRS_struct.p.Vox;
@@ -38,18 +47,13 @@ for ii = 1:numscans
         % Check which SPM version is installed and segment accordingly
         tmp = [T1dir '/c1' T1name T1ext];
         if ~exist(tmp,'file')
-            spmversion = fileparts(which('spm'));
-            if strcmpi(spmversion(end-4:end),'spm12')
-                CallSPM12segmentation(anatimage);
-            else
-                CallSPM8segmentation(anatimage);
-            end
+            CallSPM12segmentation(anatimage);
         end
         
         % 2 - Determine GM, WM and CSF fractions for each voxel
         
         if strcmp(T1dir,'')
-            T1dir='.';
+            T1dir = '.';
         end
         
         GM  = [T1dir '/c1' T1name T1ext];

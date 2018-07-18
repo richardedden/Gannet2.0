@@ -2,7 +2,16 @@ function MRS_struct = GannetCoRegister(MRS_struct, nii_name)
 
 %Coregistration of MRS voxel volumes to imaging datasets, based on headers.
 
-MRS_struct.version.coreg = '180523';
+MRS_struct.version.coreg = '180718';
+
+% First check if SPM12 is installed and on the search path
+spmversion = fileparts(which('spm'));
+if isempty(spmversion)
+    error('SPM not found! Please install SPM12 (https://www.fil.ion.ucl.ac.uk/spm/software/spm12) and make sure it is on your search path.');
+elseif strcmpi(spmversion(end-3:end),'spm8')
+    error(['SPM8 detected! Gannet 3.0 no longer supports SPM8. ' ...
+           'Please install SPM12 (https://www.fil.ion.ucl.ac.uk/spm/software/spm12) and make sure it is on your search path.']);
+end
 
 if MRS_struct.p.PRIAM % deciding how many voxels there are -- MGSaleh 2016
     vox = MRS_struct.p.Vox;

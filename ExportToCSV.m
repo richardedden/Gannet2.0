@@ -10,13 +10,13 @@ for trg = 1:length(target)
     end
     
     if strcmp(MRS_struct.p.vendor,'Siemens_rda')
-        out.matlabVersion = repmat(version('-release'), [length(MRS_struct.metabfile)/2 1]);
-        out.GannetVersion = repmat('3', [length(MRS_struct.metabfile)/2 1]);
-        out.date          = repmat(date, [length(MRS_struct.metabfile)/2 1]);
+        out.matlabVersion = cellstr(repmat(version('-release'), [length(MRS_struct.metabfile)/2 1]));
+        out.GannetVersion = cellstr(repmat('3', [length(MRS_struct.metabfile)/2 1]));
+        out.date          = cellstr(repmat(date, [length(MRS_struct.metabfile)/2 1]));
     else
-        out.matlabVersion = repmat(version('-release'), [length(MRS_struct.metabfile) 1]);
-        out.GannetVersion = repmat('3', [length(MRS_struct.metabfile) 1]);
-        out.date          = repmat(date, [length(MRS_struct.metabfile) 1]);
+        out.matlabVersion = cellstr(repmat(version('-release'), [length(MRS_struct.metabfile) 1]));
+        out.GannetVersion = cellstr(repmat('3', [length(MRS_struct.metabfile) 1]));
+        out.date          = cellstr(repmat(date, [length(MRS_struct.metabfile) 1]));
     end
     
     %%% 1. Extract data from GannetFit %%%
