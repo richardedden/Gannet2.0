@@ -12,8 +12,9 @@ function DicomHeader = read_dcm_header(fid)
 %   Credits:    
 % 
 %   Version history:
-%   0.9: First version (2018-04-24)
+%   0.9:  First version (2018-04-24)
 %   0.91: Several sequence-specific loading fixes (2018-05-13)
+%   0.92: Added support for sLASER sequence (2018-07-18)
 %   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% HEADER INFO PARSING %%%
@@ -89,9 +90,11 @@ elseif strfind(DicomHeader.sequenceFileName,'eja_svs_mpress')
     DicomHeader.seqtype = 'MEGAPRESS';
     DicomHeader.seqorig = 'CMRR'; % Minnesota sequence
 elseif strfind(DicomHeader.sequenceFileName,'svs_se')
-    DicomHeader.seqtype = 'PRESS'; % In case PRESS is used as water reference
+    DicomHeader.seqtype = 'PRESS'; % PRESS
+elseif strfind(DicomHeader.sequenceFileName,'svs_slaser')
+    DicomHeader.seqtype = 'sLASER'; % sLASER
 else
-    DicomHeader.seqorig = DicomHeader.sequenceString;
+    DicomHeader.seqorig = DicomHeader.sequenceFileName;
     error(['Unknown sequence: ' DicomHeader.seqorig '. Please consult the Gannet team for support.'])
 end
 
@@ -148,52 +151,55 @@ DicomHeader.B0                   = dcmHeader.sProtConsistencyInfo.flNominalB0; %
 DicomHeader.dwellTime            = dcmHeader.sRXSPEC.alDwellTime0; % dwell time [ns]
 DicomHeader.tx_freq              = dcmHeader.sTXSPEC.asNucleusInfo0.lFrequency; % Transmitter frequency [Hz]
 
-% these may only be extractable from a few MEGA-PRESS versions
+% these may only be extractable from a few sequences and MEGA-PRESS
+% versions:
 % editing pulse parameters
-if strcmp(DicomHeader.seqorig,'CMRR')
-    if isfield(dcmHeader, 'sWipMemBlock')
-        if isfield(dcmHeader.sWipMemBlock, 'adFree3')
-            DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree3;
+if isfield(DicomHeader, 'seqorig')
+    if strcmp(DicomHeader.seqorig,'CMRR')
+        if isfield(dcmHeader, 'sWipMemBlock')
+            if isfield(dcmHeader.sWipMemBlock, 'adFree3')
+                DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree3;
+            end
+            if isfield(dcmHeader.sWipMemBlock, 'adFree2')
+                DicomHeader.editRF.freq(2) = dcmHeader.sWipMemBlock.adFree2;
+            end
+            if isfield(dcmHeader.sWipMemBlock, 'adFree6')
+                DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
+            end
+        elseif isfield(dcmHeader, 'sWiPMemBlock')
+            if isfield(dcmHeader.sWiPMemBlock, 'adFree3')
+                DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree3;
+            end
+            if isfield(dcmHeader.sWiPMemBlock, 'adFree2')
+                DicomHeader.editRF.freq(2) = dcmHeader.sWiPMemBlock.adFree2;
+            end
+            if isfield(dcmHeader.sWiPMemBlock, 'adFree6')
+                DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
+            end
         end
-        if isfield(dcmHeader.sWipMemBlock, 'adFree2')
-            DicomHeader.editRF.freq(2) = dcmHeader.sWipMemBlock.adFree2;
-        end
-        if isfield(dcmHeader.sWipMemBlock, 'adFree6')
-            DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
-        end
-    elseif isfield(dcmHeader, 'sWiPMemBlock')
-        if isfield(dcmHeader.sWiPMemBlock, 'adFree3')
-            DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree3;
-        end
-        if isfield(dcmHeader.sWiPMemBlock, 'adFree2')
-            DicomHeader.editRF.freq(2) = dcmHeader.sWiPMemBlock.adFree2;
-        end
-        if isfield(dcmHeader.sWiPMemBlock, 'adFree6')
-            DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
-        end
-    end
-else
-    if isfield(dcmHeader, 'sWipMemBlock')
-        if isfield(dcmHeader.sWipMemBlock, 'adFree9')
-            DicomHeader.editRF.centerFreq = dcmHeader.sWipMemBlock.adFree9;
-        end
-        if isfield(dcmHeader.sWipMemBlock, 'adFree7')
-            DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree7;
-            DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
-        end
-        if isfield(dcmHeader.sWipMemBlock, 'adFree8')
-            DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
-        end
-    elseif isfield(dcmHeader, 'sWiPMemBlock')
-        if isfield(dcmHeader.sWiPMemBlock, 'adFree9')
-            DicomHeader.editRF.centerFreq = dcmHeader.sWiPMemBlock.adFree9;
-        end
-        if isfield(dcmHeader.sWiPMemBlock, 'adFree7')
-            DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree7;
-            DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
-        end
-        if isfield(dcmHeader.sWiPMemBlock, 'adFree8')
-            DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
+    else
+        if isfield(dcmHeader, 'sWipMemBlock')
+            if isfield(dcmHeader.sWipMemBlock, 'adFree9')
+                DicomHeader.editRF.centerFreq = dcmHeader.sWipMemBlock.adFree9;
+            end
+            if isfield(dcmHeader.sWipMemBlock, 'adFree7')
+                DicomHeader.editRF.freq(1) = dcmHeader.sWipMemBlock.adFree7;
+                DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
+            end
+            if isfield(dcmHeader.sWipMemBlock, 'adFree8')
+                DicomHeader.editRF.bw = dcmHeader.sWipMemBlock.adFree8;
+            end
+        elseif isfield(dcmHeader, 'sWiPMemBlock')
+            if isfield(dcmHeader.sWiPMemBlock, 'adFree9')
+                DicomHeader.editRF.centerFreq = dcmHeader.sWiPMemBlock.adFree9;
+            end
+            if isfield(dcmHeader.sWiPMemBlock, 'adFree7')
+                DicomHeader.editRF.freq(1) = dcmHeader.sWiPMemBlock.adFree7;
+                DicomHeader.editRF.freq(2) = DicomHeader.editRF.centerFreq + (DicomHeader.editRF.centerFreq - DicomHeader.editRF.freq(1));
+            end
+            if isfield(dcmHeader.sWiPMemBlock, 'adFree8')
+                DicomHeader.editRF.bw = dcmHeader.sWiPMemBlock.adFree8;
+            end
         end
     end
 end
