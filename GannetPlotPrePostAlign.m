@@ -14,7 +14,11 @@ if MRS_struct.p.HERMES
     baserange = MRS_struct.spec.freq <= 0 & MRS_struct.spec.freq >= -0.5;
     switch MRS_struct.p.target2
         case {'GABA','GABAGlx','Glx'}
-            peakrange = MRS_struct.spec.freq <= 4.1 & MRS_struct.spec.freq >= 2.79;
+            if MRS_struct.p.phantom
+                peakrange = MRS_struct.spec.freq <= 4.1 & MRS_struct.spec.freq >= 1.0;
+            else
+                peakrange = MRS_struct.spec.freq <= 4.1 & MRS_struct.spec.freq >= 2.79;
+            end
         case 'GSH'
             peakrange = MRS_struct.spec.freq <= 3.5 & MRS_struct.spec.freq >= 1.5;
         case 'Lac'
@@ -24,9 +28,14 @@ if MRS_struct.p.HERMES
     specbaseline = mean(real(SpectraToPlot(:,baserange)),2);
     SpectraToPlot = SpectraToPlot - repmat(specbaseline, [1 length(SpectraToPlot)]);
     
-    % Stack spectra (MM: 180108)
-    peakheight = abs(min(real(SpectraToPlot(3,peakrange))));
-    SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + 1.4*peakheight;
+    % Stack spectra (MM: 180724)
+    if MRS_struct.p.phantom
+        signalrange = max(max(real(SpectraToPlot(1:2,peakrange)))) - min(min(real(SpectraToPlot(1:2,peakrange))));
+        SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + signalrange;
+    else
+        peakheight = abs(min(real(SpectraToPlot(3,peakrange))));
+        SpectraToPlot(3:4,:) = SpectraToPlot(3:4,:) + 1.05*peakheight;
+    end
     hold on;
     plot(MRS_struct.spec.freq, real(SpectraToPlot(2,:)), 'Color', 'r');
     plot(MRS_struct.spec.freq, real(SpectraToPlot(1,:)), 'Color', 'b');

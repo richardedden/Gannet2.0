@@ -270,7 +270,7 @@ for kk = 1:length(vox)
                 noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
                 MRS_struct.out.(vox{kk}).Lac.SNR(ii) = abs(Lacheight)/noiseSigma_DIFF;
                 
-            elseif strcmp(MRS_struct.p.target,'Glx')
+            elseif strcmp(target{trg},'Glx')
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %   1.  Glx Fit
@@ -907,7 +907,7 @@ for kk = 1:length(vox)
                     
                 case 'Glx'
                     tmp1 = 'Glx Area';
-                    tmp2 = sprintf(' : %.3g', MRS_struct.out.(vox{kk}).Glx.Area(ii));
+                    tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).Glx.Area(ii));
                     
                 case 'GABAGlx'
                     tmp1 = 'GABA+/Glx Area';

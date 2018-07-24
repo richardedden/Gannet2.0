@@ -18,7 +18,7 @@ switch MRS_struct.p.ONOFForder
             switch MRS_struct.p.vendor
                 
                 case 'GE'
-                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                    if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=ExpA, 2=ExpB, 3=ExpC, 4=ExpD (MM: 171120)
                         MRS_struct.fids.ON_OFF  = repmat([1 1 0 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                         MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
@@ -28,7 +28,7 @@ switch MRS_struct.p.ONOFForder
                     end
                     
                 case 'Philips'
-                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                    if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=?, 2=?, 3=?, 4=? (MM: 170703)
                         MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                         MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
@@ -38,7 +38,7 @@ switch MRS_struct.p.ONOFForder
                     end
                     
                 case 'Siemens_twix'
-                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                    if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=?, 2=?, 3=?, 4=? (MM: 170703)
                         MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                         MRS_struct.fids.ON_OFF2 = repmat([1 1 0 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
@@ -69,7 +69,7 @@ switch MRS_struct.p.ONOFForder
             switch MRS_struct.p.vendor
                 
                 case 'GE'
-                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                    if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=?, 2=?, 3=?, 4=? (MM: 171120)
                         MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                         MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
@@ -79,7 +79,7 @@ switch MRS_struct.p.ONOFForder
                     end
                     
                 case 'Philips'
-                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                    if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=ExpC, 2=ExpB, 3=ExpA, 4=ExpD (MM: 170703)
                         MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                         MRS_struct.fids.ON_OFF2 = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
@@ -89,7 +89,7 @@ switch MRS_struct.p.ONOFForder
                     end
                     
                 case 'Siemens_twix'
-                    if strcmpi(MRS_struct.p.target, 'GABAGlx') && strcmpi(MRS_struct.p.target2, 'GSH')
+                    if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
                         % 1=?, 2=?, 3=?, 4=? (MM: 170703)
                         MRS_struct.fids.ON_OFF  = repmat([1 0 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GABA
                         MRS_struct.fids.ON_OFF2 = repmat([0 0 1 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH

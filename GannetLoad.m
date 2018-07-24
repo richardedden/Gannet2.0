@@ -63,7 +63,7 @@ if MRS_struct.p.HERMES % MGSaleh & MM 2016: for HERMES of GSH/Lac and GABAGlx/GS
     if strcmp(MRS_struct.p.target, 'Lac') && strcmp(MRS_struct.p.target2, 'GSH')
         [MRS_struct.p.target, MRS_struct.p.target2] = deal(MRS_struct.p.target2, MRS_struct.p.target);
     end
-    if strcmp(MRS_struct.p.target, 'GSH') && strcmp(MRS_struct.p.target2, 'GABAGlx')
+    if strcmp(MRS_struct.p.target, 'GSH') && any(strcmp(MRS_struct.p.target2, {'GABA','Glx','GABAGlx'}))
         [MRS_struct.p.target, MRS_struct.p.target2] = deal(MRS_struct.p.target2, MRS_struct.p.target);
     end
 end
@@ -545,7 +545,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         plot(1:size(FullData,2), MRS_struct.fids.waterfreq(ii,:)', '-', 1:size(FullData,2), rejectframesplot, 'ro');
         set(gca,'XLim',[0 size(FullData,2)]);
         xlabel('average'); ylabel('\omega_0');
-        title('Water Frequency, ppm');
+        title('Water Frequency');
         
         % Bottom left
         hc = subplot(2,2,3);
