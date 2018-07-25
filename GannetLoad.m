@@ -426,8 +426,16 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff(ii,:) = (ON2-OFF2)/2;
             MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).diff_noalign(ii,:) = (mean(AllFramesFT(:,MRS_struct.fids.ON_OFF2==1),2) - mean(AllFramesFT(:,MRS_struct.fids.ON_OFF2==0),2))/2;
             
+            % Edit-OFF,-OFF spectrum (for Cr referencing) (MM: 180725)
+            OFF_OFF = mean(AllFramesFTrealign(:,all([MRS_struct.fids.ON_OFF' MRS_struct.fids.ON_OFF2']==0,2) & MRS_struct.out.reject(:,ii)==0), 2);
+            
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).off_off(ii,:)  = OFF_OFF;
+            MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target2)).off_off(ii,:) = OFF_OFF;
+            
             % Remove residual water from diff and diff_noalign spectra using HSVD -- GO & MGSaleh 2016
             if MRS_struct.p.water_removal
+                
+                fprintf('\nFiltering out residual water signal...\n');
                 
                 % Convert DIFF spectra to time domain, apply water filter, convert back to frequency domain
                 MRS_struct.fids.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = waterremovalSVD(ifft(ifftshift(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:).')), ...

@@ -53,9 +53,12 @@ for kk = 1:length(vox)
         
         fprintf('\nFitting %s...',target{trg});
         
-        % Defining variables -- MGSaleh 2016
         DIFF = MRS_struct.spec.(vox{kk}).(target{trg}).diff;
-        OFF  = MRS_struct.spec.(vox{kk}).(target{trg}).off;
+        if MRS_struct.p.HERMES
+            OFF = MRS_struct.spec.(vox{kk}).(target{trg}).off_off; % MM (180725)
+        else
+            OFF = MRS_struct.spec.(vox{kk}).(target{trg}).off;
+        end
         numscans = size(DIFF,1);
         
         for ii = 1:numscans
@@ -614,12 +617,14 @@ for kk = 1:length(vox)
                 % Generate scaled spectra (for plotting) CJE Jan2011, MM (170705)
                 MRS_struct.spec.(vox{kk}).(target{trg}).off_scaled(ii,:) = ...
                     MRS_struct.spec.(vox{kk}).(target{trg}).off(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
+                MRS_struct.spec.(vox{kk}).(target{trg}).off_off_scaled(ii,:) = ...
+                    MRS_struct.spec.(vox{kk}).(target{trg}).off_off(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
                 MRS_struct.spec.(vox{kk}).(target{trg}).on_scaled(ii,:) = ...
                     MRS_struct.spec.(vox{kk}).(target{trg}).on(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
                 MRS_struct.spec.(vox{kk}).(target{trg}).diff_scaled(ii,:) = ...
                     MRS_struct.spec.(vox{kk}).(target{trg}).diff(ii,:) .* (1/MRS_struct.out.(vox{kk}).water.ModelParam(ii,1));
                 
-                % MM (170703): Reorder structure fields 
+                % MM (170703): Reorder structure fields
                 MRS_struct.out.(vox{kk}).water = orderfields(MRS_struct.out.(vox{kk}).water, {'Area', 'FWHM', 'SNR', 'ModelParam', 'Resid', 'FitError'});
                 
                 hb = subplot(2,2,3);

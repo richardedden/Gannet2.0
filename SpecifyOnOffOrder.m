@@ -101,6 +101,7 @@ switch MRS_struct.p.ONOFForder
             end
             
         else % MEGA-PRESS
+            
             if strcmpi(MRS_struct.p.vendor,'Philips') && strcmpi(MRS_struct.p.seqorig,'Philips')
                 MRS_struct.fids.ON_OFF = [zeros(1,size(MRS_struct.fids.data,2)/2) ones(1,size(MRS_struct.fids.data,2)/2)];
             elseif strcmpi(MRS_struct.p.vendor,'Philips_data') % Hardcode for now. This repmat depends on the value entered for NSA
@@ -108,6 +109,7 @@ switch MRS_struct.p.ONOFForder
             else
                 MRS_struct.fids.ON_OFF = repmat([0 1], [1 size(MRS_struct.fids.data,2)/2]);
             end
+            
         end
         
 end
