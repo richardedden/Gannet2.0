@@ -1,12 +1,22 @@
 function MRS_struct = GannetMask_SiemensRDA(filename, nii_file, MRS_struct, ii, vox, kk)
-
+%   Creates a .nii file containing the voxel mask of the MRS voxel.
+%   Needs to be called from GannetCoRegister.
+%   Requires SPM8 or SPM12 to be added to the MATLAB path.
+%
+%   Author:
+%       Dr. Georg Oeltzschner (Johns Hopkins University, 2018-07-28)
+%       goeltzs1@jhmi.edu
+%   
+%   Credits:
+%       The routine for correct determination of the phase and readout
+%       directions of the MRS voxel is adapted from 
+%       vox2ras_rsolveAA.m
+%       (Dr. Rudolph Pienaar, Massachusetts General Hospital, Boston)
+%
+%   History:
+%       2018-07-28: Adapted GannetMask_SiemensTWIX for processing RDA.
 warning('off','MATLAB:nearlySingularMatrix');
 warning('off','MATLAB:qhullmx:InternalWarning');
-
-% Still kind of beta with updates from GO 2017
-% this relies on SPM and a nifti file
-% being testing on data from Univ of Florida - will need to extend
-% also may need to extend to change dicoms into nifti
 
 if nargin == 2
     MRS_struct.ii = 1;
@@ -36,57 +46,118 @@ while (isempty(strfind(tline, head_end_text))) %#ok<*STREMP>
         value    = tline(occurence_of_colon+1 : length(tline)); 
         
         switch variable
-        case { 'VOINormalSag' , 'VOINormalCor' , 'VOINormalTra' , 'VOIPositionSag', 'VOIPositionCor', 'VOIPositionTra', 'VOIThickness','VOIReadoutFOV','VOIPhaseFOV'  }
+        case {'VOINormalSag' , 'VOINormalCor' , 'VOINormalTra' , 'VOIPositionSag', 'VOIPositionCor', 'VOIPositionTra', 'VOIThickness','VOIReadoutFOV','VOIPhaseFOV','VOIRotationInPlane'}
             eval(['rda.' , variable , ' = str2num(value); ']);
-        case { 'RowVector[0]' }
-            rda.row(1)=str2double(value);
-        case { 'RowVector[1]' }
-            rda.row(2)=str2double(value);
-        case { 'RowVector[2]' }
-            rda.row(3)=str2double(value);
-        case { 'ColumnVector[0]' }
-            rda.column(1)=str2double(value);
-        case { 'ColumnVector[1]' }
-            rda.column(2)=str2double(value);
-        case { 'ColumnVector[2]' }
-            rda.column(3)=str2double(value);
-        case { 'PositionVector[0]' }
-            rda.position(1)=str2double(value);
-        case { 'PositionVector[1]' }
-            rda.position(2)=str2double(value);
-        case { 'PositionVector[2]' }
-            rda.position(3)=str2double(value);                  
-        case {'VOIPositionSag' }
-            rda.pdSag = str2double(value);
-        case {'VOIPositionCor' }
-            rda.pdCor = str2double(value);
-        case {'VOIPositionTra' }
-            rda.pdTra = str2double(value);
         end
-        
+
     else
         % Don't bother storing this bit of the output
     end
     
-    
+
 end
 
+MRS_struct.p.VoI_InPlaneRot(ii)         = rda.VOIRotationInPlane;
+MRS_struct.p.NormCor(ii)                = rda.VOINormalCor;
+MRS_struct.p.NormSag(ii)                = rda.VOINormalSag;
+MRS_struct.p.NormTra(ii)                = rda.VOINormalTra;
+MRS_struct.p.voxdim(ii,1)               = rda.VOIPhaseFOV;
+MRS_struct.p.voxdim(ii,2)               = rda.VOIReadoutFOV;
+MRS_struct.p.voxdim(ii,3)               = rda.VOIThickness;
+MRS_struct.p.voxoff(ii,1)               = rda.VOIPositionSag;
+MRS_struct.p.voxoff(ii,2)               = rda.VOIPositionCor;
+MRS_struct.p.voxoff(ii,3)               = rda.VOIPositionTra;
 fclose(fid);
 
-% Create voxel coordinates
-MRS_struct.p.voxoff(ii,:) = [rda.VOIPositionSag rda.VOIPositionCor rda.VOIPositionTra];
-MRS_struct.p.voxdim(ii,:) = [rda.VOIThickness rda.VOIReadoutFOV rda.VOIPhaseFOV]; 
-MRS_Rot(:,1) = rda.row.'.* [-1 -1 1]';
-MRS_Rot(:,2) = rda.column.' ;
-MRS_Rot(:,3) = cross(MRS_Rot(:,1),MRS_Rot(:,2));
-MRS_Rot(1,:) = -MRS_Rot(1,:);
-rotmat = -MRS_Rot;
 
-% Change to current working directory
-currdir=pwd;
-cd(currdir);
+% Extract voxel position and rotation parameters from MRS_struct
+NormSag = MRS_struct.p.NormSag(ii);
+NormCor = MRS_struct.p.NormCor(ii);
+NormTra = MRS_struct.p.NormTra(ii);
+VoI_InPlaneRot = MRS_struct.p.VoI_InPlaneRot(ii);
+% Correct voxel offsets by table position (if field exists)
+if isfield(MRS_struct.p,'TablePosition')
+    VoxOffs = [MRS_struct.p.voxoff(ii,1)+MRS_struct.p.TablePosition(ii,1) MRS_struct.p.voxoff(ii,2)+MRS_struct.p.TablePosition(ii,2) MRS_struct.p.voxoff(ii,3)+MRS_struct.p.TablePosition(ii,3)];
+else
+    VoxOffs = [MRS_struct.p.voxoff(ii,1) MRS_struct.p.voxoff(ii,2) MRS_struct.p.voxoff(ii,3)];
+end
 
-% Open nifti file
+
+% Parse direction cosines of the MRS voxel's normal vector and the rotation angle
+% around the normal vector
+% The direction cosine is the cosine of the angle between the normal
+% vector and the respective direction.
+% Example: If the normal vector points exactly along the FH direction, then: 
+% NormSag = cos(90) = 0, NormCor = cos(90) = 0, NormTra = cos(0) = 1.
+Norm = [-NormSag -NormCor NormTra];
+ROT = VoI_InPlaneRot;
+% Find largest element of normal vector of the voxel to determine primary
+% orientation. 
+% Example: if NormTra has the smallest out of the three Norm
+% values, the angle of the normal vector with the Tra direction (FH) is the
+% smallest, and the primary orientation is transversal.
+[~, maxdir] = max([abs(NormSag) abs(NormCor) abs(NormTra)]);
+switch maxdir
+    case 1
+        vox_orient = 's'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+    case 2
+        vox_orient = 'c'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+    case 3
+        vox_orient = 't'; % 't' = transversal, 's' = sagittal', 'c' = coronal;
+end
+    
+% Phase reference vector
+% Adapted from Rudolph Pienaar's "vox2ras_rsolveAA.m" and
+% Andre van der Kouwe's "autoaligncorrect.cpp"
+Phase	= zeros(3, 1);
+switch vox_orient
+    case 't'
+        % For transversal voxel orientation, the phase reference vector lies in
+        % the sagittal plane
+        Phase(1)	= 0;
+        Phase(2)	=  Norm(3)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
+        Phase(3)	= -Norm(2)*sqrt(1/(Norm(2)*Norm(2)+Norm(3)*Norm(3)));
+        VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
+    case 'c'
+        % For coronal voxel orientation, the phase reference vector lies in
+        % the transversal plane
+        Phase(1)	=  Norm(2)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
+        Phase(2)	= -Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
+        Phase(3)	= 0;
+        VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
+    case 's'
+        % For sagittal voxel orientation, the phase reference vector lies in
+        % the transversal plane
+        Phase(1)	= -Norm(2)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
+        Phase(2)	=  Norm(1)*sqrt(1/(Norm(1)*Norm(1)+Norm(2)*Norm(2)));
+        Phase(3)	= 0;
+        VoxDims = [MRS_struct.p.voxdim(ii,1) MRS_struct.p.voxdim(ii,2) MRS_struct.p.voxdim(ii,3)];
+end
+
+% The readout reference vector is the cross product of Norm and Phase
+Readout = cross(Norm, Phase);
+M_R = zeros(4, 4);
+M_R(1:3, 1)	= Phase;
+M_R(1:3, 2)	= Readout;
+M_R(1:3, 3) = Norm;
+
+% Define matrix for rotation around in-plane rotation angle
+M3_Mu	= [	 cos(ROT)	sin(ROT)	0
+            -sin(ROT)	cos(ROT)	0
+            0           0           1];
+        
+M3_R	= M_R(1:3,1:3)	* M3_Mu;
+M_R(1:3,1:3)	= M3_R;
+
+% The MGH vox2ras matrix inverts the Readout column
+M_R		= M_R *   [ 1  0  0  0
+                    0 -1  0  0
+                    0  0  1  0
+                    0  0  0  1];
+
+% Final rotation matrix
+rotmat = M_R(1:3,1:3);
+
 V = spm_vol(nii_file);
 [T1,XYZ] = spm_read_vols(V);
 
@@ -96,85 +167,64 @@ V = spm_vol(nii_file);
 voxdim = abs(voxdim)';
 halfpixshift = -voxdim(1:3)/2;
 halfpixshift(3) = -halfpixshift(3);
-XYZ = XYZ+repmat(halfpixshift,[1 size(XYZ,2)]);
+XYZ = XYZ + repmat(halfpixshift, [1 size(XYZ,2)]);
 
-% Parse voxel dimensions
-ap_size = MRS_struct.p.voxsize(2);
-lr_size = MRS_struct.p.voxsize(1);
-cc_size = MRS_struct.p.voxsize(3);
-ap_off = MRS_struct.p.voxoff(2);
-lr_off = MRS_struct.p.voxoff(1);
-cc_off = MRS_struct.p.voxoff(3);
-%ap_ang = MRS_struct.p.voxang(2);
-%lr_ang = MRS_struct.p.voxang(1);
-%cc_ang = MRS_struct.p.voxang(3);
+% We need to flip ap and lr axes to match NIFTI convention
+VoxOffs(1) = -VoxOffs(1);
+VoxOffs(2) = -VoxOffs(2);
 
-%We need to flip ap and lr axes to match NIFTI convention
-ap_off = -ap_off;
-lr_off = -lr_off;
-
-% Rotation may be required backwards, doublecheck
-%ap_ang = -ap_ang;
-%lr_ang = -lr_ang;
-
-% define the voxel - use x y z  
-% x - left = positive
-% y - posterior = postive
-% z - superior = positive
+% Define voxel coordinates before rotation and transition
 vox_ctr = ...
-    [lr_size/2 -ap_size/2  cc_size/2;
-    -lr_size/2 -ap_size/2  cc_size/2;
-    -lr_size/2  ap_size/2  cc_size/2;
-     lr_size/2  ap_size/2  cc_size/2;
-    -lr_size/2  ap_size/2 -cc_size/2;
-     lr_size/2  ap_size/2 -cc_size/2;
-     lr_size/2 -ap_size/2 -cc_size/2;
-    -lr_size/2 -ap_size/2 -cc_size/2];
-   
-vox_rot=rotmat*vox_ctr.';
+    [VoxDims(1)/2 -VoxDims(2)/2  VoxDims(3)/2;
+    -VoxDims(1)/2 -VoxDims(2)/2  VoxDims(3)/2;
+    -VoxDims(1)/2  VoxDims(2)/2  VoxDims(3)/2;
+     VoxDims(1)/2  VoxDims(2)/2  VoxDims(3)/2;
+    -VoxDims(1)/2  VoxDims(2)/2 -VoxDims(3)/2;
+     VoxDims(1)/2  VoxDims(2)/2 -VoxDims(3)/2;
+     VoxDims(1)/2 -VoxDims(2)/2 -VoxDims(3)/2;
+    -VoxDims(1)/2 -VoxDims(2)/2 -VoxDims(3)/2];
 
-% calculate corner coordinates relative to xyz origin
-vox_ctr_coor = [lr_off ap_off cc_off];
+% Apply rotation as prescribed
+vox_rot = rotmat*vox_ctr.';
+
+% Shift rotated voxel by the center offset to its final position
+vox_ctr_coor = [VoxOffs(1) VoxOffs(2) VoxOffs(3)];
 vox_ctr_coor = repmat(vox_ctr_coor.', [1,8]);
-vox_corner = vox_rot+vox_ctr_coor;
+vox_corner = vox_rot + vox_ctr_coor;
 
-% create mask
+% Create a mask with all voxels that are inside the voxel
 mask = zeros(1,size(XYZ,2));
-sphere_radius = sqrt((lr_size/2)^2+(ap_size/2)^2+(cc_size/2)^2);
-distance2voxctr=sqrt(sum((XYZ-repmat([lr_off ap_off cc_off].',[1 size(XYZ, 2)])).^2,1));
-sphere_mask(distance2voxctr<=sphere_radius)=1;
-mask(sphere_mask==1) = 1;
+sphere_radius = sqrt((VoxDims(1)/2)^2+(VoxDims(2)/2)^2+(VoxDims(3)/2)^2);
+distance2voxctr = sqrt(sum((XYZ-repmat([VoxOffs(1) VoxOffs(2) VoxOffs(3)].',[1 size(XYZ, 2)])).^2,1));
+sphere_mask(distance2voxctr <= sphere_radius) = 1;
+mask(sphere_mask == 1) = 1;
 XYZ_sphere = XYZ(:,sphere_mask == 1);
-tri = delaunayn([vox_corner.'; [lr_off ap_off cc_off]]);
-tn = tsearchn([vox_corner.'; [lr_off ap_off cc_off]], tri, XYZ_sphere.');
+tri = delaunayn([vox_corner.'; [VoxOffs(1) VoxOffs(2) VoxOffs(3)]]);
+tn = tsearchn([vox_corner.'; [VoxOffs(1) VoxOffs(2) VoxOffs(3)]], tri, XYZ_sphere.');
 isinside = ~isnan(tn);
 mask(sphere_mask==1) = isinside;
+
+% Take over the voxel dimensions from the structural
 mask = reshape(mask, V.dim);
 
-% Fill mask header
-V_mask.fname = fidoutmask;
+V_mask.fname   = fidoutmask ;
 V_mask.descrip = 'MRS_voxel_mask';
-V_mask.dim = V.dim;
-V_mask.dt = V.dt;
-V_mask.mat = V.mat;
+V_mask.dim     = V.dim;
+V_mask.dt      = V.dt;
+V_mask.mat     = V.mat;
 
-% Write to file
 V_mask = spm_write_vol(V_mask,mask);
 
-% construct output 
-voxel_ctr = [-lr_off -ap_off cc_off];
-
-% Populate MRS_struct with mask information
+% Build output page
 fidoutmask = cellstr(fidoutmask);
-MRS_struct.mask.(vox{kk}).outfile(MRS_struct.ii,:) = fidoutmask;
-MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  % put as NaN for now - for output page
-
-voxel_ctr(1:2) = -voxel_ctr(1:2);
+MRS_struct.mask.(vox{kk}).outfile(ii,:) = fidoutmask;
+% Not clear how to formulate the rotations for triple rotations (revisit)
+MRS_struct.p.voxang(ii,:) = [NaN NaN NaN];  
 
 % Transform structural image and co-registered voxel mask from voxel to
 % world space for output (MM: 180221)
-[img_t,img_c,img_s] = voxel2world_space(V,voxel_ctr);
-[mask_t,mask_c,mask_s] = voxel2world_space(V_mask,voxel_ctr);
+[img_t,img_c,img_s] = voxel2world_space(V,VoxOffs);
+[mask_t,mask_c,mask_s] = voxel2world_space(V_mask,VoxOffs);
 
 img_t = flipud(img_t/max(T1(:)));
 img_c = flipud(img_c/max(T1(:)));
