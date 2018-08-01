@@ -357,21 +357,26 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         MRS_struct.p.SpecResNominal(ii) = MRS_struct.p.sw(ii)/MRS_struct.p.ZeroFillTo(ii);
         MRS_struct.p.Tacq(ii) = 1/MRS_struct.p.SpecRes(ii);
         
-        % Frame-by-frame determination of frequency of residual water (MM: 170201)
-        water_range = MRS_struct.spec.freq-F0 >= -0.2 & MRS_struct.spec.freq-F0 <= 0.2;
-        [~,FrameMaxPos] = max(abs(real(AllFramesFT(water_range,:))),[],1);
-        AllFramesFTrealign = AllFramesFT;
-        
-        % MM (170703)
-        freqWaterRange = MRS_struct.spec.freq(water_range);
-        MRS_struct.fids.waterfreq(ii,:) = freqWaterRange(FrameMaxPos);
-        
-        % MM (170629): Estimate average amount of F0 offset
-        if any(strcmp(MRS_struct.p.vendor,{'Siemens_rda','Siemens_twix','Siemens_dicom'}))
-            MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - 4.7); % Siemens assumes 4.7 ppm as F0
+        % Frame-by-frame determination of frequency of residual water (if MEGA-PRESS) or Cr (if HERMES) (MM: 180801)
+        if MRS_struct.p.HERMES
+            F0freqRange = MRS_struct.spec.freq - 3.02 >= -0.1 & MRS_struct.spec.freq - 3.02 <= 0.1;
         else
-            MRS_struct.out.AvgDeltaF0(ii) = mean(freqWaterRange(FrameMaxPos) - F0);
+            F0freqRange = MRS_struct.spec.freq - F0 >= -0.2 & MRS_struct.spec.freq - F0 <= 0.2;
         end
+        [~,FrameMaxPos] = max(abs(real(AllFramesFT(F0freqRange,:))),[],1);
+        F0freqRange = MRS_struct.spec.freq(F0freqRange);
+        MRS_struct.spec.F0freq(ii,:) = F0freqRange(FrameMaxPos);
+        
+        % MM (180801): Estimate average amount of F0 offset
+        if MRS_struct.p.HERMES
+            MRS_struct.out.AvgDeltaF0(ii) = mean(F0freqRange(FrameMaxPos) - 3.02);
+        elseif any(strcmp(MRS_struct.p.vendor,{'Siemens_rda','Siemens_twix','Siemens_dicom'}))
+            MRS_struct.out.AvgDeltaF0(ii) = mean(F0freqRange(FrameMaxPos) - 4.7); % Siemens assumes 4.7 ppm as F0
+        else
+            MRS_struct.out.AvgDeltaF0(ii) = mean(F0freqRange(FrameMaxPos) - F0);
+        end
+        
+        AllFramesFTrealign = AllFramesFT;
         
         % Frame-by-frame alignment
         switch MRS_struct.p.AlignTo
@@ -549,11 +554,15 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         
         % Top right
         hb = subplot(2,2,2);
-        rejectframesplot = (1./MRS_struct.out.reject(:,ii).') .*  MRS_struct.fids.waterfreq(ii,:);
-        plot(1:size(FullData,2), MRS_struct.fids.waterfreq(ii,:)', '-', 1:size(FullData,2), rejectframesplot, 'ro');
+        rejectframesplot = (1./MRS_struct.out.reject(:,ii).') .*  MRS_struct.spec.F0freq(ii,:);
+        plot(1:size(FullData,2), MRS_struct.spec.F0freq(ii,:)', '-', 1:size(FullData,2), rejectframesplot, 'ro');
         set(gca,'XLim',[0 size(FullData,2)]);
         xlabel('average'); ylabel('\omega_0');
-        title('Water Frequency');
+        if MRS_struct.p.HERMES
+            title('Cr Frequency');
+        else
+            title('Water Frequency');
+        end
         
         % Bottom left
         hc = subplot(2,2,3);
