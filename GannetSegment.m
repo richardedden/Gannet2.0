@@ -295,7 +295,7 @@ for ii = 1:numscans
         
         if ii == numscans
             if MRS_struct.p.mat % save MRS_struct as mat file
-                mat_name = ['MRS_struct_' vox{kk} '.mat'];
+                mat_name = ['GannetSegment_output/MRS_struct_' vox{kk} '.mat'];
                 save(mat_name,'MRS_struct');
             end
             if MRS_struct.p.csv % export MRS_struct fields into csv file

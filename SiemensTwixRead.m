@@ -265,6 +265,7 @@ elseif strfind(TwixHeader.sequenceFileName,'eja_svs_mpress')
     TwixHeader.seqorig = 'CMRR'; % Minnesota sequence
 elseif strfind(TwixHeader.sequenceFileName,'svs_se')
     TwixHeader.seqtype = 'PRESS'; % In case PRESS is used as water reference
+    TwixHeader.seqorig = TwixHeader.sequenceString;
 else
     TwixHeader.seqorig = TwixHeader.sequenceString;
     error(['Unknown sequence: ' TwixHeader.seqorig '. Please consult the Gannet team for support.'])

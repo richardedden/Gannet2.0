@@ -1091,7 +1091,7 @@ for kk = 1:length(vox)
     MRS_struct = orderfields(MRS_struct, structorder);
     
     if MRS_struct.p.mat % save MRS_struct as mat file
-        mat_name = ['MRS_struct_' vox{kk} '.mat'];
+        mat_name = ['GannetFit_output/MRS_struct_' vox{kk} '.mat'];
         save(mat_name,'MRS_struct');
     end
     
