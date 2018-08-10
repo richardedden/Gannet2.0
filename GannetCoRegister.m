@@ -96,67 +96,67 @@ for ii = 1:numscans
         subplot(2,3,4:6)
         axis off;
 
-        tmp = 'Mask output ';
+        tmp = 'Mask output: ';
         text(0.5, 0.75, tmp,'HorizontalAlignment','right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
         [~,tmp,tmp2] = fileparts(MRS_struct.mask.(vox{kk}).outfile{ii});
-        text(0.5, 0.75, [': ' tmp tmp2], ...
+        text(0.5, 0.75, [' ' tmp tmp2], ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13,'Interpreter','none');
 
-        tmp = 'Spatial parameters ';
+        tmp = 'Spatial parameters: ';
         text(0.5, 0.63, tmp, 'HorizontalAlignment', 'right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
-        tmp = ': [LR, AP, FH]';
+        tmp = ' [LR, AP, FH]';
         text(0.5, 0.63, tmp, ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
-        tmp = 'Dimension ';
+        tmp = 'Dimension: ';
         text(0.5, 0.51, tmp, 'HorizontalAlignment', 'right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
-        tmp = [': [' num2str(MRS_struct.p.voxdim(ii,1)) ', ' num2str(MRS_struct.p.voxdim(ii,2)) ', ' num2str(MRS_struct.p.voxdim(ii,3)) '] mm'];
+        tmp = [' [' num2str(MRS_struct.p.voxdim(ii,1)) ', ' num2str(MRS_struct.p.voxdim(ii,2)) ', ' num2str(MRS_struct.p.voxdim(ii,3)) '] mm'];
         text(0.5, 0.51, tmp, ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
-        tmp = 'Volume ';
+        tmp = 'Volume: ';
         text(0.5, 0.39, tmp, 'HorizontalAlignment', 'right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
         vol = MRS_struct.p.voxdim(ii,1)*MRS_struct.p.voxdim(ii,2)*MRS_struct.p.voxdim(ii,3)*.001;
-        tmp = [': ' num2str(vol) ' mL'];
+        tmp = [' ' num2str(vol) ' mL'];
         text(0.5, 0.39, tmp, ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
-        tmp = 'Position ';
+        tmp = 'Position: ';
         text(0.5, 0.27, tmp, 'HorizontalAlignment', 'right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
-        tmp = [': [' num2str(MRS_struct.p.voxoff(ii,1), '%3.1f') ', ' num2str(MRS_struct.p.voxoff(ii,2), '%3.1f') ', ' num2str(MRS_struct.p.voxoff(ii,3), '%3.1f') '] mm'];
+        tmp = [' [' num2str(MRS_struct.p.voxoff(ii,1), '%3.1f') ', ' num2str(MRS_struct.p.voxoff(ii,2), '%3.1f') ', ' num2str(MRS_struct.p.voxoff(ii,3), '%3.1f') '] mm'];
         text(0.5, 0.27, tmp, ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
-        tmp = 'Angulation ';
+        tmp = 'Angulation: ';
         text(0.5, 0.15, tmp, 'HorizontalAlignment', 'right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
-        tmp = [': [' num2str(MRS_struct.p.voxang(ii,1), '%3.1f') ', ' num2str(MRS_struct.p.voxang(ii,2), '%3.1f') ', ' num2str(MRS_struct.p.voxang(ii,3), '%3.1f') '] deg'];
+        tmp = [' [' num2str(MRS_struct.p.voxang(ii,1), '%3.1f') ', ' num2str(MRS_struct.p.voxang(ii,2), '%3.1f') ', ' num2str(MRS_struct.p.voxang(ii,3), '%3.1f') '] deg'];
         text(0.5, 0.15, tmp, ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
 
-        tmp = 'CoRegVer ';
+        tmp = 'CoRegVer: ';
         text(0.5, 0.03, tmp, 'HorizontalAlignment', 'right', ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
-        tmp = [': ' MRS_struct.version.coreg];
+        tmp = [' ' MRS_struct.version.coreg];
         text(0.5, 0.03, tmp, ...
             'VerticalAlignment', 'top', ...
             'FontName', 'Helvetica','FontSize',13);
@@ -174,20 +174,22 @@ for ii = 1:numscans
 
         imagesc(squeeze(MRS_struct.mask.(vox{kk}).img{ii}));
         colormap('gray');
-        caxis([0 0.5]); % range of 0 to 0.5 seems to work best for now - could calc optimal range later
+        img = MRS_struct.mask.(vox{kk}).img{ii};
+        img = img(:);
+        caxis([0 mean(img(img>0.01)) + 3*std(img(img>0.01))]); % MM (180807)
         axis equal;
         axis tight;
         axis off;
         text(10,size(MRS_struct.mask.(vox{kk}).img{ii},1)/2,'L','Color',[1 1 1],'FontSize',20);
         text(size(MRS_struct.mask.(vox{kk}).img{ii},2)-20,size(MRS_struct.mask.(vox{kk}).img{ii},1)/2,'R','Color',[1 1 1],'FontSize',20);
-        get(h,'pos'); % get position of axes
-        set(h,'pos',[0.0 0.15 1 1]) % move the axes slightly
+        get(h,'pos');
+        set(h,'pos',[0.0 0.15 1 1]);
         title(t, 'FontName', 'Helvetica', 'FontSize', 15, 'Interpreter', 'none');
 
         script_path = which('GannetLoad');
         Gannet_logo = [script_path(1:(end-13)) '/Gannet3_logo.png'];
         A2 = imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);
-        axes('Position',[0.80, 0.08, 0.15, 0.15]);
+        axes('Position',[0.80, 0.05, 0.15, 0.15]);
         image(A2);
         axis off;
         axis square;

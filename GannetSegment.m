@@ -7,7 +7,7 @@ function MRS_struct = GannetSegment(MRS_struct)
 % for the GM, WM and CSF segmentations. If these files are present, they
 % are loaded and used for the voxel segmentation
 
-MRS_struct.version.segment = '180718';
+MRS_struct.version.segment = '180807';
 
 % First check if SPM12 is installed and on the search path
 spmversion = fileparts(which('spm'));
@@ -44,7 +44,6 @@ for ii = 1:numscans
         anatimage = MRS_struct.mask.(vox{kk}).T1image{ii};
         
         % Check to see if segmentation already done - if not, do it
-        % Check which SPM version is installed and segment accordingly
         tmp = [T1dir '/c1' T1name T1ext];
         if ~exist(tmp,'file')
             CallSPM12segmentation(anatimage);
@@ -151,17 +150,100 @@ for ii = 1:numscans
         figTitle = 'GannetSegment Output';
         set(gcf,'Name',figTitle,'Tag',figTitle,'NumberTitle','off');
         
-        % Voxel co-registration
-        subplot(2,2,1);
-        size_max = size(MRS_struct.mask.(vox{kk}).img{ii},1);
-        imagesc(MRS_struct.mask.(vox{kk}).img{ii}(:,size_max+(1:size_max)));
+        % Output results
+        subplot(2,3,4:6);
+        axis off;
+        
+        text_pos = 0.87;
+        
+        % Print correction of institutional units only feasible if water-scaling is
+        % performed, skip otherwise (GO 07/13/2017)
+        if strcmp(MRS_struct.p.Reference_compound,'H2O')
+            for trg = 1:length(target)
+                
+                text_pos = text_pos - 0.12;
+                
+                switch target{trg}
+                    case 'GABA'
+                        tmp1 = 'GABA+ (CSF-corrected): ';
+                        tmp2 = sprintf(' %.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_CSFcorr(ii));
+                        
+                    case {'Glx','GSH','Lac'}
+                        tmp1 = [target{trg} ' (CSF-corrected): '];
+                        tmp2 = sprintf(': %.3g i.u.', MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_CSFcorr(ii));
+                        
+                    case 'GABAGlx'
+                        tmp1 = 'GABA+/Glx (CSF-corrected): ';
+                        tmp2 = sprintf(' %.3g/%.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_CSFcorr(ii), ...
+                            MRS_struct.out.(vox{kk}).Glx.ConcIU_CSFcorr(ii));
+                end
+                
+                text(0.5, text_pos, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+                text(0.5, text_pos, tmp2, 'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13);
+                
+            end
+        end
+        
+        tmp1 = 'GM voxel fraction: ';
+        tmp2 = sprintf(' %.3g', MRS_struct.out.(vox{kk}).tissue.GMfra(ii));
+        text(0.5, text_pos-0.12, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+        text(0.5, text_pos-0.12, tmp2, 'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13);
+        
+        tmp1 = 'WM voxel fraction: ';
+        tmp2 = sprintf(' %.3g', MRS_struct.out.(vox{kk}).tissue.WMfra(ii));
+        text(0.5, text_pos-0.24, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+        text(0.5, text_pos-0.24, tmp2, 'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13);
+        
+        tmp1 = 'CSF voxel fraction: ';
+        tmp2 = sprintf(' %.3g', MRS_struct.out.(vox{kk}).tissue.CSFfra(ii));
+        text(0.5, text_pos-0.36, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+        text(0.5, text_pos-0.36, tmp2, 'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13);
+        
+        tmp1 = 'Filename: ';
+        if strcmp(MRS_struct.p.vendor,'Siemens_rda')
+            [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii*2-1});
+        else
+            [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii});
+        end
+        text(0.5, text_pos-0.48, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+        text(0.5, text_pos-0.48, [' ' tmp2 tmp3],  'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13, 'Interpreter', 'none');
+        
+        tmp1 = 'Anatomical image: ';
+        [~,tmp2,tmp3] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
+        text(0.5, text_pos-0.6, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+        text(0.5, text_pos-0.6, [' ' tmp2 tmp3],  'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13, 'Interpreter', 'none');
+        
+        tmp1 = 'SegmentVer: ';
+        tmp2 = [' ' MRS_struct.version.segment];
+        text(0.5, text_pos-0.72, tmp1, 'FontName', 'Helvetica', 'HorizontalAlignment','right', 'VerticalAlignment', 'top', 'FontSize', 13);
+        text(0.5, text_pos-0.72, tmp2,  'FontName', 'Helvetica', 'VerticalAlignment', 'top', 'FontSize', 13);
+        
+        % Voxel segmentation (MM: 180807)
+        T1 = spm_read_vols(spm_vol(anatimage));
+        img_t     = flipud(voxel2world_space(spm_vol(anatimage), MRS_struct.p.voxoff(ii,:)));
+        vox_t     = flipud(voxel2world_space(voxmaskvol, MRS_struct.p.voxoff(ii,:)));
+        vox_t_GM  = flipud(voxel2world_space(O_GMvox, MRS_struct.p.voxoff(ii,:)));
+        vox_t_WM  = flipud(voxel2world_space(O_WMvox, MRS_struct.p.voxoff(ii,:)));
+        vox_t_CSF = flipud(voxel2world_space(O_CSFvox, MRS_struct.p.voxoff(ii,:)));
+        img_t = img_t/max(T1(:));
+        img_montage = [img_t+0.175*vox_t, img_t+0.21*vox_t_GM, img_t+0.25*vox_t_WM, img_t+0.4*vox_t_CSF];
+        
+        h = subplot(2,3,1:3);
+        imagesc(img_montage);
         colormap('gray');
-        caxis([0 0.5]);
+        img = MRS_struct.mask.(vox{kk}).img{ii};
+        img = img(:);
+        caxis([0 mean(img(img>0.01)) + 3*std(img(img>0.01))]);
         axis equal;
         axis tight;
         axis off;
+        text(floor(size(vox_t,2)/2), 20, 'Voxel', 'Color', [1 1 1], 'FontSize', 20, 'HorizontalAlignment', 'center'); 
+        text(floor(size(vox_t,2)) + floor(size(vox_t,2)/2), 20, 'GM', 'Color', [1 1 1], 'FontSize', 20, 'HorizontalAlignment', 'center'); 
+        text(2*floor(size(vox_t,2)) + floor(size(vox_t,2)/2), 20, 'WM', 'Color', [1 1 1], 'FontSize', 20, 'HorizontalAlignment', 'center'); 
+        text(3*floor(size(vox_t,2)) + floor(size(vox_t,2)/2), 20, 'CSF', 'Color', [1 1 1], 'FontSize', 20, 'HorizontalAlignment', 'center'); 
+        get(h,'pos');
+        set(h,'pos',[0 0.15 1 1]);
         
-        % MM (180112)
         if strcmp(MRS_struct.p.vendor,'Siemens_rda')
             [~,tmp,tmp2] = fileparts(MRS_struct.metabfile{ii*2-1});
         else
@@ -169,91 +251,9 @@ for ii = 1:numscans
         end
         [~,tmp3,tmp4] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii});
         t = ['Voxel from ' tmp tmp2 ' on ' tmp3 tmp4];
-        title(t, 'Interpreter', 'none');
-        
-        % Post-alignment spectra + model fits
-        subplot(2,2,3);
-        GannetPlotPrePostAlign2(MRS_struct, vox, ii);
-        if MRS_struct.p.HERMES
-            title('Edited Spectra and Model Fits');
-        else
-            title('Edited Spectrum and Model Fit');
-        end
-        xlabel('ppm');
-        set(gca,'YTick',[]);
-        
-        % Output results
-        subplot(2,2,2);
-        axis off;
-        
-        text_pos = 1;
-        
-        % Print correction of institutional units only feasible if water-scaling is
-        % performed, skip otherwise (GO 07/13/2017)
-        if strcmp(MRS_struct.p.Reference_compound,'H2O')
-            for trg = 1:length(target)
-                
-                text_pos = text_pos - 0.1;
-                
-                switch target{trg}
-                    case 'GABA'
-                        tmp1 = 'GABA+ (CSF-corrected)';
-                        tmp2 = sprintf(': %.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_CSFcorr(ii));
-                        
-                    case {'Glx','GSH','Lac'}
-                        tmp1 = [target{trg} ' (CSF-corrected)'];
-                        tmp2 = sprintf(': %.3g i.u.', MRS_struct.out.(vox{kk}).(target{trg}).ConcIU_CSFcorr(ii));
-                        
-                    case 'GABAGlx'
-                        tmp1 = 'GABA+/Glx (CSF-corrected)';
-                        tmp2 = sprintf(': %.3g/%.3g i.u.', MRS_struct.out.(vox{kk}).GABA.ConcIU_CSFcorr(ii), ...
-                            MRS_struct.out.(vox{kk}).Glx.ConcIU_CSFcorr(ii));
-                end
-                
-                text(0, text_pos, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-                text(0.5, text_pos, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-                
-            end
-        end
-        
-        tmp1 = 'GM voxel fraction';
-        tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).tissue.GMfra(ii));
-        text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-        text(0.5, text_pos-0.1, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-        
-        tmp1 = 'WM voxel fraction';
-        tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).tissue.WMfra(ii));
-        text(0, text_pos-0.2, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-        text(0.5, text_pos-0.2, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-        
-        tmp1 = 'CSF voxel fraction';
-        tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).tissue.CSFfra(ii));
-        text(0, text_pos-0.3, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-        text(0.5, text_pos-0.3, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
-        
-        % MM (180112)
-        tmp1 = 'Filename';
-        if strcmp(MRS_struct.p.vendor,'Siemens_rda')
-            [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii*2-1});
-        else
-            [~,tmp2,tmp3] = fileparts(MRS_struct.metabfile{ii});
-        end
-        text(0, text_pos-0.4, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-        text(0.5, text_pos-0.4, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
-        
-        tmp1 = 'Anatomical image';
-        [~,tmp2,tmp3] = fileparts(MRS_struct.mask.(vox{kk}).T1image{ii}); % MM (180112)
-        text(0, text_pos-0.5, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-        text(0.5, text_pos-0.5, [': ' tmp2 tmp3], 'FontName', 'Helvetica', 'FontSize', 10, 'Interpreter', 'none');
-        
-        tmp1 = 'SegmentVer';
-        tmp2 = [': ' MRS_struct.version.segment];
-        text(0, text_pos-0.6, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
-        text(0.5, text_pos-0.6, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
+        title(t, 'FontName', 'Helvetica', 'FontSize', 15, 'Interpreter', 'none');
         
         % Gannet logo
-        subplot(2,2,4);
-        axis off;
         script_path = which('GannetFit');
         Gannet_logo = [script_path(1:(end-12)) '/Gannet3_logo.png'];
         A2 = imread(Gannet_logo,'png','BackgroundColor',[1 1 1]);

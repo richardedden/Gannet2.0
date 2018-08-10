@@ -75,6 +75,13 @@ LPS_SVS_edge = MRS_struct.p.voxoff(ii,:) - 0.5*e1_SVS - 0.5*e2_SVS - 0.5*e3_SVS;
 
 % Read all DICOM files into one volume
 currdir = pwd;
+datadir = fileparts(MRS_struct.metabfile{ii});
+if isempty(datadir)
+    datadir = '.';
+end
+cd(datadir);
+datadir = pwd;
+cd(currdir);
 cd(dcm_dir);
 dcm_list = dir;
 dcm_list = dcm_list(~ismember({dcm_list.name}, {'.','..','.DS_Store'}));
@@ -82,7 +89,14 @@ dcm_list = cellstr(char(dcm_list.name));
 dcm_list = dcm_list(cellfun(@isempty, strfind(dcm_list, '.nii'))); %#ok<*STRCLFH>
 dcm_list = dcm_list(cellfun(@isempty, strfind(dcm_list, '.mat')));
 dcm_hdr = spm_dicom_headers(char(dcm_list));
-nii_file_dir = spm_dicom_convert(dcm_hdr, 'all', 'flat', 'nii', currdir); % create NIFTI file of T1 image
+nii_file_dir = spm_dicom_convert(dcm_hdr, 'all', 'flat', 'nii', datadir); % create NIFTI file of T1 image
+
+% Rename NIFTI file into something more sensical (MM: 180810)
+[a,~,c] = fileparts(nii_file_dir.files{1});
+[~,b] = fileparts(MRS_struct.metabfile{ii});
+nii_file = [a filesep b '_struc' c];
+movefile(nii_file_dir.files{1}, nii_file);
+
 slice_location = zeros(1,length(dcm_list));
 for jj = 1:length(dcm_list)
     slice_location(jj) = dcm_hdr{jj}.SliceLocation;
@@ -97,7 +111,6 @@ end
 
 cd(currdir);
 
-nii_file = nii_file_dir.files{1};
 V = spm_vol(nii_file);
 T1 = spm_read_vols(V);
 
@@ -170,8 +183,11 @@ end
 mask = flip(mask,2);
 
 % Output mask
-[~,metabfile]  = fileparts(fname);
-V_mask.fname   = fullfile([metabfile '_mask.nii']);
+[a,b] = fileparts(fname);
+if isempty(a)
+    a = '.';
+end
+V_mask.fname   = fullfile([a filesep b '_mask.nii']);
 V_mask.descrip = 'MRS_voxel_mask';
 V_mask.dim     = V.dim;
 V_mask.dt      = V.dt;
@@ -191,9 +207,9 @@ img_t = flipud(img_t/max(T1(:)));
 img_c = flipud(img_c/max(T1(:)));
 img_s = flipud(img_s/max(T1(:)));
 
-img_t = img_t + 0.2*flipud(mask_t);
-img_c = img_c + 0.2*flipud(mask_c);
-img_s = img_s + 0.2*flipud(mask_s);
+img_t = img_t + 0.175*flipud(mask_t);
+img_c = img_c + 0.175*flipud(mask_c);
+img_s = img_s + 0.175*flipud(mask_s);
 
 size_max = max([max(size(img_t)) max(size(img_c)) max(size(img_s))]);
 three_plane_img = zeros([size_max 3*size_max]);
@@ -215,11 +231,11 @@ r3(3) = -r3(3);
 
 if abs(r3(1)) ~= 1
     theta1 = -asin(r3(1));
-%    theta2 = pi - theta1;
+    %theta2 = pi - theta1;
     psi1 = atan2(r3(2)/cos(theta1), r3(3)/cos(theta1));
-%    psi2 = atan2(r3(2)/cos(theta2), r3(3)/cos(theta2));
+    %psi2 = atan2(r3(2)/cos(theta2), r3(3)/cos(theta2));
     phi1 = atan2(r2(1)/cos(theta1), r1(1)/cos(theta1));
-%    phi2 = atan2(r2(1)/cos(theta2), r1(1)/cos(theta2));
+    %phi2 = atan2(r2(1)/cos(theta2), r1(1)/cos(theta2));
 else
     phi1 = 0;
     if r3(1) == -1
