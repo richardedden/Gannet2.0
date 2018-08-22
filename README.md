@@ -56,8 +56,8 @@ Versioning is conducted on a module-specific basis using the style YYMMDD. That 
 
 This software is open-source and does not have a specific license, but should you publish material that made use of Gannet in some way please cite the following publications:
 
-* Edden RAE, Puts NAJ, Harris AD, Barker PB, Evans CJ. Gannet: A batch-processing tool for the quantitative analysis of gamma-aminobutyric acid-edited MR spectroscopy spectra. J. Magn. Reson. Imaging 2014;40:1445–1452. doi: 10.1002/jmri.24478
-* Harris AD, Puts NAJ, Edden RAE. Tissue correction for GABA-edited MRS: Considerations of voxel composition, tissue segmentation, and tissue relaxations. J. Magn. Reson. Imaging 2015;42:1431–1440. doi: 10.1002/jmri.24903 (if you report tissue-corrected, water-referenced measurements)
+* Edden RAE, Puts NAJ, Harris AD, Barker PB, Evans CJ. Gannet: A batch-processing tool for the quantitative analysis of gamma-aminobutyric acid-edited MR spectroscopy spectra. J. Magn. Reson. Imaging 2014;40:1445–1452. doi: [10.1002/jmri.24478](http://doi.wiley.com/10.1002/jmri.24478)
+* Harris AD, Puts NAJ, Edden RAE. Tissue correction for GABA-edited MRS: Considerations of voxel composition, tissue segmentation, and tissue relaxations. J. Magn. Reson. Imaging 2015;42:1431–1440. doi: [10.1002/jmri.24903](http://doi.wiley.com/10.1002/jmri.24903) (if you report tissue-corrected, water-referenced measurements)
 
 ## Acknowledgments
 
