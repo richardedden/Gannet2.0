@@ -8,8 +8,7 @@ Visit our [website](http://www.gabamrs.com/) for the latest news on Gannet and o
 
 ### Prerequisites
 
-Gannet runs in MATLAB (we recommend using the latest release if possible).
-Additionally, Gannet requires that the following MATLAB toolboxes are installed:
+Gannet runs in MATLAB (we recommend using the latest release if possible). Additionally, Gannet requires that the following MATLAB toolboxes are installed:
 
 * Image Processing
 * Optimization
@@ -20,8 +19,7 @@ To run the voxel co-registration and structural image segmentation modules, [SPM
 
 ### Installing
 
-The simplest way to install Gannet 3.0 is to download the zipped [master folder](https://github.com/richardedden/Gannet3.0/archive/master.zip), unzip it and then move the Gannet3.0-master folder to your MATLAB directory.
-To add the folder to your search path, run the following line of code in the command window of MATLAB:
+The simplest way to install Gannet 3.0 is to download the zipped [master folder](https://github.com/richardedden/Gannet3.0/archive/master.zip), unzip it and then move the Gannet3.0-master folder to your MATLAB directory. To add the folder to your search path, run the following line of code in the command window of MATLAB:
 
 macOS
 ```
@@ -40,7 +38,7 @@ For bug reporting, contribution requests and/or queries, please contact us at: g
 
 ## Versioning
 
-Versioning is conducted on a module-specific basis using the style <YYMMDD>. That is, each Gannet module has its own release version. Major changes or additions of new functionalities are reflected in the version updates, while minor bug fixes are not.
+Versioning is conducted on a module-specific basis using the style YYMMDD. That is, each Gannet module has its own release version. Major changes or additions of new functionalities are reflected in the version updates, while minor bug fixes are not.
 
 ## Authors
 
