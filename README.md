@@ -38,7 +38,7 @@ For bug reporting, contribution requests and/or queries, please contact us at: g
 
 ## Versioning
 
-Versioning is conducted on a module-specific basis using the style YYMMDD. That is, each Gannet module has its own release version. Major changes or additions of new functionalities are reflected in the version updates, while minor bug fixes are not.
+Versioning is conducted on a module-specific basis using the style YYMMDD. That is, each Gannet module has its own release version. Major changes or addition of new functionalities are reflected in the version updates, while minor bug fixes are not.
 
 ## Authors
 
