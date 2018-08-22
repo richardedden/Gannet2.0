@@ -21,9 +21,9 @@ To run the voxel co-registration and structural image segmentation modules, [SPM
 ### Installing
 
 The simplest way to install Gannet 3.0 is to download the zipped [master folder](https://github.com/richardedden/Gannet3.0/archive/master.zip), unzip it and then move the Gannet3.0-master folder to your MATLAB directory.
-To add the folder to your search path, either run the following line of code in the command window of MATLAB:
+To add the folder to your search path, run the following line of code in the command window of MATLAB:
 
-macOS:
+macOS
 ```
 addpath(genpath('~/Documents/MATLAB/Gannet3.0-master'));
 ```
@@ -34,13 +34,13 @@ Alternatively, open the Set Path dialog box from the MATLAB menu, click 'Add wit
 
 * [MATLAB](https://www.mathworks.com/products/matlab.html)
 
-## Bugs, Contributing, Queries
+## Bugs, Contributions, Queries
 
-For bug reporting, contribution requests and/or queries, please contact us at: [gabamrs@gmail.com](gabamrs@gmail.com).
+For bug reporting, contribution requests and/or queries, please contact us at: gabamrs@gmail.com
 
 ## Versioning
 
-Versioning is conducted on a module-specific basis using the style YYMMDD. That is, each Gannet module has its own release version. Minor bug fixes are not reflected in version updates.
+Versioning is conducted on a module-specific basis using the style <YYMMDD>. That is, each Gannet module has its own release version. Major changes or additions of new functionalities are reflected in the version updates, while minor bug fixes are not.
 
 ## Authors
 
@@ -64,3 +64,5 @@ This software is open-source and does not have a specific license, but should yo
 We wish to thank the following individuals for their contributions to the development of Gannet:
 
 * Ralph Noeske (GE Berlin)
+* Peter Barker (The Johns Hopkins University)
+* Robin de Graaf (Yale School of Medicine)
