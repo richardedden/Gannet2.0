@@ -222,11 +222,16 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             % in the DATA/LIST files. Later: add option to provide an additional
             % water reference file (i.e. short-TE). GO 03/02/2018
             MRS_struct.p.Reference_compound = 'H2O';
-            MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii});
+            if nargin > 1
+                MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii},waterfile{ii});
+                WaterData = MRS_struct.fids.data_water;
+            else
+                MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii});
+                MRS_struct.p.Reference_compound = 'Cr';
+            end
+            MRS_struct = SpecifyOnOffOrder(MRS_struct); %For 3T and 7T -- 08212018 MGSaleh
             FullData = MRS_struct.fids.data;
-            WaterData = MRS_struct.fids.data_water;
-            MRS_struct = SpecifyOnOffOrder(MRS_struct);
-            
+        
         case 'Philips_raw' % GO 11/01/2016
             
             MRS_struct = PhilipsRawLoad(MRS_struct,metabfile{ii},3,0); % GO 11/02/2016 
@@ -262,6 +267,13 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             % Phase by multiplying with normalized complex conjugate of first point
             conj_norm = conj(PRIAMWaterData(:,kk,1)) ./ abs(conj(PRIAMWaterData(:,kk,1)));
             PRIAMWaterData(:,kk,:) = PRIAMWaterData(:,kk,:) .* repmat(conj_norm, [1 1 MRS_struct.p.npoints]);
+        end
+    elseif strcmp(MRS_struct.p.vendor,'Philips_data') && ceil(MRS_struct.p.LarmorFreq(MRS_struct.ii)) < 290 %Added info about averaging in the coil dimensions -- 08232018 MGSaleh
+        FullData = squeeze(sum(FullData,1))';
+        MRS_struct.fids.data = FullData;
+        if strcmp(MRS_struct.p.Reference_compound,'H2O')
+            WaterData = squeeze(sum(WaterData,1))';
+            MRS_struct.fids.data_water = WaterData;
         end
     end
     
