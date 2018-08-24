@@ -221,12 +221,15 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             % If a water reference scan is acquired, it is saved as a mix
             % in the DATA/LIST files. Later: add option to provide an additional
             % water reference file (i.e. short-TE). GO 03/02/2018
-            MRS_struct.p.Reference_compound = 'H2O';
             if nargin > 1
                 MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii},waterfile{ii});
-                WaterData = MRS_struct.fids.data_water;
             else
                 MRS_struct = PhilipsRead_data(MRS_struct, metabfile{ii});
+            end
+            if isfield(MRS_struct.fids, 'data_water')
+                MRS_struct.p.Reference_compound = 'H2O';
+                WaterData = MRS_struct.fids.data_water;
+            else
                 MRS_struct.p.Reference_compound = 'Cr';
             end
             MRS_struct = SpecifyOnOffOrder(MRS_struct); %For 3T and 7T -- 08212018 MGSaleh
