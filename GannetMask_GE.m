@@ -12,30 +12,52 @@ if MRS_struct.p.GE.rdbm_rev_num >= 11.0
 else
     fid = fopen(fname, 'r', 'ieee-be');
 end
-fseek(fid, 1468, 'bof');
-p_hdr_value = fread(fid, 12, 'integer*4');
-fseek(fid, p_hdr_value(8), 'bof');
-o_hdr_value = fread(fid, p_hdr_value(9)-p_hdr_value(8), 'real*4');
+
 switch num2str(MRS_struct.p.GE.rdbm_rev_num)
     case '14.3'
-        MRS_struct.p.voxdim(ii,:) = o_hdr_value(810:812)';
-        MRS_struct.p.voxoff(ii,:) = o_hdr_value(813:815)';
-        error('GannetMask_GE not yet compatible with rdbm_rev_num 14.3!');
+        rdb_hdr_off_image   = 377;
+        rdb_hdr_ps_mps_freq = 107;
+        image_user8         = 38;
+        image_user11        = 41;
+        tlhc                = 121;
+        trhc                = 124;
+        brhc                = 127;
     case '16'
-        MRS_struct.p.voxdim(ii,:) = o_hdr_value(822:824)';
-        MRS_struct.p.voxoff(ii,:) = o_hdr_value(825:827)';
-        tlhc_LPS = o_hdr_value(905:907)';
-        trhc_LPS = o_hdr_value(908:910)';
-        brhc_LPS = o_hdr_value(911:913)';
+        rdb_hdr_off_image   = 377;
+        rdb_hdr_ps_mps_freq = 107;
+        image_user8         = 50;
+        image_user11        = 53;
+        tlhc                = 133;
+        trhc                = 136;
+        brhc                = 139;
     case '24'
-        MRS_struct.p.voxdim(ii,:) = o_hdr_value(1228:1230)';
-        MRS_struct.p.voxoff(ii,:) = o_hdr_value(1231:1233)';
-        tlhc_LPS = o_hdr_value(1311:1313)';
-        trhc_LPS = o_hdr_value(1314:1316)';
-        brhc_LPS = o_hdr_value(1317:1319)';
+        rdb_hdr_off_image   = 377;
+        rdb_hdr_ps_mps_freq = 107;
+        image_user8         = 98;
+        image_user11        = 101;
+        tlhc                = 181;
+        trhc                = 184;
+        brhc                = 187;
     case '26.002'
-        error('GannetMask_GE not yet compatible with rdbm_rev_num 26.002!');
+        rdb_hdr_off_image   = 11;
+        rdb_hdr_ps_mps_freq = 123;
+        image_user8         = 98;
+        image_user11        = 101;
+        tlhc                = 181;
+        trhc                = 184;
+        brhc                = 187;
 end
+
+fseek(fid, 0, 'bof');
+i_hdr_value = fread(fid, max(rdb_hdr_off_image, rdb_hdr_ps_mps_freq), 'integer*4');
+fseek(fid, i_hdr_value(rdb_hdr_off_image), 'bof');
+o_hdr_value = fread(fid, brhc+2, 'real*4');
+
+MRS_struct.p.voxdim(ii,:) = o_hdr_value(image_user8:image_user8+2)';
+MRS_struct.p.voxoff(ii,:) = o_hdr_value(image_user11:image_user11+2)';
+tlhc_LPS = o_hdr_value(tlhc:tlhc+2)';
+trhc_LPS = o_hdr_value(trhc:trhc+2)';
+brhc_LPS = o_hdr_value(brhc:brhc+2)';
 
 MRS_struct.p.voxoff(ii,:) = MRS_struct.p.voxoff(ii,:) .* [-1 -1 1];
 tlhc_LPS = tlhc_LPS .* [-1 -1 1];
