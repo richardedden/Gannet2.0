@@ -155,7 +155,7 @@ end
 function [TwixData, TwixHeader] = GetTwixData(fname)
 
 % Pull TWIX data in with the mapVBVD tool
-twix_obj=mapVBVD(fname);
+twix_obj=mapVBVD_Gannet(fname);
             
 % Is the data single-RAID or multi-RAID?
 % struct - single-RAID

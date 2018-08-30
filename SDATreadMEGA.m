@@ -1,7 +1,7 @@
-function A = SDATreadMEGA(filename,da_xres, da_yres)
-%function A = SDATread(filename,da_xres)
+function A = SDATreadMEGA(filename, da_xres, da_yres)
+%function A = SDATread(filename, da_xres, da_yres)
 % Open file to read reference scan data.
-fid = fopen(filename,'rb', 'ieee-le');
+fid = fopen(filename, 'rb', 'ieee-le');
 if fid == -1
     sprintf('Unable to locate file %s', filename);
     return

@@ -1,11 +1,11 @@
-function twix_obj = mapVBVD(filename,varargin)
+function twix_obj = mapVBVD_Gannet(filename,varargin)
 
 %  Reads Siemens raw .dat file from VB/VD MRI raw data.
-% 
-%  Requires twix_map_obj.m
-% 
+%  requires twix_map_obj.m & read_twix_hdr.m
+%
+%
 %  Author: Philipp Ehses (philipp.ehses@tuebingen.mpg.de)
-% 
+%  
 % 
 %  Philipp Ehses 11.02.07, original version
 %  [..]
@@ -44,6 +44,8 @@ function twix_obj = mapVBVD(filename,varargin)
 %                          * => Parsing speed improved by factor 3...7 or so
 %                          * Speed increase for reading data, esp. when slicing,
 %                            os-removal or reflected lines. Also for random acquisitions.
+% Jonas Bause,    18.11.16   receiver phase for ramp-sampling fixed, now takes into account  
+%   Chris Mirkes & PE        offcenter shifts in readout direction
 % 
 % 
 % Input:
@@ -155,7 +157,7 @@ if ~exist('filename','var') || isempty(filename)
 else
     if ischar(filename)
         % assume that complete path is given
-        if  ~strcmpi(filename(end-3:end),'.dat');
+        if  ~strcmpi(filename(end-3:end),'.dat')
             filename=[filename '.dat'];   %% adds filetype ending to file
         end
     else
@@ -277,7 +279,11 @@ clear varargin
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 tic;
-fid = fopen(filename,'r','l','US-ASCII');
+fid = fopen(filename, 'r', 'ieee-le');
+
+% get file size
+fseek(fid,0,'eof');
+fileSize = ftell(fid);
 
 % start of actual measurement data (sans header)
 fseek(fid,0,'bof');
@@ -294,27 +300,28 @@ if and(firstInt < 10000, secondInt <= 64)
     NScans = secondInt;
     measID = fread(fid,1,'uint32');
     fileID = fread(fid,1,'uint32');
-    % measOffset: points to beginning of header, usually at 10240 bytes
-    measOffset = fread(fid,1,'uint64');
-    measLength = fread(fid,1,'uint64');
-    fseek(fid,measOffset,'bof');
-    hdrLength  = fread(fid,1,'uint32');
-
+    measOffset = cell(1, NScans);
+    measLength = cell(1, NScans);
+    for k=1:NScans
+        measOffset{k} = fread(fid,1,'uint64');
+        measLength{k} = fread(fid,1,'uint64'); 
+        fseek(fid, 152 - 16, 'cof');
+    end
 else
     % in VB versions, the first 4 bytes indicate the beginning of the
     % raw data part of the file
     version  = 'vb';
     disp('Software version: VB (!?)');
-    measOffset = 0;
-    hdrLength  = firstInt;
+    measOffset{1} = 0;
+    measLength{1} = fileSize;
     NScans     = 1; % VB does not support multiple scans in one file
 end
-datStart = measOffset + hdrLength;
 
 %SRY read data correction factors
 % do this for all VB datasets, so that the factors are available later
 % in the image_obj if the user chooses to set the correction flag
 if (strcmp(version, 'vb')) % not implemented/tested for vd, yet
+    datStart = measOffset{1} + firstInt;
     frewind(fid);
     while ( (ftell(fid) < datStart) && ~exist('rawfactors', 'var'))
         line = fgetl(fid);
@@ -358,34 +365,47 @@ end
 %      ima, ref,... scan
 %   2) reading the data
 tic;
-cPos            = measOffset;
 twix_obj        = cell(1,NScans);
 
 for s=1:NScans
+    cPos = measOffset{s};
     fseek(fid,cPos,'bof');
     hdr_len = fread(fid, 1,'uint32');
 
     % read header and calculate regridding (optional)
     rstraj = [];
     if arg.bReadHeader
-        [twix_obj{s}.hdr,rstraj] = read_twix_hdr(fid);
+        [twix_obj{s}.hdr, rstraj] = read_twix_hdr_Gannet(fid);
     end
 
     % declare data objects:
-    twix_obj{s}.image         = twix_map_obj(arg,'image',filename,version,rstraj);
-    twix_obj{s}.noise         = twix_map_obj(arg,'noise',filename,version);
-    twix_obj{s}.phasecor      = twix_map_obj(arg,'phasecor',filename,version,rstraj);
-    twix_obj{s}.phasestab     = twix_map_obj(arg,'phasestab',filename,version,rstraj);
-    twix_obj{s}.phasestabRef0 = twix_map_obj(arg,'phasestab_ref0',filename,version,rstraj);
-    twix_obj{s}.phasestabRef1 = twix_map_obj(arg,'phasestab_ref1',filename,version,rstraj);
-    twix_obj{s}.refscan       = twix_map_obj(arg,'refscan',filename,version,rstraj);
-    twix_obj{s}.refscanPC     = twix_map_obj(arg,'refscan_phasecor',filename,version,rstraj);
-    twix_obj{s}.refscanPS     = twix_map_obj(arg,'refscan_phasestab',filename,version,rstraj);
-    twix_obj{s}.refscanPSRef0 = twix_map_obj(arg,'refscan_phasestab_ref0',filename,version,rstraj);
-    twix_obj{s}.refscanPSRef1 = twix_map_obj(arg,'refscan_phasestab_ref1',filename,version,rstraj);
-    twix_obj{s}.RTfeedback    = twix_map_obj(arg,'rtfeedback',filename,version,rstraj);
-    twix_obj{s}.vop           = twix_map_obj(arg,'vop',filename,version); % tx-array rf pulses
-
+    twix_obj{s}.image         = twix_map_obj_Gannet(arg,'image',filename,version,rstraj);
+    twix_obj{s}.noise         = twix_map_obj_Gannet(arg,'noise',filename,version);
+    twix_obj{s}.phasecor      = twix_map_obj_Gannet(arg,'phasecor',filename,version,rstraj);
+    twix_obj{s}.phasestab     = twix_map_obj_Gannet(arg,'phasestab',filename,version,rstraj);
+    twix_obj{s}.phasestabRef0 = twix_map_obj_Gannet(arg,'phasestab_ref0',filename,version,rstraj);
+    twix_obj{s}.phasestabRef1 = twix_map_obj_Gannet(arg,'phasestab_ref1',filename,version,rstraj);
+    twix_obj{s}.refscan       = twix_map_obj_Gannet(arg,'refscan',filename,version,rstraj);
+    twix_obj{s}.refscanPC     = twix_map_obj_Gannet(arg,'refscan_phasecor',filename,version,rstraj);
+    twix_obj{s}.refscanPS     = twix_map_obj_Gannet(arg,'refscan_phasestab',filename,version,rstraj);
+    twix_obj{s}.refscanPSRef0 = twix_map_obj_Gannet(arg,'refscan_phasestab_ref0',filename,version,rstraj);
+    twix_obj{s}.refscanPSRef1 = twix_map_obj_Gannet(arg,'refscan_phasestab_ref1',filename,version,rstraj);
+    twix_obj{s}.RTfeedback    = twix_map_obj_Gannet(arg,'rtfeedback',filename,version,rstraj);
+    twix_obj{s}.vop           = twix_map_obj_Gannet(arg,'vop',filename,version); % tx-array rf pulses
+    
+    % print reader version information
+    if s==1
+        fprintf('Reader version: %d', twix_obj{s}.image.readerVersion);
+        isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+        if isOctave
+            date_str = ctime(twix_obj{s}.image.readerVersion);
+            date_str = date_str(1:end-1);
+        else
+            date_str = datetime(twix_obj{s}.image.readerVersion, 'ConvertFrom','posixtime');
+        end
+        fprintf(' (UTC: %s)\n', char(date_str));
+    end
+    
     % jump to first mdh
     cPos = cPos + hdr_len;
     fseek( fid, cPos, 'bof' );
@@ -393,13 +413,10 @@ for s=1:NScans
     % find all mdhs and save them in binary form, first:
     fprintf('Scan %d/%d, read all mdhs:\n', s, NScans )
 
-    [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version );  % uint8; size: [ byteMDH  Nmeas ]
+    [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version, NScans, s, measOffset{s}, measLength{s});  % uint8; size: [ byteMDH  Nmeas ]
 
     cPos = filePos( end );
     filePos( end ) = [];
-
-    fprintf('          parse mdhs... ')
-    t0 = tic;
 
     % get mdhs and masks for each scan, no matter if noise, image, RTfeedback etc:
     [mdh, mask] = evalMDH( mdh_blob, version ); % this is quasi-instant (< 1s) :-)    
@@ -535,7 +552,6 @@ for s=1:NScans
             end
         end
     end
-    fprintf('done. (%g seconds)\n', toc(t0) )
 
 end % NScans loop
 
@@ -548,7 +564,7 @@ end % of mapVBVD()
 
 
 
-function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
+function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version, Nscans, scan, measOffset, measLength)
 % Goal of this function is to gather all mdhs in the dat file and store them
 % in binary form, first. This enables us to evaluate and parse the stuff in
 % a MATLAB-friendly (vectorized) way. We also yield a clear separation between
@@ -582,22 +598,17 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
             warning( [mfilename() ':UnknownVer'], 'Software version "%s" is not supported.', version );
     end
 
-    cPos            = ftell(fid);
-    n_acq           = 0;
-    allocSize       = 4096;
-    ulDMALength     = byteMDH;
-    isEOF           = false;
-    percentFinished = 0;
-    progress_str    = '';
-    prevLength      = numel( progress_str );
+    cPos          = ftell(fid);
+    n_acq         = 0;
+    allocSize     = 4096;
+    ulDMALength   = byteMDH;
+    isEOF         = false;
+    last_progress = 0;
 
     mdh_blob = zeros( byteMDH, 0, 'uint8' );
     szBlob   = size( mdh_blob, 2 );
     filePos  = zeros(0, 1, class(cPos));  % avoid bug in Matlab 2013b: https://scivision.co/matlab-fseek-bug-with-uint64-offset/
 
-    % get file size
-    fseek(fid,0,'eof');
-    fileSize = ftell(fid);
     fseek(fid,cPos,'bof');
 
     % ======================================
@@ -621,6 +632,16 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
         end
     % ======================================
 
+    isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+    if isOctave % octave does not support a cancel button
+        h = waitbar(0,'','Name', sprintf('Reading Scan ID %d/%d', scan, Nscans));
+    else
+        h = waitbar(0,'','Name', sprintf('Reading Scan ID %d/%d', scan, Nscans),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(h,'canceling',0)
+    end
+
     t0 = tic;
     while true
         % Read mdh as binary (uint8) and evaluate as little as possible to know...
@@ -628,6 +649,7 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
         %   ... whether it is only for sync (MDH_SYNCDATA)
         %   ... whether it is the last one (MDH_ACQEND)
         % evalMDH() contains the correct and readable code for all mdh entries.
+         
         try
             % read everything and cut out the mdh
             data_u8 = fread( fid, ulDMALength, 'uint8=>uint8' );
@@ -644,10 +666,14 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
             break
         end
 
+        if ~isOctave && getappdata(h,'canceling') 
+            break;
+        end
+        
         bitMask = data_u8(evIdx);   % the initial 8 bit from evalInfoMask are enough
 
         if   isequal( data_u8(1:3), u8_000 )    ... % probably ulDMALength == 0
-          || bitand(bitMask, bit_0);                % MDH_ACQEND
+          || bitand(bitMask, bit_0)                 % MDH_ACQEND
 
             % ok, look closer if really all *4* bytes are 0:
             data_u8(4)= bitget( data_u8(4),1);  % ubit24: keep only 1 bit from the 4th byte
@@ -662,7 +688,7 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
                 break;
             end
         end
-        if bitand(bitMask, bit_5);  % MDH_SYNCDATA
+        if bitand(bitMask, bit_5)   % MDH_SYNCDATA
             data_u8(4)= bitget( data_u8(4),1);  % ubit24: keep only 1 bit from the 4th byte
             ulDMALength = double( typecast( data_u8(1:4), 'uint32' ) );
             cPos = cPos + ulDMALength;
@@ -689,19 +715,20 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
         mdh_blob(:,n_acq) = data_u8;
         filePos( n_acq )  = cPos;
 
-        if (100*cPos)/fileSize > percentFinished + 1
-            percentFinished = floor((100*cPos)/fileSize);
-            elapsed_time    = toc(t0);
-            time_left       = (fileSize/cPos-1) * elapsed_time;
-            prevLength      = numel(progress_str);
-            progress_str    = sprintf('    %3.0f %% read in %4.0f s; estimated time left: %4.0f s \n',...
-                                      percentFinished,elapsed_time, time_left);
-            fprintf([repmat('\b',1,prevLength) '%s'],progress_str);
+        progress = (cPos-measOffset)/measLength;
+        
+        if progress > last_progress  + 0.01
+            last_progress = progress;
+            elapsed_time  = toc(t0);
+            time_left     = elapsed_time * (1/progress-1);
+            progress_str  = sprintf('%3.0f %% read in %4.0f s;\nestimated time left: %4.0f s', round(100*progress), elapsed_time, time_left);
+            waitbar(progress, h, progress_str);
         end
 
         cPos = cPos + ulDMALength;
     end % while true
-
+    delete(h);
+    
     if isEOF
         n_acq = n_acq-1;    % ignore the last attempt
     end
@@ -712,10 +739,7 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
     mdh_blob = mdh_blob(:,1:n_acq);
     filePos  = reshape( filePos(1:n_acq+1), 1, [] ); % row vector
 
-    prevLength   = numel(progress_str) * (~isEOF);
-    elapsed_time = toc(t0);
-    progress_str = sprintf('    100 %% read in %4.0f s; estimated time left:    0 s \n', elapsed_time);
-    fprintf([repmat('\b',1,prevLength) '%s'],progress_str);
+    fprintf('%8.1f MB read in %4.0f s\n', measLength/1024^2, round(toc(t0)));
 
 end % of loop_mdh_read()
 
@@ -726,12 +750,12 @@ function [mdh,mask] = evalMDH( mdh_blob, version )
 % and pkg/MrServers/MrMeasSrv/SeqIF/MDH/MdhProxy.h
 
 if ~isa( mdh_blob, 'uint8' )
-    error( [mfilename() ':NoInt8'], 'Binary mdh data must be a uint8 array!' )
+    error([mfilename() ':NoInt8'], 'mdh data must be a uint8 array!')
 end
 
 if version(end) == 'd'
     isVD = true;
-    mdh_blob = mdh_blob([1:20 41:end], :);     % remove 20 unnecessary bytes
+    mdh_blob = mdh_blob([1:20 41:end], :);  % remove 20 unnecessary bytes
 else
     isVD = false;
 end
@@ -780,27 +804,26 @@ end
 
 % inlining of evalInfoMask
 evalInfoMask1 = mdh.aulEvalInfoMask(:,1);
-mask.MDH_ACQEND             = min(bitand(evalInfoMask1, 2^0), 1);
-mask.MDH_RTFEEDBACK         = min(bitand(evalInfoMask1, 2^1), 1);
-mask.MDH_HPFEEDBACK         = min(bitand(evalInfoMask1, 2^2), 1);
-mask.MDH_SYNCDATA           = min(bitand(evalInfoMask1, 2^5), 1);
-mask.MDH_RAWDATACORRECTION  = min(bitand(evalInfoMask1, 2^10),1);
-mask.MDH_REFPHASESTABSCAN   = min(bitand(evalInfoMask1, 2^14),1);
-mask.MDH_PHASESTABSCAN      = min(bitand(evalInfoMask1, 2^15),1);
-mask.MDH_SIGNREV            = min(bitand(evalInfoMask1, 2^17),1);
-mask.MDH_PHASCOR            = min(bitand(evalInfoMask1, 2^21),1);
-mask.MDH_PATREFSCAN         = min(bitand(evalInfoMask1, 2^22),1);
-mask.MDH_PATREFANDIMASCAN   = min(bitand(evalInfoMask1, 2^23),1);
-mask.MDH_REFLECT            = min(bitand(evalInfoMask1, 2^24),1);
-mask.MDH_NOISEADJSCAN       = min(bitand(evalInfoMask1, 2^25),1);
-mask.MDH_VOP                = min(bitand(mdh.aulEvalInfoMask(2), 2^(53-32)),1); % was 0 in VD
+mask.MDH_ACQEND            = min(bitand(evalInfoMask1, 2^0), 1);
+mask.MDH_RTFEEDBACK        = min(bitand(evalInfoMask1, 2^1), 1);
+mask.MDH_HPFEEDBACK        = min(bitand(evalInfoMask1, 2^2), 1);
+mask.MDH_SYNCDATA          = min(bitand(evalInfoMask1, 2^5), 1);
+mask.MDH_RAWDATACORRECTION = min(bitand(evalInfoMask1, 2^10),1);
+mask.MDH_REFPHASESTABSCAN  = min(bitand(evalInfoMask1, 2^14),1);
+mask.MDH_PHASESTABSCAN     = min(bitand(evalInfoMask1, 2^15),1);
+mask.MDH_SIGNREV           = min(bitand(evalInfoMask1, 2^17),1);
+mask.MDH_PHASCOR           = min(bitand(evalInfoMask1, 2^21),1);
+mask.MDH_PATREFSCAN        = min(bitand(evalInfoMask1, 2^22),1);
+mask.MDH_PATREFANDIMASCAN  = min(bitand(evalInfoMask1, 2^23),1);
+mask.MDH_REFLECT           = min(bitand(evalInfoMask1, 2^24),1);
+mask.MDH_NOISEADJSCAN      = min(bitand(evalInfoMask1, 2^25),1);
+mask.MDH_VOP               = min(bitand(mdh.aulEvalInfoMask(2), 2^(53-32)),1); % was 0 in VD
+mask.MDH_IMASCAN           = ones( Nmeas, 1, 'uint32' );
 
-mask.MDH_IMASCAN            = ones( Nmeas, 1, 'uint32' );
-
-noImaScan = (   mask.MDH_ACQEND             | mask.MDH_RTFEEDBACK   | mask.MDH_HPFEEDBACK       ...
-              | mask.MDH_PHASCOR            | mask.MDH_NOISEADJSCAN | mask.MDH_PHASESTABSCAN    ...
-              | mask.MDH_REFPHASESTABSCAN   | mask.MDH_SYNCDATA                                 ... 
-              | (mask.MDH_PATREFSCAN & ~mask.MDH_PATREFANDIMASCAN) );
+noImaScan = ( mask.MDH_ACQEND           | mask.MDH_RTFEEDBACK   | mask.MDH_HPFEEDBACK    ...
+            | mask.MDH_PHASCOR          | mask.MDH_NOISEADJSCAN | mask.MDH_PHASESTABSCAN ...
+            | mask.MDH_REFPHASESTABSCAN | mask.MDH_SYNCDATA                              ... 
+            | (mask.MDH_PATREFSCAN & ~mask.MDH_PATREFANDIMASCAN) );
 
 mask.MDH_IMASCAN( noImaScan ) = 0;
 

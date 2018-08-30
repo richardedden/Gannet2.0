@@ -1,4 +1,5 @@
-function [prot,rstraj] = read_twix_hdr(fid)
+function [prot,rstraj] = read_twix_hdr_Gannet(fid)
+
 % function to read raw data header information from siemens MRI scanners 
 % (currently VB and VD software versions are supported and tested).
 %
@@ -8,17 +9,13 @@ function [prot,rstraj] = read_twix_hdr(fid)
     
     prot = [];
     for b=1:nbuffers
-        namesz  = 0;
-        byte = 1;
-        while byte~=0 % look for NULL-character
-            byte   = fread(fid, 1, 'uint8');
-            namesz = namesz+1;
-        end
-        fseek(fid,-namesz,'cof');
-        bufname        = fread(fid,namesz,'char=>char').';
-        bufname(end)   = []; % delete NULL character
+        %now read string up to null termination     
+        bufname = fread(fid, 10, 'uint8=>char').';
+        bufname = regexp(bufname, '^\w*', 'match');
+        bufname = bufname{1};
+        fseek(fid, numel(bufname)-9, 'cof');        
         buflen         = fread(fid, 1,'uint32');
-        buffer         = fread(fid, buflen, 'char=>char').';
+        buffer         = fread(fid, buflen, 'uint8=>char').';
         buffer         = regexprep(buffer,'\n\s*\n',''); % delete empty lines
         prot.(bufname) = parse_buffer(buffer);
     end
@@ -29,7 +26,8 @@ function [prot,rstraj] = read_twix_hdr(fid)
             ncol           = prot.Meas.alRegridDestSamples(1);
             dwelltime      = prot.Meas.aflRegridADCDuration(1)/ncol;
             gr_adc         = zeros(1,ncol,'single');
-            time_adc       = prot.Meas.alRegridDelaySamplesTime(1) + dwelltime * (0.5:ncol);
+            start          = prot.Meas.alRegridRampupTime(1) - (prot.Meas.aflRegridADCDuration(1)-prot.Meas.alRegridFlattopTime(1))/2;
+            time_adc       = start + dwelltime * (0.5:ncol);            
             ixUp           = time_adc <= prot.Meas.alRegridRampupTime(1);
             ixFlat         = (time_adc <= prot.Meas.alRegridRampupTime(1)+prot.Meas.alRegridFlattopTime(1)) & ~ixUp;
             ixDn           = ~ixUp & ~ixFlat;
@@ -51,13 +49,18 @@ function [prot,rstraj] = read_twix_hdr(fid)
             gr_adc = max(gr_adc,1e-4);
             rstraj = (cumsum(gr_adc(:)) - ncol/2)/sum(gr_adc(:));
             rstraj = rstraj - rstraj(ncol/2+1);
+            % scale rstraj by kmax (only works if all slices have same FoV!!!)
+            kmax = prot.MeasYaps.sKSpace.lBaseResolution/...
+                prot.MeasYaps.sSliceArray.asSlice{1}.dReadoutFOV;
+            rstraj = kmax * rstraj;
         end
     end
     
 end        
-    
+
+
 function prot = parse_buffer(buffer)
-    [ascconv,xprot] = regexp(buffer,'### ASCCONV BEGIN[^\n]*\n(.*)\s### ASCCONV END ###','tokens','split');
+    [ascconv, xprot] = regexp(buffer,'### ASCCONV BEGIN[^\n]*\n(.*)\s### ASCCONV END ###','tokens','split');
 
     if ~isempty(ascconv)
         ascconv = ascconv{:}{:};
@@ -67,7 +70,7 @@ function prot = parse_buffer(buffer)
     end
 
     if ~isempty(xprot)
-        xprot = xprot{:};
+        xprot = strcat(xprot{:}); % bug fix by Qiuting Wen (added strcat)
         xprot = parse_xprot(xprot);
         if isstruct(xprot)
             name   = cat(1,fieldnames(prot),fieldnames(xprot));
@@ -77,6 +80,7 @@ function prot = parse_buffer(buffer)
         end
     end
 end
+
 
 function xprot = parse_xprot(buffer)
     xprot = [];
@@ -100,10 +104,13 @@ function xprot = parse_xprot(buffer)
     end
 end
 
+
 function mrprot = parse_ascconv(buffer)  
     mrprot = [];    
     % [mv] was: vararray = regexp(buffer,'(?<name>\S*)\s*=\s(?<value>\S*)','names');
     vararray = regexp(buffer,'(?<name>\S*)\s*=\s*(?<value>\S*)','names');
+    
+    isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
     
     for var=vararray
 
@@ -117,22 +124,32 @@ function mrprot = parse_ascconv(buffer)
         v = regexp(var.name,'(?<name>\w*)\[(?<ix>[0-9]*)\]|(?<name>\w*)','names');
 
         cnt = 0;
-        tmp = cell(2,numel(v));
+        tmp = cell(2, numel(v));
 
         breaked = false;
         for k=1:numel(v)
-            if ~isletter(v(k).name(1))
+            if isOctave
+                vk = v{k};
+                if iscell(vk.name)
+                    % lazy fix that throws some info away
+                    vk.name = vk.name{1};
+                    vk.ix   = vk.ix{1};
+                end
+            else
+                vk = v(k);
+            end
+            if ~isletter(vk.name(1))
                 breaked = true;
                 break;
             end
             cnt = cnt+1;
             tmp{1,cnt} = '.';
-            tmp{2,cnt} = v(k).name;
+            tmp{2,cnt} = vk.name;
 
-            if ~isempty(v(k).ix)
+            if ~isempty(vk.ix)
                 cnt = cnt+1;
                 tmp{1,cnt} = '{}';
-                tmp{2,cnt}{1} = 1 + str2double(v(k).ix);
+                tmp{2,cnt}{1} = 1 + str2double(vk.ix);
             end
         end
         if ~breaked && ~isempty(tmp)
@@ -141,4 +158,3 @@ function mrprot = parse_ascconv(buffer)
         end
     end 
 end
-

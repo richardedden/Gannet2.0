@@ -1,4 +1,5 @@
-classdef twix_map_obj < matlab.mixin.Copyable %handle
+classdef twix_map_obj_Gannet < handle
+    
 % class to hold information about raw data from siemens MRI scanners
 % (currently VB and VD software versions are supported and tested).
 %
@@ -18,8 +19,10 @@ classdef twix_map_obj < matlab.mixin.Copyable %handle
 % twix_obj.image.unsorted now returns the data in its acq. order
 % [NCol,NCha,nsamples in acq. order], all average flags don't have an
 % influence on the output, but 'flagRemoveOS' still works, PE, Sep/04/13
-%
+
+
 properties(Dependent=true)
+    readerVersion
     % flags
     flagRemoveOS        % removes oversampling in read (col) during read operation
     flagDoAverage       % averages over all avg during read operation
@@ -44,16 +47,17 @@ properties(GetAccess='public', SetAccess='public')
     filename
     softwareVersion
     dataType
+    rampSampTrj
 end
 
 properties(Dependent=true)
     dataSize % this is the current output size, depends on fullSize + some flags
     sqzSize
+    sqzDims
 end
 
 properties(GetAccess='public', SetAccess='protected')
     dataDims
-    sqzDims
 
     NCol  % mdh information
     NCha  % mdh information
@@ -105,7 +109,6 @@ properties(GetAccess='public', SetAccess='protected')
     scancounter
     timestamp
     pmutime
-    rampSampTrj
 
     % memory position in file
     memPos
@@ -127,7 +130,7 @@ end
 
 methods
     % Constructor:
-    function this = twix_map_obj(arg,dataType,fname,version,rstraj)
+    function this = twix_map_obj_Gannet(arg,dataType,fname,version,rstraj)
 
         if ~exist('dataType','var')
             this.dataType = 'image';
@@ -143,6 +146,9 @@ methods
         this.NAcq             = 0;
         this.isBrokenFile     = false;
 
+        this.dataDims = {'Col','Cha','Lin','Par','Sli','Ave','Phs',...
+            'Eco','Rep','Set','Seg','Ida','Idb','Idc','Idd','Ide'};
+            
         this.setDefaultFlags();
         if exist('arg','var')
             % copy relevant arguments from mapVBVD argument list
@@ -153,6 +159,7 @@ methods
                 end
             end
         end
+
         this.flagAverageDim(ismember(this.dataDims,'Ave')) = this.arg.doAverage;
         this.flagAverageDim(ismember(this.dataDims,'Rep')) = this.arg.averageReps;
         this.flagAverageDim(ismember(this.dataDims,'Set')) = this.arg.averageSets;
@@ -183,6 +190,26 @@ methods
         end
     end
 
+    
+    % Copy function - replacement for matlab.mixin.Copyable.copy() to create object copies
+    % from http://undocumentedmatlab.com/blog/general-use-object-copy
+    function newObj = copy(this)
+        isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+        if isOctave || verLessThan('matlab','7.11')
+            % R2010a or earlier - serialize via temp file (slower)
+            fname = [tempname '.mat'];
+            save(fname, 'obj');
+            newObj = load(fname);
+            newObj = newObj.obj;
+            delete(fname);
+        else
+            % R2010b or newer - directly in memory (faster)
+            objByteArray = getByteStreamFromArray(this);
+            newObj = getArrayFromByteStream(objByteArray);
+        end
+    end
+
+    
     function this = readMDH(this, mdh, filePos )
         % extract all values in all MDHs at once
         %
@@ -319,9 +346,6 @@ methods
         % the same for all mdhs:
         this.NCol = this.NCol(1);
         this.NCha = this.NCha(1);
-
-        this.dataDims = {'Col','Cha','Lin','Par','Sli','Ave','Phs',...
-            'Eco','Rep','Set','Seg','Ida','Idb','Idc','Idd','Ide'};
 
         if strcmp(this.dataType,'refscan')
             %pehses: check for lines with 'negative' line/partition numbers
@@ -466,10 +490,11 @@ methods
             end
         end
 
-        ixToTarg = this.sub2ind_double(selRangeSz(3:end),cIx(1,:),cIx(2,:),cIx(3,:),...
+        sz = selRangeSz(3:end); % extra variable needed for octave compatibility
+        ixToTarg = this.sub2ind_double(sz, cIx(1,:),cIx(2,:),cIx(3,:),...
             cIx(4,:),cIx(5,:),cIx(6,:),cIx(7,:),cIx(8,:),cIx(9,:),...
             cIx(10,:),cIx(11,:),cIx(12,:),cIx(13,:),cIx(14,:));
-
+        
         mem = this.memPos(ixToRaw);
         % sort mem for quicker access, sort cIxToTarg/Raw accordingly
         [mem,ix]  = sort(mem);
@@ -532,8 +557,9 @@ methods
         readCut      = this.freadInfo.cut;
         keepOS       = [1:this.NCol/4, 1+this.NCol*3/4:this.NCol];
         bRemoveOS    = this.arg.removeOS;
-        bIsReflected = this.IsReflected( cIxToRaw );
+        bIsReflected = this.IsReflected(cIxToRaw);
         bRegrid      = this.flagRampSampRegrid && numel(this.rampSampTrj);
+        slicedata    = this.slicePos(:, cIxToRaw);
         %SRY store information about raw data correction
         bDoRawDataCorrect = this.arg.doRawDataCorrect;
         bIsRawDataCorrect = this.IsRawDataCorrect( cIxToRaw );
@@ -605,20 +631,35 @@ methods
 
             blockCtr = blockCtr + 1;
             block(:,:,blockCtr) = raw;  % fast serial storage in a cache array
-            
+
             % Do expensive computations and reorderings on the gathered block.
             % Unfortunately, a lot of code is necessary, but that is executed much less
             % frequent, so its worthwhile for speed.
             % TODO: Do *everything* block-by-block
             if blockCtr == blockSz || k == kMax || (isBrokenRead && blockCtr > 1)
                 s = tic;    % measure the time to process a block of data
-            
+                
                 % remove MDH data from block:
                 block = block(readCut,:,:);
-
+                
                 if bRegrid
-                    F     = griddedInterpolant(rsTrj,block);
+                    % correct for readout shifts
+                    % the nco frequency is always scaled to the max.
+                    % gradient amp and does account for ramp-sampling
+                    ro_shift = this.calcOffcenterShiftRO(slicedata(:,k));
+                    deltak = max(abs(diff(rsTrj{1})));
+                    phase = (0:this.NCol-1).' * deltak * ro_shift;
+                    phase_factor = exp(1j*2*pi*(phase - ro_shift * rsTrj{1}));
+                    block = bsxfun(@times, block, phase_factor);
+
+                    % grid the data
+                    F = griddedInterpolant(rsTrj, block);
                     block = F(trgTrj);
+                end
+                
+                ix = 1 + k - blockCtr : k;
+                if blockCtr ~= blockSz
+                    block = block(:,:,1:blockCtr);
                 end
                 
                 if sum(isnan(block(:)))>0
@@ -626,18 +667,13 @@ methods
                 end
 
                 if bRemoveOS % remove oversampling in read
-                    block = ifft( block,[],1);
-                    block =  fft( block(keepOS,:,:),[],1);
+                    block = ifft(block, [], 1);
+                    block =  fft(block(keepOS,:,:), [], 1);
                 end
                                     
                 if ( bDoRawDataCorrect && bIsRawDataCorrect(k) )
                     %SRY apply raw data correction if necessary
                     block = bsxfun(@times, block, rawDataCorrect);
-                end
-                
-                ix = 1 + k - blockCtr : k;
-                if blockCtr ~= blockSz
-                    block = block(:,:,1:blockCtr);
                 end
                 
                 isRefl = bIsReflected(ix);
@@ -735,7 +771,7 @@ methods
         this.arg.averageSets         = false;
         this.arg.ignoreSeg           = false;
         this.arg.doRawDataCorrect    = false;
-        this.flagAverageDim          = false(1,16);
+        this.flagAverageDim          = false(1, 16);
         
         if strcmp(this.dataType,'image') || strcmp(this.dataType,'phasecor') || strcmp(this.dataType,'phasestab')
             this.arg.skipToFirstLine = false;
@@ -763,6 +799,14 @@ methods
     end
     
     
+    function versiontime = get.readerVersion(~)
+        % returns utc-unixtime of last commit (from file precommit-unixtime)
+        p = fileparts(mfilename('fullpath'));
+        fid = fopen(fullfile(p, 'precommit_unixtime'));
+        versiontime = uint64(str2double(fgetl(fid)));
+        fclose(fid);
+    end
+    
     function out = get.dataSize(this)
         out = this.fullSize;
         
@@ -780,19 +824,13 @@ methods
     end
     
     
+    function out = get.sqzDims(this)
+        out = this.dataDims(this.dataSize>1);
+    end
+    
+    
     function out = get.sqzSize(this)
-        % calculate sqzSize and sqzDims
-        out = this.dataSize(1);
-        this.sqzDims    = [];
-        this.sqzDims{1} = 'Col';
-        c = 1;
-        for k=2:numel(this.dataSize)
-            if this.dataSize(k)>1
-                c = c+1;
-                out(c) = this.dataSize(k);
-                this.sqzDims{c} = this.dataDims{k};
-            end
-        end
+        out = this.dataSize(this.dataSize>1);
     end
     
         
@@ -920,7 +958,7 @@ end
 
 methods (Access='protected')
     % helper functions
-
+    
     function fid = fileopen(this)
         % look out for unlikely event that someone is switching between
         % windows and unix systems:
@@ -1018,7 +1056,8 @@ methods (Access='protected')
         % calculate indices to target & source(raw)
         LinIx     = this.Lin - this.skipLin;
         ParIx     = this.Par - this.skipPar;
-        ixToTarget = this.sub2ind_double(this.fullSize(3:end),...
+        sz = this.fullSize(3:end); % extra variable needed for octave compatibility
+        ixToTarget = this.sub2ind_double(sz,...
             LinIx, ParIx, this.Sli, this.Ave, this.Phs, this.Eco,...
             this.Rep, this.Set, this.Seg, this.Ida, this.Idb,...
             this.Idc, this.Idd, this.Ide);
@@ -1034,8 +1073,28 @@ end
 methods (Static)
     % helper functions, accessible from outside via <classname>.function()
     % without an instance of the class.
-
-    function ndx = sub2ind_double(sz,varargin)
+    
+    function ro_shift = calcOffcenterShiftRO(slicedata)
+        % calculate ro offcenter shift from mdh's slicedata
+        
+        % slice position
+        pos = slicedata(1:3);
+        
+        %quaternion
+        a = slicedata(5);
+        b = slicedata(6);
+        c = slicedata(7);
+        d = slicedata(4);
+        
+        read_dir = zeros(3,1);
+        read_dir(1) = 2 * (a * b - c * d);
+        read_dir(2) = 1 - 2 * (a^2 + c^2);
+        read_dir(3) = 2 * (b * c + a * d);
+    
+        ro_shift = dot(pos, read_dir);
+    end 
+        
+    function ndx = sub2ind_double(sz, varargin)
         %SUB2IND_double Linear index from multiple subscripts.
         %   Works like sub2ind but always returns double
         %   also slightly faster, but no checks
