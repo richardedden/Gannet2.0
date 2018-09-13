@@ -28,7 +28,7 @@ function PhilipsDeIdentify(fnames)
 %       c = {'S01_gaba_7_2_raw_act.SPAR', 'S01_gaba_7_2_raw_ref.SPAR'};
 %       PhilipsDeIdentify(c);
 
-%   Author: Mark Mikkelsen (Johns Hopkins University, Aug. 2016)
+%   Author: Mark Mikkelsen (Johns Hopkins University, 2018)
 %
 %   Version history:
 %       2016-08-03: + Function created
@@ -38,6 +38,7 @@ function PhilipsDeIdentify(fnames)
 %                     '_noID' (req. for Gannet)
 %                   + CheckForOutput added
 %       2017-01-19: + Fix for case-sensitivity of extensions
+%       2018-09-13: + Remove scan date and time
 
 
 if nargin < 1 % De-identify all SPAR files in current directory
@@ -95,6 +96,8 @@ for ii = 1:length(fnames)
             tline = 'patient_name : ';
         elseif any(strfind(tline, 'patient_birth_date'))
             tline = 'patient_birth_date : ';
+        elseif any(strfind(tline, 'scan_date'))
+            tline = 'scan_date : ';
         end
         fprintf(spar_fid_noID, '%s\n', tline);
         tline = fgetl(spar_fid);
@@ -133,7 +136,7 @@ exitFunc = 0;
 
 if nArgs < 1
     
-    if any(~cellfun('isempty', strfind(fnames, '_noID')))
+    if any(~cellfun('isempty', strfind(fnames, '_noID'))) %#ok<*STRCL1>
         resp = input('\nDe-identified files found in the directory! Proceed and overwrite? [y/n]: ','s');
         if strcmpi(resp, 'y')
             disp('Overwriting...');
@@ -144,8 +147,8 @@ if nArgs < 1
         end
         
         ind1 = strfind(fnames, '_noID');
-        ind2 = find(~cellfun('isempty', ind1));
-        fnames(ind2) = []; %#ok<FNDSB>        
+        ind2 = ~cellfun('isempty', ind1);
+        fnames(ind2) = [];
     end
     
 else
