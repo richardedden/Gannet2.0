@@ -56,6 +56,7 @@ function TWIXDeIdentify(fnames)
 %       2017-02-02: Fixed errors for certain header formats.
 %                   Added various fields to be de-identified.
 %       2017-02-07: Added further fields to be de-identified.
+%       2018-09-14: Added further fields to be de-identified.
 
 if nargin < 1 % De-identify all DAT files in current directory
 
@@ -423,6 +424,22 @@ function newbuffer = parse_deid(buffer)
 %   tReferenceImage1 (2017-02-02)
 %   tReferenceImage2 (2017-02-02)
 %   DeviceSerialNumber (2017-02-06)
+%   PatientLOID/PatientLoid (2018-09-14)
+%   StudyLOID/StudyLoid (2018-09-14)
+%   SeriesLOID (2018-09-14)
+%   Study (2018-09-14)
+%   Patient (2018-09-14)
+%   InstitutionAddress (2018-09-14)
+%   InstitutionName (2018-09-14)
+%   StudyLOIDS4Split (2018-09-14)
+%   MppsLOIDS4Split (2018-09-14)
+%   SeriesLOIDS4Split (2018-09-14)
+%   StudyLOIDS4SplitAndPause (2018-09-14)
+%   MppsLOIDS4SplitAndPause (2018-09-14)
+%   SeriesLOIDS4SplitAndPause (2018-09-14)
+%   ParentLoid (2018-09-14)
+%   ParentUid (2018-09-14)
+%   DefaultSeriesLoid (2018-09-14)
 %
 % the double parameter fields with "precision" tag
 %   flUsedPatientWeight
@@ -450,6 +467,9 @@ function newbuffer = parse_deid(buffer)
 %
 % the array parameter fields with "default" tag
 %   ReferencedImageSequence (2017-02-02)
+%   Studyloids4Split (2018-09-14)
+%   MppsLoids4Split (2018-09-14)
+%   DefaultSeriesLoids4Split (2018-09-14)
 %
 % the simple text field in the MeasYaps header part
 %   tReferenceImage0 (2017-02-07)
@@ -465,8 +485,9 @@ function newbuffer = parse_deid(buffer)
 % History: 2016-08-23: First version.
 %          2017-02-02: Added fields containing date stamps.
 %          2017-02-07: Added fields containing device IDs.
+%          2018-09-14: Added fields containing scan dates and unique IDs.
 
-newbuffer1 = regexprep(buffer, '<Param(?:Bool|Long|String)\."(?:PatientID|PatientBirthDay|tPatientName|PatientName|PatientsName|PatientSex|lPatientSex|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID|tReferenceImage0|tReferenceImage1|tReferenceImage2|DeviceSerialNumber)">\s*\n*\s*{\s*([^}]*)','${write_xxx($0,$1)}');
+newbuffer1 = regexprep(buffer, '<Param(?:Bool|Long|String)\."(?:PatientID|PatientBirthDay|tPatientName|PatientName|PatientsName|PatientSex|lPatientSex|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID|tReferenceImage0|tReferenceImage1|tReferenceImage2|DeviceSerialNumber|PatientLOID|PatientLoid|StudyLOID|StudyLoid|SeriesLOID|Study|Patient|InstitutionAddress|InstitutionName|ParentLoid|ParentUid|DefaultSeriesLoid)">\s*\n*\s*{\s*([^}]*)','${write_xxx($0,$1)}');
 newbuffer2 = regexprep(newbuffer1, '<ParamDouble\."(?:flPatientAge|flUsedPatientWeight|PatientAge|PatientWeight)">\s*{\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$2)}');
 newbuffer3 = regexprep(newbuffer2, '<ParamDouble\."(?:flPatientHeight)">\s*{\s*<Unit>.*"\[mm\]"\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$2)}');
 newbuffer4 = regexprep(newbuffer3, '<Param(?:Bool|Long|String)\."(?:PatientName|PatientBirthDay|PatientSex|PatientID|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID)">\s*{\s*(<Visible>\s*"\w*")?\s*([^}]*)','${write_xxx($0,$2)}');
@@ -474,7 +495,11 @@ newbuffer5 = regexprep(newbuffer4, '<ParamArray\."ReferencedImageSequence">\s*{\
 newbuffer6 = regexprep(newbuffer5, '<ParamArray\."ReferencedImageSequence">\s*{\s*(<Default>\s*<ParamString."">)?\s*{\s*}\s*{\s*([^}]*)}\s*{\s*([^}]*)}\s*{\s*([^}]*)','${write_xxx($0,$3)}');
 newbuffer7 = regexprep(newbuffer6, '<ParamArray\."ReferencedImageSequence">\s*{\s*(<Default>\s*<ParamString."">)?\s*{\s*}\s*{\s*([^}]*)}\s*{\s*([^}]*)}\s*{\s*([^}]*)','${write_xxx($0,$4)}');
 newbuffer8 = regexprep(newbuffer7,'"\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*\.\d*"','${write_xxx($0,$0)}');
-newbuffer = regexprep(newbuffer8, '<ParamDouble\."(?:PatientAge|PatientWeight)">\s*{\s*(<Visible>\s*"\w*")\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$3)}');
+newbuffer9 = regexprep(newbuffer8, '<Param(?:Bool|Long|String)\."(?:PatientID|PatientBirthDay|tPatientName|PatientName|PatientsName|PatientSex|lPatientSex|PatientBirthDate|FrameOfReference|tFrameOfReference|FOR|ExamMemoryUID|tReferenceImage0|tReferenceImage1|tReferenceImage2|DeviceSerialNumber|PatientLOID|StudyLOID|SeriesLOID|Study|Patient|InstitutionAddress|InstitutionName|StudyLOIDS4Split|MppsLOIDS4Split|SeriesLOIDS4Split|StudyLOIDS4SplitAndPause|MppsLOIDS4SplitAndPause|SeriesLOIDS4SplitAndPause)">\s*{\s*<MinSize>\s*[0-9]*\s*<MaxSize>\s*[0-9]*\s*([^}]*)','${write_xxx($0,$1)}');
+newbuffer10 = regexprep(newbuffer9, '<ParamArray\."(?:Studyloids4Split|MppsLoids4Split|DefaultSeriesLoids4Split)">\s*{\s*<Default>\s*<ParamString."">\s*{\s*}\s*{\s*([^}]*)','${write_xxx($0,$1)}');
+newbuffer11 = regexprep(newbuffer10, '<ParamArray\."(?:Studyloids4Split|MppsLoids4Split|DefaultSeriesLoids4Split)">\s*{\s*<MinSize>\s*[0-9]*\s*<MaxSize>\s*[0-9]*\s*<Default>\s*<ParamString."">\s*{\s*}\s*{\s*([^}]*)','${write_xxx($0,$1)}');
+
+newbuffer = regexprep(newbuffer11, '<ParamDouble\."(?:PatientAge|PatientWeight)">\s*{\s*(<Visible>\s*"\w*")\s*(<Precision>\s*[0-9]*)?\s*([^}]*)','${write_xxx($0,$3)}');
 
 end % of parse_deid()
 
