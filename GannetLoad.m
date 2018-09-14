@@ -421,12 +421,13 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             case 'none' % GO (180224)
                 % do nothing
                 MRS_struct.spec.AllFramesFTrealign = AllFramesFTrealign;
+                MRS_struct.out.reject(:,ii) = zeros(1,size(AllFramesFTrealign,2));
         end % end of switch for alignment
         
         % Separate ON/OFF data and generate DIFF spectra
-        if MRS_struct.p.HERMES % MGSaleh 2016, MM (170703)
+        if MRS_struct.p.HERMES
             
-            % Target 1: GABA or GSH
+            % Target 1: GABA, GSH or EtOH
             OFF = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==0)' & MRS_struct.out.reject(:,ii)==0), 2);
             ON  = mean(AllFramesFTrealign(:,(MRS_struct.fids.ON_OFF==1)' & MRS_struct.out.reject(:,ii)==0), 2);
             
@@ -500,7 +501,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
                 %helpful for an additional phasing step... and messes up fitting
                 %otherwise. MGSaleh 2016 moved it to this place for
                 %completeness
-                if ~strcmp(MRS_struct.p.AlignTo, 'SpecRegHERMES') % Don't apply residual phasing if SpecRegHERMES is used (MM: 180108)
+                if ~strcmp(MRS_struct.p.AlignTo, 'SpecRegHERMES') && ~MRS_struct.p.phantom % Don't apply residual phasing if SpecRegHERMES is used or if data is from a phantom
                     residual_phase = pi-atan2(imag(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))),real(sum(MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))));
                     MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:) = (MRS_struct.spec.(vox{kk}).(sprintf('%s',MRS_struct.p.target)).diff(ii,:))*exp(1i*residual_phase);
                 end

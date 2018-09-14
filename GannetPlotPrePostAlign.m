@@ -23,6 +23,8 @@ if MRS_struct.p.HERMES
             peakrange = MRS_struct.spec.freq <= 3.5 & MRS_struct.spec.freq >= 1.5;
         case 'Lac'
             peakrange = MRS_struct.spec.freq <= 1.5 & MRS_struct.spec.freq >= 0.5;
+        case 'EtOH'
+            peakrange = MRS_struct.spec.freq <= 4.5 & MRS_struct.spec.freq >= 0.5;
     end
     
     specbaseline = mean(real(SpectraToPlot(:,baserange)),2);
@@ -67,6 +69,8 @@ else
         case 'GSH'
             peakrange = MRS_struct.spec.freq <= 3.5 & MRS_struct.spec.freq >= 1.5;
         case 'Lac'
+            peakrange = MRS_struct.spec.freq <= 4.5 & MRS_struct.spec.freq >= 0.5;
+        case 'EtOH'
             peakrange = MRS_struct.spec.freq <= 4.5 & MRS_struct.spec.freq >= 0.5;
     end
     

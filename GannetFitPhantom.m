@@ -25,13 +25,15 @@ else
                 MRS_struct.p.target = 'GSH';
             case 'Lac'
                 MRS_struct.p.target = 'Lac';
+            case 'EtOH'
+                MRS_struct.p.target = 'EtOH';
         end
     end
     target = {MRS_struct.p.target};
 end
 
 freq = MRS_struct.spec.freq;
-MRS_struct.version.fit = '180723';
+MRS_struct.version.fit = '180912';
 
 lsqopts = optimset('lsqcurvefit');
 lsqopts = optimset(lsqopts,'MaxIter',1e5,'MaxFunEvals',1e5,'TolX',1e-10,'TolFun',1e-10,'Display','off');
@@ -132,6 +134,96 @@ for kk = 1:length(vox)
                 noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
                 MRS_struct.out.(vox{kk}).(target{trg}).SNR(ii) = abs(Glxheight)/noiseSigma_DIFF;
                 
+            elseif strcmp(target{trg},'GSH')
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %   1.  GSH Fit
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                freqbounds = find(freq <= 3.2 & freq >= 2.7);
+                plotbounds = find(freq <= 3.4 & freq >= 2.5);
+                
+                maxinGSH = max(real(DIFF(ii,freqbounds)));
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
+                LinearInit = grad_points ./ abs(freq(1) - freq(2));
+                T2 = 60;
+                omega0 = 2.95;
+                J = 4/MRS_struct.p.LarmorFreq(ii);
+                
+                SixLorentzModelInit = [-maxinGSH/T2/10 -maxinGSH/T2/10 ...
+                                       maxinGSH/T2 maxinGSH/T2 ...
+                                       -maxinGSH/T2/10 -maxinGSH/T2/10 ...
+                                       T2 omega0 J ...
+                                       180 180 0 0 180 180 ...
+                                       -LinearInit 0];  
+                                     
+                lb = [-4000*maxinGSH/T2/10 -4000*maxinGSH/T2/10 ...
+                      -4000*maxinGSH/T2    -4000*maxinGSH/T2 ...
+                      -4000*maxinGSH/T2/10 -4000*maxinGSH/T2/10 ...
+                      0 omega0-J J-0.01 ...
+                      -pi -pi -pi -pi -pi -pi ...
+                      -40*maxinGSH -2000*maxinGSH];
+                  
+                ub = [4000*maxinGSH/T2/10 4000*maxinGSH/T2/10 ...
+                      4000*maxinGSH/T2    4000*maxinGSH/T2 ...
+                      4000*maxinGSH/T2/10 4000*maxinGSH/T2/10 ...
+                      T2*100 omega0+J J+0.01 ...
+                      pi pi pi pi pi pi ...
+                      40*maxinGSH 2000*maxinGSH];
+                
+                % Least-squares model fitting
+                SixLorentzModelInit = lsqcurvefit(@SixLorentzModel, SixLorentzModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
+                [SixLorentzModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @SixLorentzModel, SixLorentzModelInit, nlinopts);
+                
+                GSHheight = max(SixLorentzModelParam(3:4)) * SixLorentzModelParam(7);
+                MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(resid)/GSHheight;
+                MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = sum(SixLorentzModel(SixLorentzModelParam,freq(freqbounds))) * abs(freq(1) - freq(2));
+                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = 1./(pi*SixLorentzModelParam(7))*1e3;
+                MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = SixLorentzModelParam;
+                MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = resid;
+                
+                % Calculate SNR of GABA signal (MM: 170502)
+                noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
+                MRS_struct.out.(vox{kk}).(target{trg}).SNR(ii) = abs(GSHheight)/noiseSigma_DIFF;
+                
+            elseif strcmp(target{trg},'EtOH')
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %   1.  EtOH Fit
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                freqbounds = find(freq <= 1.4 & freq >= 0.9);
+                plotbounds = find(freq <= 1.6 & freq >= 0.7);
+                
+                maxinEtOH = max(real(DIFF(ii,freqbounds)));
+                grad_points = (real(DIFF(ii,freqbounds(end))) - real(DIFF(ii,freqbounds(1)))) ./ abs(freqbounds(end) - freqbounds(1));
+                LinearInit = grad_points ./ abs(freq(1) - freq(2));
+                T2 = 70;
+                omega0 = 1.18;
+                J = 7.5/MRS_struct.p.LarmorFreq(ii);
+                
+                ThreeLorentzModelInit = [maxinEtOH/T2 maxinEtOH/T2 maxinEtOH/T2/3 ...
+                                         T2 omega0 J 0 0 0 -LinearInit 0];
+                lb = [-4000*maxinEtOH/T2 -4000*maxinEtOH/T2 -4000*maxinEtOH/T2/3 ...
+                      0 omega0-J J-0.01 -pi -pi -pi -40*maxinEtOH -2000*maxinEtOH];
+                ub = [4000*maxinEtOH/T2 4000*maxinEtOH/T2 4000*maxinEtOH/T2/3 ...
+                      T2*100 omega0+J J+0.01 pi pi pi 40*maxinEtOH 1000*maxinEtOH];
+                
+                % Least-squares model fitting
+                ThreeLorentzModelInit = lsqcurvefit(@ThreeLorentzModel, ThreeLorentzModelInit, freq(freqbounds), real(DIFF(ii,freqbounds)), lb, ub, lsqopts);
+                [ThreeLorentzModelParam, resid] = nlinfit(freq(freqbounds), real(DIFF(ii,freqbounds)), @ThreeLorentzModel, ThreeLorentzModelInit, nlinopts);
+                
+                EtOHheight = max(ThreeLorentzModelParam(1:3)) * ThreeLorentzModelParam(4);
+                MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii) = 100*std(resid)/EtOHheight;
+                MRS_struct.out.(vox{kk}).(target{trg}).Area(ii) = sum(ThreeLorentzModel(ThreeLorentzModelParam,freq(freqbounds))) * abs(freq(1) - freq(2));
+                MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii) = 1./(pi*ThreeLorentzModelParam(4))*1e3;
+                MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,:) = ThreeLorentzModelParam;
+                MRS_struct.out.(vox{kk}).(target{trg}).Resid(ii,:) = resid;
+                
+                % Calculate SNR of EtOH signal (MM: 170502)
+                noiseSigma_DIFF = CalcNoise(freq, DIFF(ii,:));
+                MRS_struct.out.(vox{kk}).(target{trg}).SNR(ii) = abs(EtOHheight)/noiseSigma_DIFF;
+                
             else
                 
                 error('Fitting MRS_struct.p.target not recognised');
@@ -169,9 +261,9 @@ for kk = 1:length(vox)
                 set(gca,'XLim',[2.6 3.4]);
             elseif strcmp(target{trg},'GSH')
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b' ,...
-                    freq(freqbounds), GSHgaussModel(GaussModelParam,freq(freqbounds)), 'r', ...
+                    freq(freqbounds), SixLorentzModel(SixLorentzModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds),resid, 'k');
-                set(gca,'XLim',[1.8 4.2]);
+                set(gca,'XLim',[2.5 3.4]);
             elseif strcmp(target{trg},'Lac')
                 plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
                     freq(freqbounds), FourGaussModel(FourGaussModelParam,freq(freqbounds)), 'r', ...
@@ -183,6 +275,11 @@ for kk = 1:length(vox)
                     freq(freqbounds), TwoLorentzModel2(TwoLorentzModelParam,freq(freqbounds)), 'r', ...
                     freq(freqbounds), resid, 'k');
                 set(gca,'XLim',[3.35 4.15]);
+            elseif strcmp(target{trg},'EtOH')
+                plot(freq(plotbounds), real(DIFF(ii,plotbounds)), 'b', ...
+                    freq(freqbounds), ThreeLorentzModel(ThreeLorentzModelParam,freq(freqbounds)), 'r', ...
+                    freq(freqbounds), resid, 'k');
+                set(gca,'XLim',[0.7 1.6]);
             end
                         
             title('Edited Spectrum and Model Fit');
@@ -202,15 +299,15 @@ for kk = 1:length(vox)
                     text(2.775, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'GSH'
-                    h1 = text(2.95,maxinGSH/2,target{trg});
+                    h1 = text(3.05,maxinGSH/2,target{trg});
                     set(h1, 'horizontalAlignment', 'center');
-                    labelbounds = freq <= 2.4 & freq >= 1.75; % MM (170705)
+                    labelbounds = freq <= 2.8 & freq >= 2.5; % MM (170705)
                     tailtop = max(real(DIFF(ii,labelbounds)));
                     tailbottom = min(real(DIFF(ii,labelbounds)));
-                    h2 = text(2.25, min(resid),'residual');
+                    h2 = text(2.7, min(resid),'residual');
                     set(h2, 'horizontalAlignment', 'left');
-                    text(2.25, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
-                    text(2.45, tailbottom-20*metabmax/20, 'model', 'Color', [1 0 0]);
+                    text(2.7, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
+                    text(2.7, tailbottom-20*metabmax/20, 'model', 'Color', [1 0 0]);
                     
                 case 'Glx'
                     h1 = text(MRS_struct.out.(vox{kk}).(target{trg}).ModelParam(ii,4), metabmax/5, MRS_struct.p.target);
@@ -221,7 +318,18 @@ for kk = 1:length(vox)
                     h2 = text(3.5, min(resid),'residual');
                     set(h2, 'horizontalAlignment', 'left');
                     text(3.5, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
-                    text(3.5, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);                    
+                    text(3.5, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
+                    
+                case 'EtOH'
+                    h1 = text(1.35,metabmax/3,MRS_struct.p.target);
+                    set(h1, 'horizontalAlignment', 'center');
+                    labelbounds = freq <= 1.0 & freq >= 0.7; % MM (170705)
+                    tailtop = max(real(DIFF(ii,labelbounds)));
+                    tailbottom = min(real(DIFF(ii,labelbounds)));
+                    h2 = text(0.9, min(resid), 'residual');
+                    set(h2, 'horizontalAlignment', 'left');
+                    text(0.9, tailtop+metabmax/20, 'data', 'Color', [0 0 1]);
+                    text(0.9, tailbottom-metabmax/20, 'model', 'Color', [1 0 0]);
             end
             xlabel('ppm');
             set(gca,'YTick',[]);
@@ -285,6 +393,10 @@ for kk = 1:length(vox)
                     case 'Lac'
                         MRS_struct.out.(vox{kk}).Lac.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).Lac.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
                         MRS_struct = CalcConc(MRS_struct, vox{kk}, (target{trg}), ii);
+                        
+                    case 'EtOH'
+                        MRS_struct.out.(vox{kk}).EtOH.FitError_W(ii) = sqrt(MRS_struct.out.(vox{kk}).EtOH.FitError(ii).^2 + MRS_struct.out.(vox{kk}).water.FitError(ii).^2);
+                        MRS_struct = CalcConc(MRS_struct, vox{kk}, 'EtOH', ii);
                 end
                 
                 % Generate scaled spectra (for plotting) CJE Jan2011, MM (170705)
@@ -394,6 +506,10 @@ for kk = 1:length(vox)
                 case 'Lac'
                     tmp1 = 'Lac Area';
                     tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).(target{trg}).Area(ii));
+                    
+                case 'EtOH'
+                    tmp1 = 'EtOH Area';
+                    tmp2 = sprintf(': %.3g', MRS_struct.out.(vox{kk}).EtOH.Area(ii));
             end
             text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos-0.1, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
@@ -565,6 +681,52 @@ Ab = cos(phi_b) .* ((Hb .* T2) ./ (1 + (f0 - J - freq).^2 .* T2.^2)) ...
 F = Aa + Ab + M .* (f0 - freq) + C;
 
 
+%%%%%%%%%%%%%%%%%%%% SIX LORENTZ MODEL (MM: 180912) %%%%%%%%%%%%%%%%%%%%
+function F = SixLorentzModel(x,freq)
+% TwoLorentzModel with phase parameters
+% Based on Marshall & Roe, 1978 (Analytical Chem)
+
+Ha    = x(1); % amplitude of peak 1
+Hb    = x(2); % amplitude of peak 2
+Hc    = x(3); % amplitude of peak 3
+Hd    = x(4); % amplitude of peak 4
+He    = x(5); % amplitude of peak 5
+Hf    = x(6); % amplitude of peak 6
+T2    = x(7); % T2 relaxation time constant
+f0    = x(8); % frequency (in ppm)
+J     = x(9); % J-coupling constant (in ppm)
+phi_a = x(10); % phase of peak 1 (in rad)
+phi_b = x(11); % phase of peak 2
+phi_c = x(12); % phase of peak 1 (in rad)
+phi_d = x(13); % phase of peak 2
+phi_e = x(14); % phase of peak 1 (in rad)
+phi_f = x(15); % phase of peak 2
+M     = x(16); % baseline slope
+C     = x(17); % baseline offset
+
+Aa = cos(phi_a) .* ((Ha .* T2) ./ (1 + (f0 + 3*J - freq).^2 .* T2.^2)) ...
+    - sin(phi_a) .* ((Ha .* (f0 + 3*J - freq) .* T2.^2) ./ (1 + (f0 + 3*J - freq).^2 .* T2.^2));
+
+Ab = cos(phi_b) .* ((Hb .* T2) ./ (1 + (f0 + 2*J - freq).^2 .* T2.^2)) ...
+    - sin(phi_b) .* ((Hb .* (f0 + 2*J - freq) .* T2.^2) ./ ( 1 + (f0 + 2*J - freq).^2 .* T2.^2));
+
+
+Ac = cos(phi_c) .* ((Hc .* T2) ./ (1 + (f0 + J - freq).^2 .* T2.^2)) ...
+    - sin(phi_c) .* ((Hc .* (f0 + J - freq) .* T2.^2) ./ (1 + (f0 + J - freq).^2 .* T2.^2));
+
+Ad = cos(phi_d) .* ((Hd .* T2) ./ (1 + (f0 - J - freq).^2 .* T2.^2)) ...
+    - sin(phi_d) .* ((Hd .* (f0 - J - freq) .* T2.^2) ./ ( 1 + (f0 - J - freq).^2 .* T2.^2));
+
+
+Ae = cos(phi_e) .* ((He .* T2) ./ (1 + (f0 - 2*J - freq).^2 .* T2.^2)) ...
+    - sin(phi_e) .* ((He .* (f0 - 2*J - freq) .* T2.^2) ./ (1 + (f0 - 2*J - freq).^2 .* T2.^2));
+
+Af = cos(phi_f) .* ((Hf .* T2) ./ (1 + (f0 - 3*J - freq).^2 .* T2.^2)) ...
+    - sin(phi_f) .* ((Hf .* (f0 - 3*J - freq) .* T2.^2) ./ ( 1 + (f0 - 3*J - freq).^2 .* T2.^2));
+
+F = Aa + Ab + Ac + Ad + Ae + Af + M .* (f0 - freq) + C;
+
+
 %%%%%%%%%%%%%%%%  LORENTZGAUSSMODEL %%%%%%%%%%%%%%%%%%%%
 function F = LorentzGaussModel(x,freq)
 % Function for LorentzGaussModel Model
@@ -674,6 +836,12 @@ switch metab
         T1_Metab = 1.50; % Wijnen et al. 2015 (NMR Biomed)
         T2_Metab = 0.24; % Madan et al. 2015 (MRM) (NB: this was estimated in brain tumors)
         N_H_Metab = 3;
+        
+    case 'EtOH'
+        EditingEfficiency = 0.5; % determined by FID-A simulations (for TE = 140 ms)
+        T1_Metab = 1.50; % Wijnen et al. 2015 (NMR Biomed)
+        T2_Metab = 0.24; % Madan et al. 2015 (MRM) (NB: this was estimated in brain tumors)
+        N_H_Metab = 2;
 end
 
 T1_Factor = (1-exp(-TR_water./T1_Water)) ./ (1-exp(-TR./T1_Metab));

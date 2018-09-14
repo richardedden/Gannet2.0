@@ -23,7 +23,7 @@ function GEDeIdentify(fnames)
 %       c = {'P15221.7', 'P17981.7'};
 %       GEDeIdentify(c);
 
-%   Author: Mark Mikkelsen (Johns Hopkins University, Aug. 2016)
+%   Author: Mark Mikkelsen (Johns Hopkins University, 2018)
 %
 %   Acknowledgements:
 %       This code is heavily based on plotp.m and pfile_anon.c written by

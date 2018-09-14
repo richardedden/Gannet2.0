@@ -46,6 +46,9 @@ switch MRS_struct.p.ONOFForder
                         % This has not been tested with universal sequence -- 03142018 MGSaleh
                         % MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                         % MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % Lac
+                    elseif strcmpi(MRS_struct.p.target, 'EtOH') && strcmpi(MRS_struct.p.target2, 'GSH')
+                        MRS_struct.fids.ON_OFF  = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % EtOH
+                        MRS_struct.fids.ON_OFF2 = repmat([0 0 1 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                     end
                     
             end
@@ -59,9 +62,7 @@ switch MRS_struct.p.ONOFForder
                     MRS_struct.fids.ON_OFF = repmat([ones(1,(MRS_struct.p.Navg(MRS_struct.ii)/MRS_struct.p.nrows)) zeros(1,(MRS_struct.p.Navg(MRS_struct.ii)/MRS_struct.p.nrows))],[1 size(MRS_struct.fids.data,2)/((MRS_struct.p.Navg(MRS_struct.ii)/MRS_struct.p.nrows)*2)]); % GABA @ 7T % Changed by MGSaleh  -- 2017
                 else
                     MRS_struct.fids.ON_OFF = repmat([1 1 0 0], [1 size(MRS_struct.fids.data,2)/4]);
-                    %                 MRS_struct.fids.ON_OFF = repmat([1 0], [1
-                    %                 size(MRS_struct.fids.data,2)/2]); %This seems to work
-                    %                 with the MR1 Philips_data
+                    %MRS_struct.fids.ON_OFF = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]); %This seems to work with the MR1 Philips_data
                 end
             else
                 MRS_struct.fids.ON_OFF = repmat([1 0], [1 size(MRS_struct.fids.data,2)/2]);
