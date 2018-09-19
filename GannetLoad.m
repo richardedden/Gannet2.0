@@ -47,7 +47,7 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.version.load = '180326'; % set to date when final updates have been made
+MRS_struct.version.load = '180919'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.metabfile = metabfile;
 MRS_struct = GannetPreInitialise(MRS_struct);
@@ -136,17 +136,10 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             
         case 'Siemens_dicom' % GO 11/01/2016
             if exist('waterfile','var')
-                % Load the data. GannetLoad specifies a file in the first
-                % place, so take apart that filename, and feed the containing
-                % folder into the SiemensDICOMRead function. % GO 11/01/2016
-                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 02/05/2017
-                [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
-                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder,waterfolder); % GO 02/05/2017
+                MRS_struct = SiemensDICOMRead(MRS_struct,metabfile{ii},waterfile{ii}); % GO 02/05/2017
                 WaterData = MRS_struct.fids.data_water;
             else
-                % Same as above, but without parsing the waterfolder. % GO 02/05/2017
-                [imafolder,~,~] = fileparts(metabfile{ii}); % GO 11/01/2016
-                MRS_struct = SiemensDICOMRead(MRS_struct,imafolder); % GO 11/01/2016
+                MRS_struct = SiemensDICOMRead(MRS_struct,metabfile{ii}); % GO 11/01/2016
             end
             FullData = MRS_struct.fids.data;
             % Determine order of ON and OFF acquisitions
@@ -154,17 +147,10 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             
         case 'dicom' % GO 11/30/2016
             if exist('waterfile','var')
-                % Load the data. GannetLoad specifies a file in the first
-                % place, so take apart that filename, and feed the containing
-                % folder into the DICOMRead function. % GO 11/01/2016
-                [dcmfolder,~,~] = fileparts(metabfile{ii}); % GO 02/05/2017
-                [waterfolder,~,~] = fileparts(waterfile{ii}); % GO 02/05/2017
-                MRS_struct = DICOMRead(MRS_struct,dcmfolder,waterfolder); % GO 02/05/2017
+                MRS_struct = DICOMRead(MRS_struct,metabfile{ii},waterfile{ii}); % GO 02/05/2017
                 WaterData = MRS_struct.fids.data_water;
             else
-                % Same as above, but without parsing the waterfolder. % GO 02/05/2017
-                [dcmfolder,~,~] = fileparts(metabfile{ii}); % GO 11/01/2016
-                MRS_struct = DICOMRead(MRS_struct,dcmfolder); % GO 11/01/2016
+                MRS_struct = DICOMRead(MRS_struct,metabfile{ii}); % GO 11/01/2016
             end
             FullData = MRS_struct.fids.data;
             

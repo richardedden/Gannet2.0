@@ -1,19 +1,17 @@
-function MRS_struct = DICOMRead(MRS_struct,folder,waterfolder)
-%% MRS_struct = DICOMRead(MRS_struct,folder,waterfolder)
+function MRS_struct = DICOMRead(MRS_struct,metabfile,waterfile)
+%% MRS_struct = DICOMRead(MRS_struct,metabfile,waterfile)
 %   This function is designed to load edited MR spectroscopy data in the 
 %   general form of DICOM data into a Gannet file structure. Files usually
 %   have the extension '.DCM' or '.dcm', and contain exactly 1 FID per
-%   file, i.e. an acquisition of 320 averages will yield 320 IMA files.
+%   file, i.e. an acquisition of 320 averages will yield 320 DCM files.
 %   
-%   The user must specify the folder containing all of these averages. It
-%   is assumed that they are ordered in the order of acquisition.
+%   It is assumed that they are ordered in the order of acquisition.
 %   Water-suppressed and water-unsuppressed files need to be stored in
-%   separate folders, which need to be defined accordingly:
+%   separate folders, e.g. '/user/data/subject01/dcm_gaba/' and 
+%   '/user/data/subject01/dcm_water/', respectively.
 %
 %   Example:
-%       folder = '/user/data/subject01/dcm_gaba/';
-%       waterfolder = '/user/data/subject01/dcm_water/'; (optional)
-%       MRS_struct = DICOMRead(MRS_struct,folder,waterfolder);
+%       MRS_struct = DICOMRead(MRS_struct,'/user/data/subject01/dcm_gaba/metab.dcm','/user/data/subject01/dcm_water/water.dcm');
 %
 %   Author:
 %       Dr. Georg Oeltzschner (Johns Hopkins University, 2016-11-10)
@@ -32,7 +30,9 @@ function MRS_struct = DICOMRead(MRS_struct,folder,waterfolder)
 %           of Minnesota) (2017-11-20). Thanks to Jim Lagopoulos.
 %   0.95: Fills missing voxel geometry parameters in DICOM header with zero
 %           values. Thanks to Alen Tersakyan.
-%   
+%   0.96: Fixed to accomodate batch processing of coregister/segmentation.
+%           (2018-09-19)
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -46,6 +46,7 @@ ii = MRS_struct.ii;
 % no overlap.
 % dcm_file_list = [dir([folder,'/*.DCM']); dir([folder,'/*.dcm'])]; % may
 % cause problems on win/unix systems, take out for now % GO 11/16/2016
+[folder,~,~] = fileparts(metabfile); % GO 11/01/2016
 dcm_file_list = dir([folder,'/*.dcm']); % GO 11/16/2016
 fprintf('%d water-suppressed DCM files detected in %s.\n',length(dcm_file_list),folder);
 
@@ -60,7 +61,7 @@ dcm_file_names = strcat(folder, filesep, dcm_file_names); % GO 11/20/2016
 %%% /PREPARATION %%%
 
 %%% HEADER INFO PARSING %%%
-DicomHeader = read_dcm_header(dcm_file_names{1});
+DicomHeader = read_dcm_header(metabfile);
 MRS_struct.p.seq = DicomHeader.sequenceFileName;
 MRS_struct.p.TR(ii) = DicomHeader.TR;
 MRS_struct.p.TE(ii) = DicomHeader.TE;
@@ -100,12 +101,14 @@ disp('...complete')
 
 % It appears that IMA stores the transients weirdly, 1-n/2 are all ONs, and
 % n/2-n are all OFFS. Shuffle them below.
-a = MRS_struct.fids.data(:,1:end/2);
-b = MRS_struct.fids.data(:,1+end/2:end);
-c = zeros(size(MRS_struct.fids.data));
-c(:,1:2:end) = a;
-c(:,2:2:end) = b;
-MRS_struct.fids.data = c;
+if size(MRS_struct.fids.data,2) > 1
+    a = MRS_struct.fids.data(:,1:end/2);
+    b = MRS_struct.fids.data(:,1+end/2:end);
+    c = zeros(size(MRS_struct.fids.data));
+    c(:,1:2:end) = a;
+    c(:,2:2:end) = b;
+    MRS_struct.fids.data = c;
+end
 %%% /DATA LOADING %%%
 
 
@@ -117,6 +120,7 @@ MRS_struct.fids.data = c;
 
 % Set up the file name array.
 if nargin == 3
+    [waterfolder,~,~] = fileparts(waterfile);
     water_file_list = dir([waterfolder,'/*.DCM']);
     fprintf('%d water-unsuppressed DCM files detected in %s.\n',length(water_file_list),waterfolder);
     disp('Reading water-unsuppressed files...')
