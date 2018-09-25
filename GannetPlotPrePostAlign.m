@@ -85,9 +85,11 @@ else
     plot(MRS_struct.spec.freq, real(SpectraToPlot(1,:)), 'Color', 'b');
     hold off;
     
-    yaxismax = abs(max(real(SpectraToPlot(2,peakrange))));
-    yaxismax = yaxismax + yaxismax/10;
-    yaxismin = -peakheight/2;
+    yaxismax = max(max(real(SpectraToPlot(:,peakrange)),[],2));
+    yaxismin = min(min(real(SpectraToPlot(:,peakrange)),[],2));
+    yrange = yaxismax - yaxismin;
+    yaxismax = yaxismax + 0.15*yrange;
+    yaxismin = yaxismin - 0.15*yrange;
     
 end
 

@@ -29,9 +29,9 @@ switch MRS_struct.p.ONOFForder
                     
                 case 'Philips'
                     if any(strcmpi(MRS_struct.p.target, {'GABA','Glx','GABAGlx'})) && strcmpi(MRS_struct.p.target2, 'GSH')
-                        % 1=?, 2=?, 3=?, 4=? (MM: 170703)
-                        MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
-                        MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % GSH
+                        % 1=B, 2=C, 3=A, 4=D (MM: 180925)
+                        MRS_struct.fids.ON_OFF  = repmat([1 0 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GABA
+                        MRS_struct.fids.ON_OFF2 = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                     elseif strcmpi(MRS_struct.p.target, 'GSH') && strcmpi(MRS_struct.p.target2, 'Lac')
                         MRS_struct.fids.ON_OFF  = repmat([0 1 1 0], [1 size(MRS_struct.fids.data,2)/4]); % GSH
                         MRS_struct.fids.ON_OFF2 = repmat([0 1 0 1], [1 size(MRS_struct.fids.data,2)/4]); % Lac

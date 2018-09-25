@@ -279,7 +279,7 @@ fclose(fid);
 if nechoes == 1
     
     MRS_struct.p.Navg(ii) = (nframes - 8) * 2;
-    MRS_struct.p.Nwateravg = 8;
+    MRS_struct.p.Nwateravg(ii) = 8;
     ShapeData = reshape(raw_data, [2 MRS_struct.p.npoints(ii) totalframes nreceivers]);
     WaterData = ShapeData(:,:,2:9,:);
     FullData = ShapeData(:,:,10:end,:);

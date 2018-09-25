@@ -57,7 +57,14 @@ MRS_struct.fids.data = MRS_struct.fids.data .* corrph;
 
 % Re-introduce initial phase step
 if MRS_struct.p.HERMES % MM (170604)
-    phi = repelem(conj(MRS_struct.fids.data(1,2:2:end))./abs(MRS_struct.fids.data(1,2:2:end)),2);
+    if strcmp(MRS_struct.p.ONOFForder,'offfirst')
+        phi = repelem(conj(MRS_struct.fids.data(1,2:2:end))./abs(MRS_struct.fids.data(1,2:2:end)),2);
+    elseif strcmp(MRS_struct.p.ONOFForder,'onfirst')
+        ind1 = sort([1:4:size(MRS_struct.fids.data,2) 2:4:size(MRS_struct.fids.data,2)]);
+        ind2 = sort([3:4:size(MRS_struct.fids.data,2) 4:4:size(MRS_struct.fids.data,2)]);
+        phi(ind1) = repelem(conj(MRS_struct.fids.data(1,1:4:end))./abs(MRS_struct.fids.data(1,1:4:end)),2);
+        phi(ind2) = repelem(conj(MRS_struct.fids.data(1,4:4:end))./abs(MRS_struct.fids.data(1,4:4:end)),2);
+    end
     MRS_struct.fids.data = MRS_struct.fids.data .* repmat(phi,[MRS_struct.p.npoints(MRS_struct.ii) 1]);
 else
     MRS_struct.fids.data = MRS_struct.fids.data .* repmat(conj(MRS_struct.fids.data(1,:))./abs(MRS_struct.fids.data(1,:)),[MRS_struct.p.npoints(MRS_struct.ii) 1]);
