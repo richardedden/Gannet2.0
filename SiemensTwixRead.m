@@ -30,6 +30,8 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %       2018-05-25: Correct extraction of acquired data points before the
 %                   echo for Siemens PRESS, Siemens WIP MEGA-PRESS, and 
 %                   Siemens CMRR MEGA-PRESS sequences.
+%       2018-09-25: Correct extraction of acquired data points for
+%                   custom-built MEGA-PRESS sequences.
 
 ii = MRS_struct.ii;
 
@@ -252,10 +254,14 @@ end
 % Determine the origin of the sequence
 if strfind(TwixHeader.sequenceFileName,'svs_edit')
     TwixHeader.seqtype = 'MEGAPRESS';
-    if strfind(TwixHeader.sequenceFileName(end-3:end),'univ') %#ok<STRIFCND>
+    if strcmp(TwixHeader.sequenceFileName(end-3:end),'univ')
         TwixHeader.seqorig = 'Universal'; % Universal sequence
     else
-        TwixHeader.seqorig = 'WIP'; % Siemens WIP
+        if strcmp(TwixHeader.sequenceFileName(end-2:end),'529') || strcmp(TwixHeader.sequenceFileName(end-2:end),'859')
+            TwixHeader.seqorig = 'WIP'; % Siemens WIP
+        else
+            TwixHeader.seqorig = 'Custom'; % There are some custom implementations out there...
+        end
     end
 elseif strfind(TwixHeader.sequenceFileName,'jn_')
     TwixHeader.seqtype = 'MEGAPRESS';
@@ -341,9 +347,13 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
     % sequence:
     if strcmp(TwixHeader.seqorig,'CMRR')
         TwixHeader.pointsBeforeEcho     = twix_obj.image.iceParam(5,1);
-    else % Siemens WIP
+    elseif strcmp(TwixHeader.seqorig,'WIP') % Siemens WIP
         TwixHeader.pointsBeforeEcho     = twix_obj.image.cutOff(1,1);
         TwixHeader.pointsAfterEcho      = twix_obj.image.cutOff(2,1);
+    elseif strcmp(TwixHeader.seqorig,'Custom') % Custom
+        TwixHeader.pointsBeforeEcho     = twix_obj.image.freeParam(1);
+    else
+        TwixHeader.pointsBeforeEcho     = twix_obj.image.freeParam(1);
     end
 
     TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.averages]);
