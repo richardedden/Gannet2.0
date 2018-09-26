@@ -39,6 +39,7 @@ function PhilipsDeIdentify(fnames)
 %                   + CheckForOutput added
 %       2017-01-19: + Fix for case-sensitivity of extensions
 %       2018-09-13: + Remove scan date and time
+%       2018-09-25: + Minor bug fix
 
 
 if nargin < 1 % De-identify all SPAR files in current directory
@@ -47,6 +48,7 @@ if nargin < 1 % De-identify all SPAR files in current directory
     if isempty(flist)
         flist = dir('*.SPAR');
     end
+    flist = flist(cellfun(@isempty, strfind({flist.name}, '._'))); %#ok<*STRCLFH>
     for ii = 1:length(flist)
         fnames(ii) = cellstr(flist(ii).name);
     end

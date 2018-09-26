@@ -57,14 +57,16 @@ function TWIXDeIdentify(fnames)
 %                   Added various fields to be de-identified.
 %       2017-02-07: Added further fields to be de-identified.
 %       2018-09-14: Added further fields to be de-identified.
+%       2018-09-25: Minor bug fix.
 
 if nargin < 1 % De-identify all DAT files in current directory
 
     flist = dir('*.dat');
+    flist = flist(cellfun(@isempty, strfind({flist.name}, '._'))); %#ok<*STRCLFH>
     for ii = 1:length(flist)
         fnames(ii) = cellstr(flist(ii).name);
     end
-
+    
     nArgs = nargin;
     [exitFunc, fnames] = CheckForOutput(nArgs, fnames);
     if exitFunc
@@ -172,7 +174,7 @@ for ii = 1:length(fnames)
                         %                    end;
                         if (mod(length(rawfactors),2) ~= 0)
                             error('Error reading rawfactors');
-                        end;
+                        end
                         %note the transpose, this makes the vector
                         %multiplication during the read easier
                         arg.rawDataCorrectionFactors = rawfactors(1:2:end).' + 1i*rawfactors(2:2:end).';
@@ -188,7 +190,7 @@ for ii = 1:length(fnames)
     
     % Loop over all scans within the TWIX file (only VD and higher!)
     for s=1:NScans
-        s
+        
         fseek(fid,cPos,'bof');
         hdr_len = fread(fid, 1,'uint32');
         
@@ -314,7 +316,7 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
         bitMask = data_u8(evIdx);   % the initial 8 bit from evalInfoMask are enough
 
         if   isequal( data_u8(1:3), u8_000 )    ... % probably ulDMALength == 0
-          || bitand(bitMask, bit_0);                % MDH_ACQEND
+          || bitand(bitMask, bit_0)                % MDH_ACQEND
 
             % ok, look closer if really all *4* bytes are 0:
             data_u8(4)= bitget( data_u8(4),1);  % ubit24: keep only 1 bit from the 4th byte
@@ -329,7 +331,7 @@ function [mdh_blob, filePos, isEOF] = loop_mdh_read( fid, version )
                 break;
             end
         end
-        if bitand(bitMask, bit_5);  % MDH_SYNCDATA
+        if bitand(bitMask, bit_5)  % MDH_SYNCDATA
             data_u8(4)= bitget( data_u8(4),1);  % ubit24: keep only 1 bit from the 4th byte
             ulDMALength = double( typecast( data_u8(1:4), 'uint32' ) );
             cPos = cPos + ulDMALength;

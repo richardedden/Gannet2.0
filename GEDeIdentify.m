@@ -34,11 +34,13 @@ function GEDeIdentify(fnames)
 %   Version history:
 %       2016-08-09: + Function created
 %       2018-09-05: + Smarter parsing of P-file header
+%       2018-09-25: + Minor bug fix
 
 
 if nargin < 1 % De-identify all P-files in current directory
     
     flist = dir('*.7');
+    flist = flist(cellfun(@isempty, strfind({flist.name}, '._'))); %#ok<*STRCLFH>
     for ii = 1:length(flist)
         fnames(ii) = cellstr(flist(ii).name);
     end
