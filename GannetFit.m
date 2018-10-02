@@ -657,7 +657,7 @@ for kk = 1:length(vox)
                 %   2a.  Residual Water Fit (MM: 170209)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                if ~MRS_struct.p.HERMES
+                if MRS_struct.p.FitResidWater && ~MRS_struct.p.HERMES
                     
                     water_OFF = OFF(ii,:);
                     freqWaterOFF = freq <= 4.68+0.4 & freq >= 4.68-0.4;
