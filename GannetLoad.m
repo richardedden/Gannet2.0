@@ -1,4 +1,4 @@
-function MRS_struct = GannetLoad(metabfile, waterfile)
+function MRS_struct = GannetLoad(varargin)
 % Gannet 3.0 GannetLoad
 % Started by RAEE Nov 5, 2012
 % Updates by MGS, MM, GO 2016-2018
@@ -18,6 +18,8 @@ function MRS_struct = GannetLoad(metabfile, waterfile)
 %   0. Check the file list for typos
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+metabfile = varargin{1};
 missing = 0;
 for filecheck = 1:length(metabfile)
     % If only water-suppressed data are provided, select Cr as reference.
@@ -27,8 +29,33 @@ for filecheck = 1:length(metabfile)
         missing = 1;
     end
 end
-if nargin > 1
+
+if nargin < 3
+    mode = 'batch';
+    if nargin < 2
+    else
+        if iscell(varargin{2})
+            % If water-unsuppressed data are provided, select H2O as reference.
+            waterfile = varargin{2};
+            MRS_struct.waterfile = waterfile;
+            MRS_struct.p.Reference_compound = 'H2O';
+            for filecheck=1:length(waterfile)
+                if ~exist(waterfile{filecheck},'file')
+                    disp(['The file ' waterfile(filecheck) ' is missing. Typo?'])
+                    missing = 1;
+                end
+            end
+        else
+            mode = varargin{2};
+        end
+    end
+else
+    mode = varargin{3};
+    if strcmp(mode, 'batch') == 0 && strcmp(mode, 'join') == 0
+        error('The third input argument needs to be either ''batch'' or ''join''.')
+    end
     % If water-unsuppressed data are provided, select H2O as reference.
+    waterfile = varargin{2};
     MRS_struct.waterfile = waterfile;
     MRS_struct.p.Reference_compound = 'H2O';
     for filecheck=1:length(waterfile)
@@ -38,6 +65,7 @@ if nargin > 1
         end
     end
 end
+
 if missing
     error('Not all the files are there, so I give up.');
 end
@@ -47,7 +75,7 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.version.load = '180919'; % set to date when final updates have been made
+MRS_struct.version.load = '181014'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.metabfile = metabfile;
 MRS_struct = GannetPreInitialise(MRS_struct);
@@ -75,7 +103,15 @@ end
 
 % Determine number of provided water-suppressed files in the batch
 MRS_struct.p.Reference_compound='Cr';
-numscans = numel(metabfile);
+switch mode
+    case 'batch'
+        numscans = numel(metabfile);
+        numfilesperscan = 1;
+    case 'join'
+        numscans = 1;
+        numfilesperscan = numel(metabfile);
+        fprintf('Running GannetLoad in ''join'' mode. FIDs from %i separate files...\n', numfilesperscan);
+end
 
 % Discern input data format
 MRS_struct = GannetDiscernDatatype(metabfile{1}, MRS_struct);
@@ -121,10 +157,34 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             
         case 'Siemens_twix'
             if exist('waterfile','var')
-                MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii}, waterfile{ii});
+                if strcmp(mode,'batch')
+                    MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii}, waterfile{ii});
+                else
+                    % Load each input file and append the FIDs
+                    MRS_struct = SiemensTwixRead(MRS_struct, metabfile{1}, waterfile{ii});
+                    for kk=2:numfilesperscan
+                        sub_MRS_struct{kk} = SiemensTwixRead(MRS_struct, metabfile{kk}, waterfile{ii});
+                        MRS_struct.fids.data = [MRS_struct.fids.data sub_MRS_struct{kk}.fids.data];
+                    end
+                end
+                % Correct the total number of averages
+                MRS_struct.p.nrows = MRS_struct.p.nrows * numfilesperscan;
+                MRS_struct.p.Navg = MRS_struct.p.Navg * numfilesperscan;
                 WaterData = MRS_struct.fids.data_water;
             else
-                MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii});
+                if strcmp(mode,'batch')
+                    MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii});
+                else
+                    % Load each input file and append the FIDs
+                    MRS_struct = SiemensTwixRead(MRS_struct, metabfile{1});
+                    for kk=2:numfilesperscan
+                        sub_MRS_struct{kk} = SiemensTwixRead(MRS_struct, metabfile{kk});
+                        MRS_struct.fids.data = [MRS_struct.fids.data sub_MRS_struct{kk}.fids.data];
+                    end
+                end
+                % Correct the total number of averages
+                MRS_struct.p.nrows = MRS_struct.p.nrows * numfilesperscan;
+                MRS_struct.p.Navg = MRS_struct.p.Navg * numfilesperscan;
             end
             % MM (160914): Need to set Water_Positive based on water signal
             if MRS_struct.p.Water_Positive == 0
