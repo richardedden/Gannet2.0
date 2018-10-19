@@ -98,17 +98,13 @@ end % end of load-and-processing loop over datasets
 %   4. Call coregister function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ii = 1:length(metabfile) % Loop over all files in the batch (from metabfile)
-    MRS_struct = CoReg(MRS_struct, niifile);
-end
+MRS_struct = CoReg(MRS_struct, niifile);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   5. Call segment function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for ii = 1:length(metabfile) % Loop over all files in the batch (from metabfile)
-    MRS_struct = Seg(MRS_struct);
-end
+MRS_struct = Seg(MRS_struct);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   6. Clean up, save data
