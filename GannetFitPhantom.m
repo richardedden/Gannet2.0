@@ -514,9 +514,7 @@ for kk = 1:length(vox)
             text(0, text_pos-0.1, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
             text(0.375, text_pos-0.1, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
             
-            % MGSaleh 2016, MM (170703): Some changes to accomodate multiplexed fitting output
             if strcmp(MRS_struct.p.Reference_compound,'H2O')
-                
                 tmp = sprintf(': %.3g', MRS_struct.out.(vox{kk}).water.Area(ii));
                 text(0, text_pos-0.2, 'Water Area', 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0.375, text_pos-0.2, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
@@ -533,7 +531,14 @@ for kk = 1:length(vox)
                 text(0.375, text_pos-0.4, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0, text_pos-0.5, tmp2, 'FontName', 'Helvetica', 'FontSize', 10);
                 text(0.375, text_pos-0.5, tmp3, 'FontName', 'Helvetica', 'FontSize', 10);
+            else
+                tmp = sprintf(': %.1f Hz', MRS_struct.out.(vox{kk}).(target{trg}).FWHM(ii));
+                text(0, text_pos-0.3, [target{trg} ' FWHM'], 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.3, tmp, 'FontName', 'Helvetica', 'FontSize', 10);
                 
+                tmp1 = sprintf(': %.1f%%', MRS_struct.out.(vox{kk}).(target{trg}).FitError(ii));
+                text(0, text_pos-0.4, 'Fit Error', 'FontName', 'Helvetica', 'FontSize', 10);
+                text(0.375, text_pos-0.4, tmp1, 'FontName', 'Helvetica', 'FontSize', 10);
             end
             
             tmp = [': ' MRS_struct.version.fit];
@@ -571,7 +576,11 @@ for kk = 1:length(vox)
             end            
             
             if sum(strcmp(listfonts,'Helvetica')) > 0
-                set([ha,hb],'FontName','Helvetica'); % MM: 180111
+                if strcmp(MRS_struct.p.Reference_compound,'H2O')
+                    set([ha,hb],'FontName','Helvetica');
+                else
+                    set(ha,'FontName','Helvetica');
+                end
             end
             
             % Save PDF output
