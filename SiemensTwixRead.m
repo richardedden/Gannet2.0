@@ -102,13 +102,28 @@ if nargin == 3
     MRS_struct.p.npoints_water(ii) = MRS_struct.p.npoints_water(ii) - MRS_struct.p.pointsBeforeEcho_water; % MM (160914)
     
     % Coil combination and prephasing
-    firstpoint_water = conj(WaterData(:,1,:));
-    channels_scale = squeeze(sqrt(sum(firstpoint_water .* conj(firstpoint_water),1)));
-    channels_scale = repmat(channels_scale, [1 size(WaterData,1) MRS_struct.p.npoints_water(ii)]);
-    channels_scale = permute(channels_scale, [2 3 1]);
-    firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints_water(ii) 1])./channels_scale;
-    WaterData = WaterData .* firstpoint_water;
-    WaterData = conj(squeeze(sum(WaterData,1)));
+%     firstpoint_water = conj(WaterData(:,1,:));
+%     channels_scale = squeeze(sqrt(sum(firstpoint_water .* conj(firstpoint_water),1)));
+%     channels_scale = repmat(channels_scale, [1 size(WaterData,1) MRS_struct.p.npoints_water(ii)]);
+%     channels_scale = permute(channels_scale, [2 3 1]);
+%     firstpoint_water = repmat(firstpoint_water, [1 MRS_struct.p.npoints_water(ii) 1])./channels_scale;
+%     WaterData = WaterData .* firstpoint_water;
+%     WaterData = conj(squeeze(sum(WaterData,1)));
+%     WaterData = squeeze(mean(WaterData,2));
+    
+    % Calculate mean of water FID for all channels
+    WaterMean = mean(WaterData,3);
+    % Determine signal strength for each channel
+    sig = max(abs(WaterMean),[],2);
+    % Normalize so the sum is 1
+    sig = sig/norm(sig);
+    % Determine phase of each channel
+    ph = phase(WaterMean(:,1));
+    % Apply changes
+    WaterData = WaterData .* repmat(exp(-1i*ph).*sig, [1 size(WaterData,2) size(WaterData,3)]);
+    % Sum over coils
+    WaterData = squeeze(sum(conj(WaterData),1));
+    % Average across averages
     WaterData = squeeze(mean(WaterData,2));
     MRS_struct.fids.data_water = double(WaterData);
 end
@@ -120,10 +135,14 @@ if isfield(MRS_struct.p,'seqtype_water') && strcmp(MRS_struct.p.seqtype_water,'M
     disp('MEGA-PRESS water reference found!');
     disp('Phasing metabolite data with water reference phase...');
     % Use first point of water data to phase water-suppressed data
-    firstpoint = mean(firstpoint_water,3);
-    firstpoint = repmat(firstpoint, [1 1 size(MetabData,3)]);
-    MetabData = MetabData .* firstpoint;
-    MetabData = conj(squeeze(sum(MetabData,1)));
+%     firstpoint = mean(firstpoint_water,3);
+%     firstpoint = repmat(firstpoint, [1 1 size(MetabData,3)]);
+%     MetabData = MetabData .* firstpoint;
+%     MetabData = conj(squeeze(sum(MetabData,1)));
+    
+    MetabData = MetabData .* repmat(exp(-1i*ph).*sig, [1 size(MetabData,2) size(MetabData,3)]);
+    % Sum over coils
+    MetabData = squeeze(sum(conj(MetabData),1));
     MRS_struct.fids.data = double(MetabData);
 else
     % If no water data (or PRESS water reference) provided, combine data 
@@ -320,6 +339,8 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
                 dims.averages=find(strcmp(TwixHeader.sqzDims,'Set'));
             elseif ~isempty(find(strcmp(TwixHeader.sqzDims,'Rep'),1))
                 dims.averages=find(strcmp(TwixHeader.sqzDims,'Rep'));
+            else
+                dims.averages=4;
             end
         else
             dims.averages=find(strcmp(TwixHeader.sqzDims,'Ave'));
@@ -338,7 +359,8 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
         elseif strcmp(TwixHeader.seqorig,'JN')
             dims.dyn=find(strcmp(TwixHeader.sqzDims,'Set'));
         else
-            dims.dyn=find(strcmp(TwixHeader.sqzDims,'Ide'));
+            %dims.dyn=find(strcmp(TwixHeader.sqzDims,'Ide'));
+            dims.dyn=3;
         end
     end
     

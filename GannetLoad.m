@@ -161,7 +161,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
                     MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii}, waterfile{ii});
                 else
                     % Load each input file and append the FIDs
-                    MRS_struct = SiemensTwixRead(MRS_struct, metabfile{1}, waterfile{ii});
+                    MRS_struct = SiemensTwixRead(MRS_struct, metabfile{ii}, waterfile{ii});
                     for kk=2:numfilesperscan
                         sub_MRS_struct{kk} = SiemensTwixRead(MRS_struct, metabfile{kk}, waterfile{ii});
                         MRS_struct.fids.data = [MRS_struct.fids.data sub_MRS_struct{kk}.fids.data];
