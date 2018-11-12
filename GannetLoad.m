@@ -418,8 +418,8 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         MRS_struct.p.SpecResNominal(ii) = MRS_struct.p.sw(ii)/MRS_struct.p.ZeroFillTo(ii);
         MRS_struct.p.Tacq(ii) = 1/MRS_struct.p.SpecRes(ii);
         
-        % Frame-by-frame determination of frequency of residual water (if MEGA-PRESS) or Cr (if HERMES) (MM: 180801)
-        if MRS_struct.p.HERMES
+        % Frame-by-frame determination of frequency of residual water (if MEGA-PRESS) or Cr (if HERMES or GSH editing) (MM: 180801)
+        if MRS_struct.p.HERMES || strcmp(MRS_struct.p.target,'GSH')
             F0freqRange = MRS_struct.spec.freq - 3.02 >= -0.1 & MRS_struct.spec.freq - 3.02 <= 0.1;
         else
             F0freqRange = MRS_struct.spec.freq - F0 >= -0.2 & MRS_struct.spec.freq - F0 <= 0.2;
@@ -429,7 +429,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         MRS_struct.spec.F0freq(ii,:) = F0freqRange(FrameMaxPos);
         
         % MM (180801): Estimate average amount of F0 offset
-        if MRS_struct.p.HERMES
+        if MRS_struct.p.HERMES || strcmp(MRS_struct.p.target,'GSH')
             MRS_struct.out.AvgDeltaF0(ii) = mean(F0freqRange(FrameMaxPos) - 3.02);
         elseif any(strcmp(MRS_struct.p.vendor,{'Siemens_rda','Siemens_twix','Siemens_dicom'}))
             MRS_struct.out.AvgDeltaF0(ii) = mean(F0freqRange(FrameMaxPos) - 4.7); % Siemens assumes 4.7 ppm as F0
@@ -620,7 +620,7 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
         plot(1:size(FullData,2), MRS_struct.spec.F0freq(ii,:)', '-', 1:size(FullData,2), rejectframesplot, 'ro');
         set(gca,'XLim',[0 size(FullData,2)]);
         xlabel('average'); ylabel('\omega_0');
-        if MRS_struct.p.HERMES
+        if MRS_struct.p.HERMES || strcmp(MRS_struct.p.target,'GSH')
             title('Cr Frequency');
         else
             title('Water Frequency');

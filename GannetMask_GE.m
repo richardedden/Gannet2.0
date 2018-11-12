@@ -112,12 +112,7 @@ dcm_list = dcm_list(cellfun(@isempty, strfind(dcm_list, '.nii'))); %#ok<*STRCLFH
 dcm_list = dcm_list(cellfun(@isempty, strfind(dcm_list, '.mat')));
 dcm_hdr = spm_dicom_headers(char(dcm_list));
 nii_file_dir = spm_dicom_convert(dcm_hdr, 'all', 'flat', 'nii', datadir); % create NIFTI file of T1 image
-
-% Rename NIFTI file into something more sensical (MM: 180810)
-[a,~,c] = fileparts(nii_file_dir.files{1});
-[~,b] = fileparts(MRS_struct.metabfile{ii});
-nii_file = [a filesep b '_struc' c];
-movefile(nii_file_dir.files{1}, nii_file);
+nii_file = nii_file_dir.files{1};
 
 slice_location = zeros(1,length(dcm_list));
 for jj = 1:length(dcm_list)

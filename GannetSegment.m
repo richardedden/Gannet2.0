@@ -7,7 +7,7 @@ function MRS_struct = GannetSegment(MRS_struct)
 % for the GM, WM and CSF segmentations. If these files are present, they
 % are loaded and used for the voxel segmentation
 
-MRS_struct.version.segment = '180807';
+MRS_struct.version.segment = '181112';
 
 % First check if SPM12 is installed and on the search path
 spmversion = fileparts(which('spm'));
@@ -64,9 +64,10 @@ for ii = 1:numscans
         CSFvol = spm_vol(CSF);
         
         voxmaskvol = spm_vol(cell2mat(MRS_struct.mask.(vox{kk}).outfile(ii)));
+        [a,b,c] = fileparts(voxmaskvol.fname);
         
         % GM
-        O_GMvox.fname = [T1dir '/c1' T1name '_GM_mask.nii'];
+        O_GMvox.fname = fullfile(a, [b '_GM' c]);
         O_GMvox.descrip = 'GMmasked_MRS_Voxel_Mask';
         O_GMvox.dim = voxmaskvol.dim;
         O_GMvox.dt = voxmaskvol.dt;
@@ -75,7 +76,7 @@ for ii = 1:numscans
         O_GMvox = spm_write_vol(O_GMvox, GM_voxmask_vol);
         
         % WM
-        O_WMvox.fname = [T1dir '/c2' T1name '_WM_mask.nii'];
+        O_WMvox.fname = fullfile(a, [b '_WM' c]);
         O_WMvox.descrip = 'WMmasked_MRS_Voxel_Mask';
         O_WMvox.dim = voxmaskvol.dim;
         O_WMvox.dt = voxmaskvol.dt;
@@ -84,7 +85,7 @@ for ii = 1:numscans
         O_WMvox = spm_write_vol(O_WMvox, WM_voxmask_vol);
         
         % CSF
-        O_CSFvox.fname = [T1dir '/c3' T1name '_CSF_mask.nii'];
+        O_CSFvox.fname = fullfile(a, [b '_CSF' c]);
         O_CSFvox.descrip = 'CSFmasked_MRS_Voxel_Mask';
         O_CSFvox.dim = voxmaskvol.dim;
         O_CSFvox.dt = voxmaskvol.dt;
