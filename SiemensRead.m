@@ -2,7 +2,7 @@
 %
 % Read a .rda file
 %
-% Version 180111
+% Version 181113
 function MRS_struct = SiemensRead(MRS_struct, off_filename, on_filename, water_filename)
 % [filename , pathname ] = uigetfile('*.rda', 'Select an RDA file')
 % rda_filename = [pathname , filename]; %'c:/data/spectroscopy/spec raw data/MrSpec.20020531.160701.rda'
@@ -232,14 +232,7 @@ hmm_complex = complex(hmm(1,:,:,:,:),hmm(2,:,:,:,:));
 
 %RE 110726 This is the complex time domain data
 MRS_struct.fids.ondata = hmm_complex;
-switch MRS_struct.p.ONOFForder
-    case 'offfirst'
-        MRS_struct.fids.data = [MRS_struct.fids.offdata;MRS_struct.fids.ondata].';
-    case 'onfirst'
-        MRS_struct.fids.data = [MRS_struct.fids.ondata;MRS_struct.fids.offdata].';
-end
-
-%MRS_struct.fids.data =[MRS_struct.fids.ondata;MRS_struct.fids.offdata].';
+MRS_struct.fids.data =[MRS_struct.fids.ondata;MRS_struct.fids.offdata].';
 
 if nargin==4
     %%%Now load in the Water data

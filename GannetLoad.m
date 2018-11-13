@@ -75,7 +75,7 @@ end
 %   1. Pre-initialise
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MRS_struct.version.load = '181014'; % set to date when final updates have been made
+MRS_struct.version.load = '181113'; % set to date when final updates have been made
 MRS_struct.ii = 0;
 MRS_struct.metabfile = metabfile;
 MRS_struct = GannetPreInitialise(MRS_struct);
@@ -101,32 +101,40 @@ end
 %   2. Determine data parameters from header
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Discern input data format
+MRS_struct = GannetDiscernDatatype(metabfile{1}, MRS_struct);
+
 % Determine number of provided water-suppressed files in the batch
 MRS_struct.p.Reference_compound='Cr';
 switch mode
     case 'batch'
         numscans = numel(metabfile);
+        % For Siemens RDA, each acquisition has two RDA files, i.e. correct the
+        % number:
+        if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
+            numscans = numscans/2;
+        end
         numfilesperscan = 1;
     case 'join'
         numscans = 1;
         numfilesperscan = numel(metabfile);
+        % For Siemens RDA, each acquisition has two RDA files, i.e. correct the
+        % number:
+        if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
+            numfilesperscan = numfilesperscan/2;
+        end
         fprintf('Running GannetLoad in ''join'' mode. FIDs from %i separate files...\n', numfilesperscan);
 end
 
-% Discern input data format
-MRS_struct = GannetDiscernDatatype(metabfile{1}, MRS_struct);
-
-% For Siemens RDA, each acquisition has two RDA files, i.e. correct the
-% number:
-if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
-    numscans = numscans/2;
-end
 % Determine number of provided water-unsuppressed files in the batch
 if exist('waterfile','var')
     MRS_struct.p.Reference_compound='H2O';
     numwaterscans = numel(waterfile);
-    if numwaterscans ~= numscans
-        error ('Number of water-unsuppressed files does not match number of water-suppressed files.');
+    switch mode
+        case 'batch'
+            if numwaterscans ~= numscans
+                error ('Number of water-unsuppressed files does not match number of water-suppressed files.');
+            end
     end
 end
 
@@ -239,11 +247,33 @@ for ii = 1:numscans % Loop over all files in the batch (from metabfile)
             
         case 'Siemens_rda'
             if exist('waterfile','var')
-                MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2}, metabfile{ii*2-1}, waterfile{ii});
+                if strcmp(mode,'batch')
+                    MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2}, metabfile{ii*2-1}, waterfile{ii});
+                else
+                    % Load each input file and append the FIDs
+                    MRS_struct = SiemensRead(MRS_struct, metabfile{2}, metabfile{1}, waterfile{ii});
+                    for kk=2:numfilesperscan
+                        sub_MRS_struct{kk} = SiemensRead(MRS_struct, metabfile{kk*2}, metabfile{kk*2-1}, waterfile{ii});
+                        MRS_struct.fids.data = [MRS_struct.fids.data sub_MRS_struct{kk}.fids.data];
+                    end
+                end
+                % Correct the total number of averages
+                MRS_struct.p.Navg = MRS_struct.p.Navg * numfilesperscan;
                 WaterData = MRS_struct.fids.data_water;
                 MRS_struct.p.Nwateravg = 1;
             else
-                MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2}, metabfile{ii*2-1});
+                if strcmp(mode,'batch')
+                    MRS_struct = SiemensRead(MRS_struct, metabfile{ii*2}, metabfile{ii*2-1});
+                else
+                    % Load each input file and append the FIDs
+                    MRS_struct = SiemensRead(MRS_struct, metabfile{2}, metabfile{1});
+                    for kk=2:numfilesperscan
+                        sub_MRS_struct{kk} = SiemensRead(MRS_struct, metabfile{kk*2}, metabfile{kk*2-1});
+                        MRS_struct.fids.data = [MRS_struct.fids.data sub_MRS_struct{kk}.fids.data];
+                    end
+                end
+                % Correct the total number of averages
+                MRS_struct.p.Navg = MRS_struct.p.Navg * numfilesperscan;
             end
             FullData = MRS_struct.fids.data;
             % Determine order of ON and OFF acquisitions
