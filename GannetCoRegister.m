@@ -23,10 +23,7 @@ if MRS_struct.ii ~= length(nii_name)
     error('The number of nifti files does not match the number of MRS files processed by GannetLoad.');
 end
 
-numscans = numel(MRS_struct.metabfile);
-if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
-    numscans = numscans/2;
-end
+numscans = MRS_struct.p.numscans;
 
 for ii = 1:numscans
     % Loop over voxels if PRIAM

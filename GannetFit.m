@@ -59,7 +59,7 @@ for kk = 1:length(vox)
         else
             OFF = MRS_struct.spec.(vox{kk}).(target{trg}).off;
         end
-        numscans = size(DIFF,1);
+        numscans = MRS_struct.p.numscans;
         
         for ii = 1:numscans
             

@@ -24,10 +24,7 @@ else
     vox = {MRS_struct.p.Vox{1}};
 end
 
-numscans = numel(MRS_struct.metabfile);
-if strcmpi(MRS_struct.p.vendor,'Siemens_rda')
-    numscans = numscans/2;
-end
+numscans = MRS_struct.p.numscans;
 
 % Set up SPM for batch processing
 spm('defaults','fmri');

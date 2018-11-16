@@ -148,6 +148,7 @@ end
 %   3. Load data from files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+MRS_struct.p.numscans = numscans;
 for ii = 1:numscans % Loop over all files in the batch (from metabfile)
     
     MRS_struct.ii = ii;
