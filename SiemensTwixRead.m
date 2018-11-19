@@ -118,7 +118,7 @@ if nargin == 3
     % Normalize so the sum is 1
     sig = sig/norm(sig);
     % Determine phase of each channel
-    ph = phase(WaterMean(:,1));
+    ph = angle(WaterMean(:,1));
     % Apply changes
     WaterData = WaterData .* repmat(exp(-1i*ph).*sig, [1 size(WaterData,2) size(WaterData,3)]);
     % Sum over coils
