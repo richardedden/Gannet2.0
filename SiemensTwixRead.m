@@ -364,6 +364,17 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
         end
     end
     
+    % It looks like newer CMRR implementations may have another (5th)
+    % dimension of the FID array:
+    if strcmp(TwixHeader.seqorig,'CMRR') && length(TwixHeader.sqzDims) > 4
+        dims.onoff=4;
+        TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.onoff dims.averages]);
+        TwixData = reshape(TwixData,[size(TwixData,1) size(TwixData,2) size(TwixData,3)*size(TwixData,4)*size(TwixData,5)]);
+    else
+        TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.averages]);
+        TwixData = reshape(TwixData,[size(TwixData,1) size(TwixData,2) size(TwixData,3)*size(TwixData,4)]);
+    end
+    
     % MEGA-PRESS sequences store the number of points acquired before the
     % echo maximum in different fields, depending on the origin of the
     % sequence:
@@ -378,8 +389,7 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
         TwixHeader.pointsBeforeEcho     = twix_obj.image.freeParam(1);
     end
 
-    TwixData = permute(TwixData,[dims.coils dims.points dims.dyn dims.averages]);
-    TwixData = reshape(TwixData,[size(TwixData,1) size(TwixData,2) size(TwixData,3)*size(TwixData,4)]);
+
 end
 
 end
