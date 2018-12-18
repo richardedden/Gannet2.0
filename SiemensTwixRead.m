@@ -32,6 +32,7 @@ function MRS_struct = SiemensTwixRead(MRS_struct,fname,fname_water)
 %                   Siemens CMRR MEGA-PRESS sequences.
 %       2018-09-25: Correct extraction of acquired data points for
 %                   custom-built MEGA-PRESS sequences.
+%       2018-12-18: Bugfix in data dimension assignment.
 
 ii = MRS_struct.ii;
 
@@ -359,8 +360,7 @@ elseif strcmp(TwixHeader.seqtype,'MEGAPRESS')
         elseif strcmp(TwixHeader.seqorig,'JN')
             dims.dyn=find(strcmp(TwixHeader.sqzDims,'Set'));
         else
-            %dims.dyn=find(strcmp(TwixHeader.sqzDims,'Ide'));
-            dims.dyn=3;
+            dims.dyn=find(strcmp(TwixHeader.sqzDims,'Ide'));
         end
     end
     
