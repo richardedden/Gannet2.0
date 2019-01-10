@@ -114,7 +114,7 @@ MRS_struct = Seg(MRS_struct);
 MRS_struct = rmfield(MRS_struct,'fids');
 if ii == length(metabfile) && MRS_struct.p.mat
     % Set up filename
-    mat_name = ['CoRegStandAlone_output/MRS_struct_CoRegStandAlone.mat'];
+    mat_name = 'CoRegStandAlone_output/MRS_struct_CoRegStandAlone.mat';
     save(mat_name,'MRS_struct');
 end
            

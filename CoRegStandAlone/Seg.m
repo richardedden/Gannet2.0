@@ -1,22 +1,32 @@
 function MRS_struct = Seg(MRS_struct)
 
-% Relies on SPM being installed
+% Relies on SPM12 being installed
 %
 % Runs segmentation script if segmented images not present according to
 % file convention of c1, c2 and c3 as prefixes on the anatomical image name
 % for the GM, WM and CSF segmentations. If these files are present, they
 % are loaded and used for the voxel segmentation
 %
-% This script does not require any information from the fit.
+% This script does not require any information from GannetFit.
 % This is useful if only the tissue segmentation information is supposed to
 % be obtained.
 
-MRS_struct.version.segment = '180403';
+MRS_struct.version.segment = '181112';
 vox = {MRS_struct.p.Vox{1}};
+
+% First check if SPM12 is installed and on the search path
+spmversion = fileparts(which('spm'));
+if isempty(spmversion)
+    error('SPM not found! Please install SPM12 (https://www.fil.ion.ucl.ac.uk/spm/software/spm12) and make sure it is on your search path.');
+elseif strcmpi(spmversion(end-3:end),'spm8')
+    error(['SPM8 detected! Gannet 3.0 no longer supports SPM8. ' ...
+           'Please install SPM12 (https://www.fil.ion.ucl.ac.uk/spm/software/spm12) and make sure it is on your search path.']);
+end
 
 % Set up SPM for batch processing
 spm('defaults','fmri');
 spm_jobman('initcfg');
+
 kk = 1;
 for ii = 1:length(MRS_struct.metabfile)
     
@@ -26,21 +36,15 @@ for ii = 1:length(MRS_struct.metabfile)
     anatimage = MRS_struct.mask.(vox{kk}).T1image{ii};
     
     % Check to see if segmentation already done - if not, do it
-    % Check which SPM version is installed and segment accordingly
     tmp = [T1dir '/c1' T1name T1ext];
     if ~exist(tmp,'file')
-        spmversion = fileparts(which('spm'));
-        if strcmpi(spmversion(end-4:end),'spm12')
-            CallSPM12segmentation(anatimage);
-        else
-            CallSPM8segmentation(anatimage);
-        end
+        CallSPM12segmentation(anatimage);
     end
     
     % 2 - Determine GM, WM and CSF fractions for each voxel
     
     if strcmp(T1dir,'')
-        T1dir='.';
+        T1dir = '.';
     end
     
     GM  = [T1dir '/c1' T1name T1ext];
@@ -55,9 +59,10 @@ for ii = 1:length(MRS_struct.metabfile)
     for kk = 1:length(vox)
         
         voxmaskvol = spm_vol(cell2mat(MRS_struct.mask.(vox{kk}).outfile(ii)));
+        [a,b,c] = fileparts(voxmaskvol.fname);
         
         % GM
-        O_GMvox.fname = [T1dir '/c1' T1name '_GM_mask.nii'];
+        O_GMvox.fname = fullfile(a, [b '_GM' c]);
         O_GMvox.descrip = 'GMmasked_MRS_Voxel_Mask';
         O_GMvox.dim = voxmaskvol.dim;
         O_GMvox.dt = voxmaskvol.dt;
@@ -66,7 +71,7 @@ for ii = 1:length(MRS_struct.metabfile)
         O_GMvox = spm_write_vol(O_GMvox, GM_voxmask_vol);
         
         % WM
-        O_WMvox.fname = [T1dir '/c2' T1name '_WM_mask.nii'];
+        O_WMvox.fname = fullfile(a, [b '_WM' c]);
         O_WMvox.descrip = 'WMmasked_MRS_Voxel_Mask';
         O_WMvox.dim = voxmaskvol.dim;
         O_WMvox.dt = voxmaskvol.dt;
@@ -75,7 +80,7 @@ for ii = 1:length(MRS_struct.metabfile)
         O_WMvox = spm_write_vol(O_WMvox, WM_voxmask_vol);
         
         % CSF
-        O_CSFvox.fname = [T1dir '/c3' T1name '_CSF_mask.nii'];
+        O_CSFvox.fname = fullfile(a, [b '_CSF' c]);
         O_CSFvox.descrip = 'CSFmasked_MRS_Voxel_Mask';
         O_CSFvox.dim = voxmaskvol.dim;
         O_CSFvox.dt = voxmaskvol.dt;
@@ -97,7 +102,7 @@ for ii = 1:length(MRS_struct.metabfile)
         wmfra = wmsum/(gmsum+wmsum+csfsum);
         csffra = csfsum/(gmsum+wmsum+csfsum);
         
-        tissuefra = gmfra+wmfra;
+        %tissuefra = gmfra+wmfra;
         
         MRS_struct.out.(vox{kk}).tissue.GMfra(ii) = gmfra;
         MRS_struct.out.(vox{kk}).tissue.WMfra(ii) = wmfra;
