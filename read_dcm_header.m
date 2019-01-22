@@ -126,7 +126,7 @@ for pp = 1:length(VoI_Params)
         dcmHeader.sSpecPara.sVoI.sNormal.(VoI_Params{pp}) = realmin('double');
     end
     if ~isfield(dcmHeader.sSpecPara.sVoI.sPosition, VoI_Params{pp})
-        dcmHeader.sSpecPara.sVoI.sNormal.(VoI_Params{pp}) = realmin('double');
+        dcmHeader.sSpecPara.sVoI.sPosition.(VoI_Params{pp}) = realmin('double');
     end
 end
 
