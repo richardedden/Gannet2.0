@@ -59,8 +59,10 @@ This software is open-source and does not have a specific license, but should yo
 
 ## Acknowledgments
 
-We wish to thank the following individuals for their contributions to the development of Gannet:
+We wish to thank the following individuals for their contributions to the development of Gannet and shared data processing code:
 
 * Ralph Noeske (GE Berlin)
 * Peter Barker (The Johns Hopkins University)
 * Robin de Graaf (Yale School of Medicine)
+* Philipp Ehses (Max Planck Institute for Biological Cybernetics, Tübingen)
+* Wouter Potters (UMC Amsterdam)
